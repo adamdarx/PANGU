@@ -1,0 +1,3 @@
+[submodule "parthenon"]
+	path = parthenon
+	url = https://github.com/parthenon-hpc-lab/parthenon.git
