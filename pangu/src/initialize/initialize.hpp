@@ -14,11 +14,17 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(parthenon::ParameterInput
     auto AdiabaticIndex = pin->GetOrAddReal("PANGU", "AdiabaticIndex", 5. / 3.);
     auto QFactorFloor = pin->GetOrAddReal("PANGU", "QFactorFloor", 0.3);
     auto QFactorCeiling = pin->GetOrAddReal("PANGU", "QFactorCeiling", 0.03);
+    auto Mode = pin->GetOrAddString("PANGU", "Mode", "SR");
+    auto MetricName = pin->GetOrAddString("PANGU", "MetricName", "Minkowski");
+    auto MetricSpin = pin->GetOrAddReal("PANGU", "MetricSpin", 0.0);
 
     Package->AddParam<>("CFLNumber", CFLNumber);
     Package->AddParam<>("AdiabaticIndex", AdiabaticIndex);
     Package->AddParam<>("QFactorFloor", QFactorFloor);
     Package->AddParam<>("QFactorCeiling", QFactorCeiling);
+    Package->AddParam<>("Mode", Mode);
+    Package->AddParam<>("MetricName", MetricName);
+    Package->AddParam<>("MetricSpin", MetricSpin);
 
     parthenon::Metadata m;
     m = parthenon::Metadata({parthenon::Metadata::Cell, parthenon::Metadata::FillGhost});
@@ -39,6 +45,13 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(parthenon::ParameterInput
     Package->AddField(std::string("Conservative"), m);
     m = parthenon::Metadata({parthenon::Metadata::Cell, parthenon::Metadata::FillGhost});
     Package->AddField(std::string("Flag"), m);
+
+    if (Mode == "GR") {
+        m = parthenon::Metadata({parthenon::Metadata::Cell, parthenon::Metadata::FillGhost}, std::vector<int>({MetricTensorComponentNumber}));
+        Package->AddField(std::string("MetricLower"), m);
+        m = parthenon::Metadata({parthenon::Metadata::Cell, parthenon::Metadata::FillGhost}, std::vector<int>({MetricTensorComponentNumber}));
+        Package->AddField(std::string("MetricUpper"), m);
+    }
 
     Package->CheckRefinementBlock = CheckRefinement;
     Package->EstimateTimestepBlock = EstimateTimestepBlock;

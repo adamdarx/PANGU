@@ -1,4 +1,5 @@
 #pragma once
+
 #include <memory>
 #include <vector>
 
@@ -11,6 +12,8 @@ class Simulator : public MultiStageDriver {
 public:
     Simulator(ParameterInput *pin, ApplicationInput *app_in, Mesh *pm);
     TaskCollection MakeTaskCollection(BlockList_t &blocks, int stage);
+    TaskCollection MakeTaskCollectionSRMHD(BlockList_t &blocks, int stage);
+    TaskCollection MakeTaskCollectionGRMHD(BlockList_t &blocks, int stage);
 };
 
 void ProblemGenerator(MeshBlock *pmb, parthenon::ParameterInput *pin);

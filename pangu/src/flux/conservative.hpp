@@ -1,4 +1,5 @@
 #pragma once
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -7,57 +8,76 @@
 #include <parthenon/package.hpp>
 
 #include "../initialize/mnemonic.hpp"
-#include "../physics/EnergyMomentumTensor.hpp"
+#include "../physics/stress_tensor.hpp"
 
-parthenon::TaskStatus CalculateConservative(std::shared_ptr<parthenon::MeshBlockData<parthenon::Real>> &resource) {
-    using namespace parthenon;
-    PARTHENON_INSTRUMENT
-    
-    const auto MeshblockPointer = resource->GetBlockPointer();
-    const auto Package = MeshblockPointer->packages.Get("PANGU");
-    const auto AdiabaticIndex = Package->Param<Real>("AdiabaticIndex");
+parthenon::TaskStatus CalculateConservative(
+    std::shared_ptr<parthenon::MeshBlockData<parthenon::Real>> &resource) {
+  using namespace parthenon;
+  PARTHENON_INSTRUMENT
 
-    const auto BoundX1 = MeshblockPointer->cellbounds.GetBoundsI(IndexDomain::interior);
-    const auto BoundX2 = MeshblockPointer->cellbounds.GetBoundsJ(IndexDomain::interior);
-    const auto BoundX3 = MeshblockPointer->cellbounds.GetBoundsK(IndexDomain::interior);
+  const auto meshblock_pointer = resource->GetBlockPointer();
+  const auto package = meshblock_pointer->packages.Get("PANGU");
+  const auto adiabatic_index = package->Param<Real>("AdiabaticIndex");
 
-    PackIndexMap primitiveIndexMap;
-    const std::vector<std::string> PrimitiveTags = {"Density", "Energy", "WeightedVelocity", "MagneticField"};
-    const auto Primitive = resource->PackVariables(PrimitiveTags, primitiveIndexMap);
-    PackIndexMap conservativeIndexMap;
-    const std::vector<std::string> ConservativeTags = {"Conservative"};
-    auto conservative = resource->PackVariablesAndFluxes(ConservativeTags, conservativeIndexMap);
-    
-    MeshblockPointer->par_for(
-        PARTHENON_AUTO_LABEL, BoundX3.s, BoundX3.e, BoundX2.s, BoundX2.e, BoundX1.s, BoundX1.e,
-        KOKKOS_LAMBDA(const int k, const int j, const int i) {
-            const auto SquaredWeightedVelocity = Kokkos::pow(Primitive(WeightedVelocityX1, k, j, i), 2) + Kokkos::pow(Primitive(WeightedVelocityX2, k, j, i), 2) + Kokkos::pow(Primitive(WeightedVelocityX3, k, j, i), 2);
-            const auto SquaredLorentzFactor = 1 + SquaredWeightedVelocity;
-            const auto LorentzFactor = Kokkos::sqrt(SquaredLorentzFactor);
-            const auto MagneticFieldThreeVectorDotWeightedVelocity = Primitive(WeightedVelocityX1, k, j, i) * Primitive(MagneticFieldX1, k, j, i) + Primitive(WeightedVelocityX2, k, j, i) * Primitive(MagneticFieldX2, k, j, i) + Primitive(WeightedVelocityX3, k, j, i) * Primitive(MagneticFieldX3, k, j, i);
-            Real directedEnergyMomentumTensor[4];
-            const Real PrimitiveCArray[PrimitiveVariableNumber] = {
-                    Primitive(DensityIndex, k, j, i),
-                    Primitive(EnergyIndex, k, j, i),
-                    Primitive(WeightedVelocityX1, k, j, i),
-                    Primitive(WeightedVelocityX2, k, j, i),
-                    Primitive(WeightedVelocityX3, k, j, i),
-                    Primitive(MagneticFieldX1, k, j, i),
-                    Primitive(MagneticFieldX2, k, j, i),
-                    Primitive(MagneticFieldX3, k, j, i),
-                };
-            
-            CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveCArray, X0DIR, directedEnergyMomentumTensor);
-            conservative(DensityIndex, k, j, i) = Primitive(DensityIndex, k, j, i) * LorentzFactor;
-            conservative(EnergyIndex, k, j, i) = directedEnergyMomentumTensor[0] + conservative(DensityIndex, k, j, i);
-            conservative(WeightedVelocityX1, k, j, i) = directedEnergyMomentumTensor[1];
-            conservative(WeightedVelocityX2, k, j, i) = directedEnergyMomentumTensor[2];
-            conservative(WeightedVelocityX3, k, j, i) = directedEnergyMomentumTensor[3];
+  const auto bound_x1 =
+      meshblock_pointer->cellbounds.GetBoundsI(IndexDomain::interior);
+  const auto bound_x2 =
+      meshblock_pointer->cellbounds.GetBoundsJ(IndexDomain::interior);
+  const auto bound_x3 =
+      meshblock_pointer->cellbounds.GetBoundsK(IndexDomain::interior);
 
-            conservative(MagneticFieldX1, k, j, i) = Primitive(MagneticFieldX1, k, j, i);
-            conservative(MagneticFieldX2, k, j, i) = Primitive(MagneticFieldX2, k, j, i);
-            conservative(MagneticFieldX3, k, j, i) = Primitive(MagneticFieldX3, k, j, i);
-        });
+  PackIndexMap primitive_index_map;
+  const std::vector<std::string> primitive_tags = {
+      "Density", "Energy", "WeightedVelocity", "MagneticField"};
+  const auto primitive = resource->PackVariables(primitive_tags, primitive_index_map);
 
-    return TaskStatus::complete;
+  PackIndexMap conservative_index_map;
+  const std::vector<std::string> conservative_tags = {"Conservative"};
+  auto conservative =
+      resource->PackVariablesAndFluxes(conservative_tags, conservative_index_map);
+
+  meshblock_pointer->par_for(
+      PARTHENON_AUTO_LABEL, bound_x3.s, bound_x3.e, bound_x2.s, bound_x2.e,
+      bound_x1.s, bound_x1.e, KOKKOS_LAMBDA(const int k, const int j, const int i) {
+        const auto squared_weighted_velocity =
+            Kokkos::pow(primitive(WeightedVelocityX1, k, j, i), 2) +
+            Kokkos::pow(primitive(WeightedVelocityX2, k, j, i), 2) +
+            Kokkos::pow(primitive(WeightedVelocityX3, k, j, i), 2);
+        const auto squared_lorentz_factor = 1 + squared_weighted_velocity;
+        const auto lorentz_factor = Kokkos::sqrt(squared_lorentz_factor);
+        parthenon::Real directed_energy_momentum_tensor[4];
+        const parthenon::Real primitive_c_array[PrimitiveVariableNumber] = {
+            primitive(DensityIndex, k, j, i), primitive(EnergyIndex, k, j, i),
+            primitive(WeightedVelocityX1, k, j, i),
+            primitive(WeightedVelocityX2, k, j, i),
+            primitive(WeightedVelocityX3, k, j, i),
+            primitive(MagneticFieldX1, k, j, i),
+            primitive(MagneticFieldX2, k, j, i),
+            primitive(MagneticFieldX3, k, j, i),
+        };
+
+        CalculateEnergyMomentumTensorInDir(
+            adiabatic_index, primitive_c_array, X0DIR,
+            directed_energy_momentum_tensor);
+        conservative(DensityIndex, k, j, i) =
+            primitive(DensityIndex, k, j, i) * lorentz_factor;
+        conservative(EnergyIndex, k, j, i) =
+            directed_energy_momentum_tensor[0] +
+            conservative(DensityIndex, k, j, i);
+        conservative(WeightedVelocityX1, k, j, i) =
+            directed_energy_momentum_tensor[1];
+        conservative(WeightedVelocityX2, k, j, i) =
+            directed_energy_momentum_tensor[2];
+        conservative(WeightedVelocityX3, k, j, i) =
+            directed_energy_momentum_tensor[3];
+
+        conservative(MagneticFieldX1, k, j, i) =
+            primitive(MagneticFieldX1, k, j, i);
+        conservative(MagneticFieldX2, k, j, i) =
+            primitive(MagneticFieldX2, k, j, i);
+        conservative(MagneticFieldX3, k, j, i) =
+            primitive(MagneticFieldX3, k, j, i);
+      });
+
+  return TaskStatus::complete;
 }

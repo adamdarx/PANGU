@@ -8,355 +8,423 @@
 #include <parthenon/package.hpp>
 
 #include "../initialize/mnemonic.hpp"
-#include "../physics/AlfvenVelocity.hpp"
-#include "../physics/EnergyMomentumTensor.hpp"
+#include "../physics/alfven_velocity.hpp"
+#include "../physics/stress_tensor.hpp"
 #include "../reconstruct/InterpolaterMC.hpp"
+
+KOKKOS_INLINE_FUNCTION
+parthenon::Real LAXFFluxSRMHD(const parthenon::Real leftFlux, const parthenon::Real rightFlux,
+                              const parthenon::Real leftConservative,
+                              const parthenon::Real rightConservative,
+                              const parthenon::Real alpha) {
+    return 0.5 * (leftFlux + rightFlux - alpha * (rightConservative - leftConservative));
+}
+
+KOKKOS_INLINE_FUNCTION
+parthenon::Real HLLFluxSRMHD(const parthenon::Real leftFlux, const parthenon::Real rightFlux,
+                             const parthenon::Real leftConservative,
+                             const parthenon::Real rightConservative,
+                             const parthenon::Real alpha) {
+    return LAXFFluxSRMHD(leftFlux, rightFlux, leftConservative, rightConservative, alpha);
+}
+
+KOKKOS_INLINE_FUNCTION
+parthenon::Real HLLFluxGRMHD(const parthenon::Real leftFlux, const parthenon::Real rightFlux,
+                             const parthenon::Real leftConservative,
+                             const parthenon::Real rightConservative,
+                             const parthenon::Real alpha) {
+    return LAXFFluxSRMHD(leftFlux, rightFlux, leftConservative, rightConservative, alpha);
+}
+
+KOKKOS_INLINE_FUNCTION
+parthenon::Real ComputeAlfvenVelocityCenter(
+    const parthenon::Real adiabatic_index,
+    const parthenon::Real primitive_left_c_array[PrimitiveVariableNumber],
+    const parthenon::Real primitive_right_c_array[PrimitiveVariableNumber],
+    const int direction, const int is_gr) {
+    parthenon::Real maximum_alfven_velocity_left, maximum_alfven_velocity_right;
+    parthenon::Real minimum_alfven_velocity_left, minimum_alfven_velocity_right;
+    if (is_gr) {
+        CalculateAlfvenVelocityGRMHD(adiabatic_index, primitive_left_c_array, direction,
+                                     maximum_alfven_velocity_left,
+                                     minimum_alfven_velocity_left);
+        CalculateAlfvenVelocityGRMHD(adiabatic_index, primitive_right_c_array, direction,
+                                     maximum_alfven_velocity_right,
+                                     minimum_alfven_velocity_right);
+    } else {
+        CalculateAlfvenVelocitySRMHD(adiabatic_index, primitive_left_c_array, direction,
+                                     maximum_alfven_velocity_left,
+                                     minimum_alfven_velocity_left);
+        CalculateAlfvenVelocitySRMHD(adiabatic_index, primitive_right_c_array, direction,
+                                     maximum_alfven_velocity_right,
+                                     minimum_alfven_velocity_right);
+    }
+
+    const auto maximum_alfven_velocity_center =
+        Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximum_alfven_velocity_left),
+                                 maximum_alfven_velocity_right));
+    const auto minimum_alfven_velocity_center =
+        Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimum_alfven_velocity_left),
+                                 -minimum_alfven_velocity_right));
+    return Kokkos::max(maximum_alfven_velocity_center,
+                       minimum_alfven_velocity_center);
+}
 
 parthenon::TaskStatus CalculateFluxes(std::shared_ptr<parthenon::MeshBlockData<parthenon::Real>> &resource) {
     using namespace parthenon;
     PARTHENON_INSTRUMENT
 
-    const auto MeshblockPointer = resource->GetBlockPointer();
-    const auto Package = MeshblockPointer->packages.Get("PANGU");
-    const auto &AdiabaticIndex = Package->Param<Real>("AdiabaticIndex");
+    const auto meshblock_pointer = resource->GetBlockPointer();
+    const auto package = meshblock_pointer->packages.Get("PANGU");
+    const auto &adiabatic_index = package->Param<Real>("AdiabaticIndex");
+    const auto mode = package->Param<std::string>("Mode");
+    const int is_gr = (mode == "GR");
 
-    const auto BoundX1 = MeshblockPointer->cellbounds.GetBoundsI(IndexDomain::interior);
-    const auto BoundX2 = MeshblockPointer->cellbounds.GetBoundsJ(IndexDomain::interior);
-    const auto BoundX3 = MeshblockPointer->cellbounds.GetBoundsK(IndexDomain::interior);
+    const auto bound_x1 = meshblock_pointer->cellbounds.GetBoundsI(IndexDomain::interior);
+    const auto bound_x2 = meshblock_pointer->cellbounds.GetBoundsJ(IndexDomain::interior);
+    const auto bound_x3 = meshblock_pointer->cellbounds.GetBoundsK(IndexDomain::interior);
 
-    PackIndexMap primitiveIndexMap;
-    const std::vector<std::string> PrimitiveTags = {"Density", "Energy", "WeightedVelocity", "MagneticField"};
-    const auto Primitive = resource->PackVariables(PrimitiveTags, primitiveIndexMap);
-    PackIndexMap conservativeIndexMap;
-    const std::vector<std::string> ConservativeTags = {"Conservative"};
-    auto conservative = resource->PackVariablesAndFluxes(ConservativeTags, conservativeIndexMap);
+    PackIndexMap primitive_index_map;
+    const std::vector<std::string> primitive_tags = {"Density", "Energy", "WeightedVelocity", "MagneticField"};
+    const auto primitive = resource->PackVariables(primitive_tags, primitive_index_map);
+    PackIndexMap conservative_index_map;
+    const std::vector<std::string> conservative_tags = {"Conservative"};
+    auto conservative = resource->PackVariablesAndFluxes(conservative_tags, conservative_index_map);
     
-    const int ScratchLevel = 1;
-    const auto MeshgridSizeX1 = MeshblockPointer->cellbounds.ncellsi(IndexDomain::entire);
-    const auto MeshgridSizeX2 = MeshblockPointer->cellbounds.ncellsj(IndexDomain::entire);
-    const auto MeshgridSizeX3 = MeshblockPointer->cellbounds.ncellsk(IndexDomain::entire);
+    const int scratch_level = 1;
+    const auto meshgrid_size_x1 = meshblock_pointer->cellbounds.ncellsi(IndexDomain::entire);
+    const auto meshgrid_size_x2 = meshblock_pointer->cellbounds.ncellsj(IndexDomain::entire);
+    const auto meshgrid_size_x3 = meshblock_pointer->cellbounds.ncellsk(IndexDomain::entire);
     
-    const size_t ScratchSizeInBytesX1 = ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, MeshgridSizeX1);
-    const size_t ScratchSizeInBytesX2 = ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, MeshgridSizeX2);
-    const size_t ScratchSizeInBytesX3 = ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, MeshgridSizeX3);
+    const size_t scratch_size_in_bytes_x1 = ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, meshgrid_size_x1);
+    const size_t scratch_size_in_bytes_x2 = ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, meshgrid_size_x2);
+    const size_t scratch_size_in_bytes_x3 = ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, meshgrid_size_x3);
 
-    const int OffsetX1 = (MeshgridSizeX1 > 1) ? 1 : 0;
-    const int OffsetX2 = (MeshgridSizeX2 > 1) ? 1 : 0;
-    const int OffsetX3 = (MeshgridSizeX3 > 1) ? 1 : 0;
+    const int offset_x1 = (meshgrid_size_x1 > 1) ? 1 : 0;
+    const int offset_x2 = (meshgrid_size_x2 > 1) ? 1 : 0;
+    const int offset_x3 = (meshgrid_size_x3 > 1) ? 1 : 0;
 
-    MeshblockPointer->par_for_outer(
-        PARTHENON_AUTO_LABEL, 2 * ScratchSizeInBytesX1, ScratchLevel, BoundX3.s - OffsetX3, BoundX3.e + OffsetX3, BoundX2.s - OffsetX2, BoundX2.e + OffsetX2,
+    meshblock_pointer->par_for_outer(
+        PARTHENON_AUTO_LABEL, 2 * scratch_size_in_bytes_x1, scratch_level, bound_x3.s - offset_x3, bound_x3.e + offset_x3, bound_x2.s - offset_x2, bound_x2.e + offset_x2,
         KOKKOS_LAMBDA(team_mbr_t member, const int k, const int j) {
-            ScratchPad2D<Real> primitiveLeft(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX1);
-            ScratchPad2D<Real> primitiveRight(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX1);
+            ScratchPad2D<Real> primitive_left(member.team_scratch(scratch_level), PrimitiveVariableNumber, meshgrid_size_x1);
+            ScratchPad2D<Real> primitive_right(member.team_scratch(scratch_level), PrimitiveVariableNumber, meshgrid_size_x1);
 
-            par_for_inner(member, 0, PrimitiveVariableNumber - 1, BoundX1.s, BoundX1.e + 1, [&](const int n, const int i) {
-                primitiveLeft(n, i) = Primitive(n, k, j, i - 1) + 0.5 * InterpolateMC(Primitive(n, k, j, i - 2), Primitive(n, k, j, i - 1), Primitive(n, k, j, i));
-                primitiveRight(n, i) = Primitive(n, k, j, i) - 0.5 * InterpolateMC(Primitive(n, k, j, i - 1), Primitive(n, k, j, i), Primitive(n, k, j, i + 1));
+            par_for_inner(member, 0, PrimitiveVariableNumber - 1, bound_x1.s, bound_x1.e + 1, [&](const int n, const int i) {
+                primitive_left(n, i) = primitive(n, k, j, i - 1) + 0.5 * InterpolateMC(primitive(n, k, j, i - 2), primitive(n, k, j, i - 1), primitive(n, k, j, i));
+                primitive_right(n, i) = primitive(n, k, j, i) - 0.5 * InterpolateMC(primitive(n, k, j, i - 1), primitive(n, k, j, i), primitive(n, k, j, i + 1));
             });
             
             member.team_barrier();
 
-            par_for_inner(member, BoundX1.s, BoundX1.e + 1, [&](const int i) {
-                Real directedEnergyMomentumTensorLeft[4];
-                Real directedEnergyMomentumTensorRight[4];
-                Real conservativeLeft[PrimitiveVariableNumber];
-                Real conservativeRight[PrimitiveVariableNumber];
-                Real fluxLeft[PrimitiveVariableNumber];
-                Real fluxRight[PrimitiveVariableNumber];
-                const Real PrimitiveLeftCArray[PrimitiveVariableNumber] = {
-                    primitiveLeft(DensityIndex, i),
-                    primitiveLeft(EnergyIndex, i),
-                    primitiveLeft(WeightedVelocityX1, i),
-                    primitiveLeft(WeightedVelocityX2, i),
-                    primitiveLeft(WeightedVelocityX3, i),
-                    primitiveLeft(MagneticFieldX1, i),
-                    primitiveLeft(MagneticFieldX2, i),
-                    primitiveLeft(MagneticFieldX3, i),
+            par_for_inner(member, bound_x1.s, bound_x1.e + 1, [&](const int i) {
+                Real directed_energy_momentum_tensor_left[4];
+                Real directed_energy_momentum_tensor_right[4];
+                Real conservative_left[PrimitiveVariableNumber];
+                Real conservative_right[PrimitiveVariableNumber];
+                Real flux_left[PrimitiveVariableNumber];
+                Real flux_right[PrimitiveVariableNumber];
+                const Real primitive_left_c_array[PrimitiveVariableNumber] = {
+                    primitive_left(DensityIndex, i),
+                    primitive_left(EnergyIndex, i),
+                    primitive_left(WeightedVelocityX1, i),
+                    primitive_left(WeightedVelocityX2, i),
+                    primitive_left(WeightedVelocityX3, i),
+                    primitive_left(MagneticFieldX1, i),
+                    primitive_left(MagneticFieldX2, i),
+                    primitive_left(MagneticFieldX3, i),
                 };
-                const Real PrimitiveRightCArray[PrimitiveVariableNumber] = {
-                    primitiveRight(DensityIndex, i),
-                    primitiveRight(EnergyIndex, i),
-                    primitiveRight(WeightedVelocityX1, i),
-                    primitiveRight(WeightedVelocityX2, i),
-                    primitiveRight(WeightedVelocityX3, i),
-                    primitiveRight(MagneticFieldX1, i),
-                    primitiveRight(MagneticFieldX2, i),
-                    primitiveRight(MagneticFieldX3, i),
+                const Real primitive_right_c_array[PrimitiveVariableNumber] = {
+                    primitive_right(DensityIndex, i),
+                    primitive_right(EnergyIndex, i),
+                    primitive_right(WeightedVelocityX1, i),
+                    primitive_right(WeightedVelocityX2, i),
+                    primitive_right(WeightedVelocityX3, i),
+                    primitive_right(MagneticFieldX1, i),
+                    primitive_right(MagneticFieldX2, i),
+                    primitive_right(MagneticFieldX3, i),
                 };
 
-                const auto SquaredWeightedVelocityLeft = Kokkos::pow(PrimitiveLeftCArray[WeightedVelocityX1], 2) + Kokkos::pow(PrimitiveLeftCArray[WeightedVelocityX2], 2) + Kokkos::pow(PrimitiveLeftCArray[WeightedVelocityX3], 2);
-                const auto SquaredLorentzFactorLeft = 1 + SquaredWeightedVelocityLeft;
-                const auto LorentzFactorLeft = Kokkos::sqrt(SquaredLorentzFactorLeft);
-                const auto MagneticFieldThreeVectorDotWeightedVelocityLeft = PrimitiveLeftCArray[WeightedVelocityX1] * PrimitiveLeftCArray[MagneticFieldX1] + PrimitiveLeftCArray[WeightedVelocityX2] * PrimitiveLeftCArray[MagneticFieldX2] + PrimitiveLeftCArray[WeightedVelocityX3] * PrimitiveLeftCArray[MagneticFieldX3];
+                const auto squared_weighted_velocity_left = Kokkos::pow(primitive_left_c_array[WeightedVelocityX1], 2) + Kokkos::pow(primitive_left_c_array[WeightedVelocityX2], 2) + Kokkos::pow(primitive_left_c_array[WeightedVelocityX3], 2);
+                const auto squared_lorentz_factor_left = 1 + squared_weighted_velocity_left;
+                const auto lorentz_factor_left = Kokkos::sqrt(squared_lorentz_factor_left);
+                const auto magnetic_field_three_vector_dot_weighted_velocity_left = primitive_left_c_array[WeightedVelocityX1] * primitive_left_c_array[MagneticFieldX1] + primitive_left_c_array[WeightedVelocityX2] * primitive_left_c_array[MagneticFieldX2] + primitive_left_c_array[WeightedVelocityX3] * primitive_left_c_array[MagneticFieldX3];
 
-                const auto SquaredWeightedVelocityRight = Kokkos::pow(PrimitiveRightCArray[WeightedVelocityX1], 2) + Kokkos::pow(PrimitiveRightCArray[WeightedVelocityX2], 2) + Kokkos::pow(PrimitiveRightCArray[WeightedVelocityX3], 2);
-                const auto SquaredLorentzFactorRight = 1 + SquaredWeightedVelocityRight;
-                const auto LorentzFactorRight = Kokkos::sqrt(SquaredLorentzFactorRight);
-                const auto MagneticFieldThreeVectorDotWeightedVelocityRight = PrimitiveRightCArray[WeightedVelocityX1] * PrimitiveRightCArray[MagneticFieldX1] + PrimitiveRightCArray[WeightedVelocityX2] * PrimitiveRightCArray[MagneticFieldX2] + PrimitiveRightCArray[WeightedVelocityX3] * PrimitiveRightCArray[MagneticFieldX3];
+                const auto squared_weighted_velocity_right = Kokkos::pow(primitive_right_c_array[WeightedVelocityX1], 2) + Kokkos::pow(primitive_right_c_array[WeightedVelocityX2], 2) + Kokkos::pow(primitive_right_c_array[WeightedVelocityX3], 2);
+                const auto squared_lorentz_factor_right = 1 + squared_weighted_velocity_right;
+                const auto lorentz_factor_right = Kokkos::sqrt(squared_lorentz_factor_right);
+                const auto magnetic_field_three_vector_dot_weighted_velocity_right = primitive_right_c_array[WeightedVelocityX1] * primitive_right_c_array[MagneticFieldX1] + primitive_right_c_array[WeightedVelocityX2] * primitive_right_c_array[MagneticFieldX2] + primitive_right_c_array[WeightedVelocityX3] * primitive_right_c_array[MagneticFieldX3];
 
-                Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
-                Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitiveLeftCArray, X1DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitiveRightCArray, X1DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
-                const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft), maximumAlfvenVelocityRight));
-                const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft), -minimumAlfvenVelocityRight));
-                const auto AlfvenVelocityCenter = Kokkos::max(MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
+                const auto alfven_velocity_center =
+                    ComputeAlfvenVelocityCenter(adiabatic_index,
+                                                primitive_left_c_array,
+                                                primitive_right_c_array, X1DIR,
+                                                is_gr);
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveLeftCArray, X0DIR, directedEnergyMomentumTensorLeft);
-                conservativeLeft[DensityIndex] = PrimitiveLeftCArray[DensityIndex] * LorentzFactorLeft;
-                conservativeLeft[EnergyIndex] = directedEnergyMomentumTensorLeft[0] + conservativeLeft[DensityIndex];
-                conservativeLeft[WeightedVelocityX1] = directedEnergyMomentumTensorLeft[1];
-                conservativeLeft[WeightedVelocityX2] = directedEnergyMomentumTensorLeft[2];
-                conservativeLeft[WeightedVelocityX3] = directedEnergyMomentumTensorLeft[3];
-                conservativeLeft[MagneticFieldX1] = PrimitiveLeftCArray[MagneticFieldX1];
-                conservativeLeft[MagneticFieldX2] = PrimitiveLeftCArray[MagneticFieldX2];
-                conservativeLeft[MagneticFieldX3] = PrimitiveLeftCArray[MagneticFieldX3];
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_left_c_array, X0DIR, directed_energy_momentum_tensor_left);
+                conservative_left[DensityIndex] = primitive_left_c_array[DensityIndex] * lorentz_factor_left;
+                conservative_left[EnergyIndex] = directed_energy_momentum_tensor_left[0] + conservative_left[DensityIndex];
+                conservative_left[WeightedVelocityX1] = directed_energy_momentum_tensor_left[1];
+                conservative_left[WeightedVelocityX2] = directed_energy_momentum_tensor_left[2];
+                conservative_left[WeightedVelocityX3] = directed_energy_momentum_tensor_left[3];
+                conservative_left[MagneticFieldX1] = primitive_left_c_array[MagneticFieldX1];
+                conservative_left[MagneticFieldX2] = primitive_left_c_array[MagneticFieldX2];
+                conservative_left[MagneticFieldX3] = primitive_left_c_array[MagneticFieldX3];
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveLeftCArray, X1DIR, directedEnergyMomentumTensorLeft);
-                fluxLeft[DensityIndex] = PrimitiveLeftCArray[DensityIndex] * PrimitiveLeftCArray[WeightedVelocityX1];
-                fluxLeft[EnergyIndex] = directedEnergyMomentumTensorLeft[0] + fluxLeft[DensityIndex];
-                fluxLeft[WeightedVelocityX1] = directedEnergyMomentumTensorLeft[1];
-                fluxLeft[WeightedVelocityX2] = directedEnergyMomentumTensorLeft[2];
-                fluxLeft[WeightedVelocityX3] = directedEnergyMomentumTensorLeft[3];
-                fluxLeft[MagneticFieldX1] = 0;
-                fluxLeft[MagneticFieldX2] = ((PrimitiveLeftCArray[MagneticFieldX2] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX2]) * PrimitiveLeftCArray[WeightedVelocityX1] - (PrimitiveLeftCArray[MagneticFieldX1] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX1]) * PrimitiveLeftCArray[WeightedVelocityX2]) / LorentzFactorLeft;
-                fluxLeft[MagneticFieldX3] = ((PrimitiveLeftCArray[MagneticFieldX3] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX3]) * PrimitiveLeftCArray[WeightedVelocityX1] - (PrimitiveLeftCArray[MagneticFieldX1] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX1]) * PrimitiveLeftCArray[WeightedVelocityX3]) / LorentzFactorLeft;
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_left_c_array, X1DIR, directed_energy_momentum_tensor_left);
+                flux_left[DensityIndex] = primitive_left_c_array[DensityIndex] * primitive_left_c_array[WeightedVelocityX1];
+                flux_left[EnergyIndex] = directed_energy_momentum_tensor_left[0] + flux_left[DensityIndex];
+                flux_left[WeightedVelocityX1] = directed_energy_momentum_tensor_left[1];
+                flux_left[WeightedVelocityX2] = directed_energy_momentum_tensor_left[2];
+                flux_left[WeightedVelocityX3] = directed_energy_momentum_tensor_left[3];
+                flux_left[MagneticFieldX1] = 0;
+                flux_left[MagneticFieldX2] = ((primitive_left_c_array[MagneticFieldX2] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX2]) * primitive_left_c_array[WeightedVelocityX1] - (primitive_left_c_array[MagneticFieldX1] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX1]) * primitive_left_c_array[WeightedVelocityX2]) / lorentz_factor_left;
+                flux_left[MagneticFieldX3] = ((primitive_left_c_array[MagneticFieldX3] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX3]) * primitive_left_c_array[WeightedVelocityX1] - (primitive_left_c_array[MagneticFieldX1] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX1]) * primitive_left_c_array[WeightedVelocityX3]) / lorentz_factor_left;
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveRightCArray, X0DIR, directedEnergyMomentumTensorRight);
-                conservativeRight[DensityIndex] = PrimitiveRightCArray[DensityIndex] * LorentzFactorRight;
-                conservativeRight[EnergyIndex] = directedEnergyMomentumTensorRight[0] + conservativeRight[DensityIndex];
-                conservativeRight[WeightedVelocityX1] = directedEnergyMomentumTensorRight[1];
-                conservativeRight[WeightedVelocityX2] = directedEnergyMomentumTensorRight[2];
-                conservativeRight[WeightedVelocityX3] = directedEnergyMomentumTensorRight[3];
-                conservativeRight[MagneticFieldX1] = PrimitiveRightCArray[MagneticFieldX1];
-                conservativeRight[MagneticFieldX2] = PrimitiveRightCArray[MagneticFieldX2];
-                conservativeRight[MagneticFieldX3] = PrimitiveRightCArray[MagneticFieldX3];
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_right_c_array, X0DIR, directed_energy_momentum_tensor_right);
+                conservative_right[DensityIndex] = primitive_right_c_array[DensityIndex] * lorentz_factor_right;
+                conservative_right[EnergyIndex] = directed_energy_momentum_tensor_right[0] + conservative_right[DensityIndex];
+                conservative_right[WeightedVelocityX1] = directed_energy_momentum_tensor_right[1];
+                conservative_right[WeightedVelocityX2] = directed_energy_momentum_tensor_right[2];
+                conservative_right[WeightedVelocityX3] = directed_energy_momentum_tensor_right[3];
+                conservative_right[MagneticFieldX1] = primitive_right_c_array[MagneticFieldX1];
+                conservative_right[MagneticFieldX2] = primitive_right_c_array[MagneticFieldX2];
+                conservative_right[MagneticFieldX3] = primitive_right_c_array[MagneticFieldX3];
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveRightCArray, X1DIR, directedEnergyMomentumTensorRight);
-                fluxRight[DensityIndex] = PrimitiveRightCArray[DensityIndex] * PrimitiveRightCArray[WeightedVelocityX1];
-                fluxRight[EnergyIndex] = directedEnergyMomentumTensorRight[0] + fluxRight[DensityIndex];
-                fluxRight[WeightedVelocityX1] = directedEnergyMomentumTensorRight[1];
-                fluxRight[WeightedVelocityX2] = directedEnergyMomentumTensorRight[2];
-                fluxRight[WeightedVelocityX3] = directedEnergyMomentumTensorRight[3];
-                fluxRight[MagneticFieldX1] = 0;
-                fluxRight[MagneticFieldX2] = ((PrimitiveRightCArray[MagneticFieldX2] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX2]) * PrimitiveRightCArray[WeightedVelocityX1] - (PrimitiveRightCArray[MagneticFieldX1] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX1]) * PrimitiveRightCArray[WeightedVelocityX2]) / LorentzFactorRight;
-                fluxRight[MagneticFieldX3] = ((PrimitiveRightCArray[MagneticFieldX3] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX3]) * PrimitiveRightCArray[WeightedVelocityX1] - (PrimitiveRightCArray[MagneticFieldX1] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX1]) * PrimitiveRightCArray[WeightedVelocityX3]) / LorentzFactorRight;
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_right_c_array, X1DIR, directed_energy_momentum_tensor_right);
+                flux_right[DensityIndex] = primitive_right_c_array[DensityIndex] * primitive_right_c_array[WeightedVelocityX1];
+                flux_right[EnergyIndex] = directed_energy_momentum_tensor_right[0] + flux_right[DensityIndex];
+                flux_right[WeightedVelocityX1] = directed_energy_momentum_tensor_right[1];
+                flux_right[WeightedVelocityX2] = directed_energy_momentum_tensor_right[2];
+                flux_right[WeightedVelocityX3] = directed_energy_momentum_tensor_right[3];
+                flux_right[MagneticFieldX1] = 0;
+                flux_right[MagneticFieldX2] = ((primitive_right_c_array[MagneticFieldX2] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX2]) * primitive_right_c_array[WeightedVelocityX1] - (primitive_right_c_array[MagneticFieldX1] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX1]) * primitive_right_c_array[WeightedVelocityX2]) / lorentz_factor_right;
+                flux_right[MagneticFieldX3] = ((primitive_right_c_array[MagneticFieldX3] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX3]) * primitive_right_c_array[WeightedVelocityX1] - (primitive_right_c_array[MagneticFieldX1] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX1]) * primitive_right_c_array[WeightedVelocityX3]) / lorentz_factor_right;
                 
-                for(int index = 0; index < PrimitiveVariableNumber; index++)
-                    conservative.flux(X1DIR, index, k, j, i) = 0.5 * (fluxLeft[index] + fluxRight[index] - AlfvenVelocityCenter * (conservativeRight[index] - conservativeLeft[index]));
+                for (int index = 0; index < PrimitiveVariableNumber; ++index) {
+                    conservative.flux(X1DIR, index, k, j, i) = is_gr
+                        ? HLLFluxGRMHD(flux_left[index], flux_right[index], conservative_left[index], conservative_right[index], alfven_velocity_center)
+                        : HLLFluxSRMHD(flux_left[index], flux_right[index], conservative_left[index], conservative_right[index], alfven_velocity_center);
+                }
             });
         });
 
-    if (MeshblockPointer->pmy_mesh->ndim >= 2)
-    MeshblockPointer->par_for_outer(
-        PARTHENON_AUTO_LABEL, 2 * ScratchSizeInBytesX2, ScratchLevel, BoundX3.s - OffsetX3, BoundX3.e + OffsetX3, BoundX1.s - OffsetX1, BoundX1.e + OffsetX1,
-        KOKKOS_LAMBDA(team_mbr_t member, const int k, const int i) {
-            ScratchPad2D<Real> primitiveLeft(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX2);
-            ScratchPad2D<Real> primitiveRight(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX2);
+    if (meshblock_pointer->pmy_mesh->ndim >= 2) {
+        meshblock_pointer->par_for_outer(
+            PARTHENON_AUTO_LABEL, 2 * scratch_size_in_bytes_x2, scratch_level,
+            bound_x3.s - offset_x3, bound_x3.e + offset_x3,
+            bound_x1.s - offset_x1, bound_x1.e + offset_x1,
+            KOKKOS_LAMBDA(team_mbr_t member, const int k, const int i) {
+            ScratchPad2D<Real> primitive_left(member.team_scratch(scratch_level), PrimitiveVariableNumber, meshgrid_size_x2);
+            ScratchPad2D<Real> primitive_right(member.team_scratch(scratch_level), PrimitiveVariableNumber, meshgrid_size_x2);
 
-            par_for_inner(member, 0, PrimitiveVariableNumber - 1, BoundX2.s, BoundX2.e + 1, [&](const int n, const int j) {
-                primitiveLeft(n, j) = Primitive(n, k, j - 1, i) + 0.5 * InterpolateMC(Primitive(n, k, j - 2, i), Primitive(n, k, j - 1, i), Primitive(n, k, j, i));
-                primitiveRight(n, j) = Primitive(n, k, j, i) - 0.5 * InterpolateMC(Primitive(n, k, j - 1, i), Primitive(n, k, j, i), Primitive(n, k, j + 1, i));
+            par_for_inner(member, 0, PrimitiveVariableNumber - 1, bound_x2.s, bound_x2.e + 1, [&](const int n, const int j) {
+                primitive_left(n, j) = primitive(n, k, j - 1, i) + 0.5 * InterpolateMC(primitive(n, k, j - 2, i), primitive(n, k, j - 1, i), primitive(n, k, j, i));
+                primitive_right(n, j) = primitive(n, k, j, i) - 0.5 * InterpolateMC(primitive(n, k, j - 1, i), primitive(n, k, j, i), primitive(n, k, j + 1, i));
             });
             
             member.team_barrier();
 
-            par_for_inner(member, BoundX2.s, BoundX2.e + 1, [&](const int j) {
-                Real directedEnergyMomentumTensorLeft[4];
-                Real directedEnergyMomentumTensorRight[4];
-                Real conservativeLeft[PrimitiveVariableNumber];
-                Real conservativeRight[PrimitiveVariableNumber];
-                Real fluxLeft[PrimitiveVariableNumber];
-                Real fluxRight[PrimitiveVariableNumber];
-                const Real PrimitiveLeftCArray[PrimitiveVariableNumber] = {
-                    primitiveLeft(DensityIndex, j),
-                    primitiveLeft(EnergyIndex, j),
-                    primitiveLeft(WeightedVelocityX1, j),
-                    primitiveLeft(WeightedVelocityX2, j),
-                    primitiveLeft(WeightedVelocityX3, j),
-                    primitiveLeft(MagneticFieldX1, j),
-                    primitiveLeft(MagneticFieldX2, j),
-                    primitiveLeft(MagneticFieldX3, j),
+            par_for_inner(member, bound_x2.s, bound_x2.e + 1, [&](const int j) {
+                Real directed_energy_momentum_tensor_left[4];
+                Real directed_energy_momentum_tensor_right[4];
+                Real conservative_left[PrimitiveVariableNumber];
+                Real conservative_right[PrimitiveVariableNumber];
+                Real flux_left[PrimitiveVariableNumber];
+                Real flux_right[PrimitiveVariableNumber];
+                const Real primitive_left_c_array[PrimitiveVariableNumber] = {
+                    primitive_left(DensityIndex, j),
+                    primitive_left(EnergyIndex, j),
+                    primitive_left(WeightedVelocityX1, j),
+                    primitive_left(WeightedVelocityX2, j),
+                    primitive_left(WeightedVelocityX3, j),
+                    primitive_left(MagneticFieldX1, j),
+                    primitive_left(MagneticFieldX2, j),
+                    primitive_left(MagneticFieldX3, j),
                 };
-                const Real PrimitiveRightCArray[PrimitiveVariableNumber] = {
-                    primitiveRight(DensityIndex, j),
-                    primitiveRight(EnergyIndex, j),
-                    primitiveRight(WeightedVelocityX1, j),
-                    primitiveRight(WeightedVelocityX2, j),
-                    primitiveRight(WeightedVelocityX3, j),
-                    primitiveRight(MagneticFieldX1, j),
-                    primitiveRight(MagneticFieldX2, j),
-                    primitiveRight(MagneticFieldX3, j),
+                const Real primitive_right_c_array[PrimitiveVariableNumber] = {
+                    primitive_right(DensityIndex, j),
+                    primitive_right(EnergyIndex, j),
+                    primitive_right(WeightedVelocityX1, j),
+                    primitive_right(WeightedVelocityX2, j),
+                    primitive_right(WeightedVelocityX3, j),
+                    primitive_right(MagneticFieldX1, j),
+                    primitive_right(MagneticFieldX2, j),
+                    primitive_right(MagneticFieldX3, j),
                 };
 
-                const auto SquaredWeightedVelocityLeft = Kokkos::pow(PrimitiveLeftCArray[WeightedVelocityX1], 2) + Kokkos::pow(PrimitiveLeftCArray[WeightedVelocityX2], 2) + Kokkos::pow(PrimitiveLeftCArray[WeightedVelocityX3], 2);
-                const auto SquaredLorentzFactorLeft = 1 + SquaredWeightedVelocityLeft;
-                const auto LorentzFactorLeft = Kokkos::sqrt(SquaredLorentzFactorLeft);
-                const auto MagneticFieldThreeVectorDotWeightedVelocityLeft = PrimitiveLeftCArray[WeightedVelocityX1] * PrimitiveLeftCArray[MagneticFieldX1] + PrimitiveLeftCArray[WeightedVelocityX2] * PrimitiveLeftCArray[MagneticFieldX2] + PrimitiveLeftCArray[WeightedVelocityX3] * PrimitiveLeftCArray[MagneticFieldX3];
+                const auto squared_weighted_velocity_left = Kokkos::pow(primitive_left_c_array[WeightedVelocityX1], 2) + Kokkos::pow(primitive_left_c_array[WeightedVelocityX2], 2) + Kokkos::pow(primitive_left_c_array[WeightedVelocityX3], 2);
+                const auto squared_lorentz_factor_left = 1 + squared_weighted_velocity_left;
+                const auto lorentz_factor_left = Kokkos::sqrt(squared_lorentz_factor_left);
+                const auto magnetic_field_three_vector_dot_weighted_velocity_left = primitive_left_c_array[WeightedVelocityX1] * primitive_left_c_array[MagneticFieldX1] + primitive_left_c_array[WeightedVelocityX2] * primitive_left_c_array[MagneticFieldX2] + primitive_left_c_array[WeightedVelocityX3] * primitive_left_c_array[MagneticFieldX3];
 
-                const auto SquaredWeightedVelocityRight = Kokkos::pow(PrimitiveRightCArray[WeightedVelocityX1], 2) + Kokkos::pow(PrimitiveRightCArray[WeightedVelocityX2], 2) + Kokkos::pow(PrimitiveRightCArray[WeightedVelocityX3], 2);
-                const auto SquaredLorentzFactorRight = 1 + SquaredWeightedVelocityRight;
-                const auto LorentzFactorRight = Kokkos::sqrt(SquaredLorentzFactorRight);
-                const auto MagneticFieldThreeVectorDotWeightedVelocityRight = PrimitiveRightCArray[WeightedVelocityX1] * PrimitiveRightCArray[MagneticFieldX1] + PrimitiveRightCArray[WeightedVelocityX2] * PrimitiveRightCArray[MagneticFieldX2] + PrimitiveRightCArray[WeightedVelocityX3] * PrimitiveRightCArray[MagneticFieldX3];
+                const auto squared_weighted_velocity_right = Kokkos::pow(primitive_right_c_array[WeightedVelocityX1], 2) + Kokkos::pow(primitive_right_c_array[WeightedVelocityX2], 2) + Kokkos::pow(primitive_right_c_array[WeightedVelocityX3], 2);
+                const auto squared_lorentz_factor_right = 1 + squared_weighted_velocity_right;
+                const auto lorentz_factor_right = Kokkos::sqrt(squared_lorentz_factor_right);
+                const auto magnetic_field_three_vector_dot_weighted_velocity_right = primitive_right_c_array[WeightedVelocityX1] * primitive_right_c_array[MagneticFieldX1] + primitive_right_c_array[WeightedVelocityX2] * primitive_right_c_array[MagneticFieldX2] + primitive_right_c_array[WeightedVelocityX3] * primitive_right_c_array[MagneticFieldX3];
 
-                Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
-                Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitiveLeftCArray, X2DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitiveRightCArray, X2DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
-                const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft), maximumAlfvenVelocityRight));
-                const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft), -minimumAlfvenVelocityRight));
-                const auto AlfvenVelocityCenter = Kokkos::max(MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
+                const auto alfven_velocity_center =
+                    ComputeAlfvenVelocityCenter(adiabatic_index,
+                                                primitive_left_c_array,
+                                                primitive_right_c_array, X2DIR,
+                                                is_gr);
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveLeftCArray, X0DIR, directedEnergyMomentumTensorLeft);
-                conservativeLeft[DensityIndex] = PrimitiveLeftCArray[DensityIndex] * LorentzFactorLeft;
-                conservativeLeft[EnergyIndex] = directedEnergyMomentumTensorLeft[0] + conservativeLeft[DensityIndex];
-                conservativeLeft[WeightedVelocityX1] = directedEnergyMomentumTensorLeft[1];
-                conservativeLeft[WeightedVelocityX2] = directedEnergyMomentumTensorLeft[2];
-                conservativeLeft[WeightedVelocityX3] = directedEnergyMomentumTensorLeft[3];
-                conservativeLeft[MagneticFieldX1] = PrimitiveLeftCArray[MagneticFieldX1];
-                conservativeLeft[MagneticFieldX2] = PrimitiveLeftCArray[MagneticFieldX2];
-                conservativeLeft[MagneticFieldX3] = PrimitiveLeftCArray[MagneticFieldX3];
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_left_c_array, X0DIR, directed_energy_momentum_tensor_left);
+                conservative_left[DensityIndex] = primitive_left_c_array[DensityIndex] * lorentz_factor_left;
+                conservative_left[EnergyIndex] = directed_energy_momentum_tensor_left[0] + conservative_left[DensityIndex];
+                conservative_left[WeightedVelocityX1] = directed_energy_momentum_tensor_left[1];
+                conservative_left[WeightedVelocityX2] = directed_energy_momentum_tensor_left[2];
+                conservative_left[WeightedVelocityX3] = directed_energy_momentum_tensor_left[3];
+                conservative_left[MagneticFieldX1] = primitive_left_c_array[MagneticFieldX1];
+                conservative_left[MagneticFieldX2] = primitive_left_c_array[MagneticFieldX2];
+                conservative_left[MagneticFieldX3] = primitive_left_c_array[MagneticFieldX3];
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveLeftCArray, X2DIR, directedEnergyMomentumTensorLeft);
-                fluxLeft[DensityIndex] = PrimitiveLeftCArray[DensityIndex] * PrimitiveLeftCArray[WeightedVelocityX2];
-                fluxLeft[EnergyIndex] = directedEnergyMomentumTensorLeft[0] + fluxLeft[DensityIndex];
-                fluxLeft[WeightedVelocityX1] = directedEnergyMomentumTensorLeft[1];
-                fluxLeft[WeightedVelocityX2] = directedEnergyMomentumTensorLeft[2];
-                fluxLeft[WeightedVelocityX3] = directedEnergyMomentumTensorLeft[3];
-                fluxLeft[MagneticFieldX1] = ((PrimitiveLeftCArray[MagneticFieldX1] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX1]) * PrimitiveLeftCArray[WeightedVelocityX2] - (PrimitiveLeftCArray[MagneticFieldX2] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX2]) * PrimitiveLeftCArray[WeightedVelocityX1]) / LorentzFactorLeft;
-                fluxLeft[MagneticFieldX2] = 0;
-                fluxLeft[MagneticFieldX3] = ((PrimitiveLeftCArray[MagneticFieldX3] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX3]) * PrimitiveLeftCArray[WeightedVelocityX2] - (PrimitiveLeftCArray[MagneticFieldX2] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX2]) * PrimitiveLeftCArray[WeightedVelocityX3]) / LorentzFactorLeft;
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_left_c_array, X2DIR, directed_energy_momentum_tensor_left);
+                flux_left[DensityIndex] = primitive_left_c_array[DensityIndex] * primitive_left_c_array[WeightedVelocityX2];
+                flux_left[EnergyIndex] = directed_energy_momentum_tensor_left[0] + flux_left[DensityIndex];
+                flux_left[WeightedVelocityX1] = directed_energy_momentum_tensor_left[1];
+                flux_left[WeightedVelocityX2] = directed_energy_momentum_tensor_left[2];
+                flux_left[WeightedVelocityX3] = directed_energy_momentum_tensor_left[3];
+                flux_left[MagneticFieldX1] = ((primitive_left_c_array[MagneticFieldX1] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX1]) * primitive_left_c_array[WeightedVelocityX2] - (primitive_left_c_array[MagneticFieldX2] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX2]) * primitive_left_c_array[WeightedVelocityX1]) / lorentz_factor_left;
+                flux_left[MagneticFieldX2] = 0;
+                flux_left[MagneticFieldX3] = ((primitive_left_c_array[MagneticFieldX3] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX3]) * primitive_left_c_array[WeightedVelocityX2] - (primitive_left_c_array[MagneticFieldX2] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX2]) * primitive_left_c_array[WeightedVelocityX3]) / lorentz_factor_left;
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveRightCArray, X0DIR, directedEnergyMomentumTensorRight);
-                conservativeRight[DensityIndex] = PrimitiveRightCArray[DensityIndex] * LorentzFactorRight;
-                conservativeRight[EnergyIndex] = directedEnergyMomentumTensorRight[0] + conservativeRight[DensityIndex];
-                conservativeRight[WeightedVelocityX1] = directedEnergyMomentumTensorRight[1];
-                conservativeRight[WeightedVelocityX2] = directedEnergyMomentumTensorRight[2];
-                conservativeRight[WeightedVelocityX3] = directedEnergyMomentumTensorRight[3];
-                conservativeRight[MagneticFieldX1] = PrimitiveRightCArray[MagneticFieldX1];
-                conservativeRight[MagneticFieldX2] = PrimitiveRightCArray[MagneticFieldX2];
-                conservativeRight[MagneticFieldX3] = PrimitiveRightCArray[MagneticFieldX3];
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_right_c_array, X0DIR, directed_energy_momentum_tensor_right);
+                conservative_right[DensityIndex] = primitive_right_c_array[DensityIndex] * lorentz_factor_right;
+                conservative_right[EnergyIndex] = directed_energy_momentum_tensor_right[0] + conservative_right[DensityIndex];
+                conservative_right[WeightedVelocityX1] = directed_energy_momentum_tensor_right[1];
+                conservative_right[WeightedVelocityX2] = directed_energy_momentum_tensor_right[2];
+                conservative_right[WeightedVelocityX3] = directed_energy_momentum_tensor_right[3];
+                conservative_right[MagneticFieldX1] = primitive_right_c_array[MagneticFieldX1];
+                conservative_right[MagneticFieldX2] = primitive_right_c_array[MagneticFieldX2];
+                conservative_right[MagneticFieldX3] = primitive_right_c_array[MagneticFieldX3];
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveRightCArray, X2DIR, directedEnergyMomentumTensorRight);
-                fluxRight[DensityIndex] = PrimitiveRightCArray[DensityIndex] * PrimitiveRightCArray[WeightedVelocityX2];
-                fluxRight[EnergyIndex] = directedEnergyMomentumTensorRight[0] + fluxRight[DensityIndex];
-                fluxRight[WeightedVelocityX1] = directedEnergyMomentumTensorRight[1];
-                fluxRight[WeightedVelocityX2] = directedEnergyMomentumTensorRight[2];
-                fluxRight[WeightedVelocityX3] = directedEnergyMomentumTensorRight[3];
-                fluxRight[MagneticFieldX1] = ((PrimitiveRightCArray[MagneticFieldX1] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX1]) * PrimitiveRightCArray[WeightedVelocityX2] - (PrimitiveRightCArray[MagneticFieldX2] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX2]) * PrimitiveRightCArray[WeightedVelocityX1]) / LorentzFactorRight;
-                fluxRight[MagneticFieldX2] = 0;
-                fluxRight[MagneticFieldX3] = ((PrimitiveRightCArray[MagneticFieldX3] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX3]) * PrimitiveRightCArray[WeightedVelocityX2] - (PrimitiveRightCArray[MagneticFieldX2] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX2]) * PrimitiveRightCArray[WeightedVelocityX3]) / LorentzFactorRight;
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_right_c_array, X2DIR, directed_energy_momentum_tensor_right);
+                flux_right[DensityIndex] = primitive_right_c_array[DensityIndex] * primitive_right_c_array[WeightedVelocityX2];
+                flux_right[EnergyIndex] = directed_energy_momentum_tensor_right[0] + flux_right[DensityIndex];
+                flux_right[WeightedVelocityX1] = directed_energy_momentum_tensor_right[1];
+                flux_right[WeightedVelocityX2] = directed_energy_momentum_tensor_right[2];
+                flux_right[WeightedVelocityX3] = directed_energy_momentum_tensor_right[3];
+                flux_right[MagneticFieldX1] = ((primitive_right_c_array[MagneticFieldX1] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX1]) * primitive_right_c_array[WeightedVelocityX2] - (primitive_right_c_array[MagneticFieldX2] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX2]) * primitive_right_c_array[WeightedVelocityX1]) / lorentz_factor_right;
+                flux_right[MagneticFieldX2] = 0;
+                flux_right[MagneticFieldX3] = ((primitive_right_c_array[MagneticFieldX3] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX3]) * primitive_right_c_array[WeightedVelocityX2] - (primitive_right_c_array[MagneticFieldX2] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX2]) * primitive_right_c_array[WeightedVelocityX3]) / lorentz_factor_right;
 
-                for(int index = 0; index < PrimitiveVariableNumber; index++)
-                    conservative.flux(X2DIR, index, k, j, i) = 0.5 * (fluxLeft[index] + fluxRight[index] - AlfvenVelocityCenter * (conservativeRight[index] - conservativeLeft[index]));
+                for (int index = 0; index < PrimitiveVariableNumber; ++index) {
+                    conservative.flux(X2DIR, index, k, j, i) = is_gr
+                        ? HLLFluxGRMHD(flux_left[index], flux_right[index], conservative_left[index], conservative_right[index], alfven_velocity_center)
+                        : HLLFluxSRMHD(flux_left[index], flux_right[index], conservative_left[index], conservative_right[index], alfven_velocity_center);
+                }
             });
         });
+    }
     
-    if (MeshblockPointer->pmy_mesh->ndim == 3)
-    MeshblockPointer->par_for_outer(
-        PARTHENON_AUTO_LABEL, 2 * ScratchSizeInBytesX3, ScratchLevel, BoundX2.s, BoundX2.e, BoundX1.s, BoundX1.e,
-        KOKKOS_LAMBDA(team_mbr_t member, const int j, const int i) {
-            ScratchPad2D<Real> primitiveLeft(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX3);
-            ScratchPad2D<Real> primitiveRight(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX3);
+    if (meshblock_pointer->pmy_mesh->ndim == 3) {
+        meshblock_pointer->par_for_outer(
+            PARTHENON_AUTO_LABEL, 2 * scratch_size_in_bytes_x3, scratch_level,
+            bound_x2.s, bound_x2.e, bound_x1.s, bound_x1.e,
+            KOKKOS_LAMBDA(team_mbr_t member, const int j, const int i) {
+            ScratchPad2D<Real> primitive_left(member.team_scratch(scratch_level), PrimitiveVariableNumber, meshgrid_size_x3);
+            ScratchPad2D<Real> primitive_right(member.team_scratch(scratch_level), PrimitiveVariableNumber, meshgrid_size_x3);
 
-            par_for_inner(member, 0, PrimitiveVariableNumber - 1, BoundX3.s, BoundX3.e + 1, [&](const int n, const int k) {
-                primitiveLeft(n, k) = Primitive(n, k - 1, j, i) + 0.5 * InterpolateMC(Primitive(n, k - 2, j, i), Primitive(n, k - 1, j, i), Primitive(n, k, j, i));
-                primitiveRight(n, k) = Primitive(n, k, j, i) - 0.5 * InterpolateMC(Primitive(n, k - 1, j, i), Primitive(n, k, j, i), Primitive(n, k + 1, j, i));
+            par_for_inner(member, 0, PrimitiveVariableNumber - 1, bound_x3.s, bound_x3.e + 1, [&](const int n, const int k) {
+                primitive_left(n, k) = primitive(n, k - 1, j, i) + 0.5 * InterpolateMC(primitive(n, k - 2, j, i), primitive(n, k - 1, j, i), primitive(n, k, j, i));
+                primitive_right(n, k) = primitive(n, k, j, i) - 0.5 * InterpolateMC(primitive(n, k - 1, j, i), primitive(n, k, j, i), primitive(n, k + 1, j, i));
             });
             
             member.team_barrier();
 
-            par_for_inner(member, BoundX3.s, BoundX3.e + 1, [&](const int k) {
-                Real directedEnergyMomentumTensorLeft[4];
-                Real directedEnergyMomentumTensorRight[4];
-                Real conservativeLeft[PrimitiveVariableNumber];
-                Real conservativeRight[PrimitiveVariableNumber];
-                Real fluxLeft[PrimitiveVariableNumber];
-                Real fluxRight[PrimitiveVariableNumber];
-                const Real PrimitiveLeftCArray[PrimitiveVariableNumber] = {
-                    primitiveLeft(DensityIndex, k),
-                    primitiveLeft(EnergyIndex, k),
-                    primitiveLeft(WeightedVelocityX1, k),
-                    primitiveLeft(WeightedVelocityX2, k),
-                    primitiveLeft(WeightedVelocityX3, k),
-                    primitiveLeft(MagneticFieldX1, k),
-                    primitiveLeft(MagneticFieldX2, k),
-                    primitiveLeft(MagneticFieldX3, k),
+            par_for_inner(member, bound_x3.s, bound_x3.e + 1, [&](const int k) {
+                Real directed_energy_momentum_tensor_left[4];
+                Real directed_energy_momentum_tensor_right[4];
+                Real conservative_left[PrimitiveVariableNumber];
+                Real conservative_right[PrimitiveVariableNumber];
+                Real flux_left[PrimitiveVariableNumber];
+                Real flux_right[PrimitiveVariableNumber];
+                const Real primitive_left_c_array[PrimitiveVariableNumber] = {
+                    primitive_left(DensityIndex, k),
+                    primitive_left(EnergyIndex, k),
+                    primitive_left(WeightedVelocityX1, k),
+                    primitive_left(WeightedVelocityX2, k),
+                    primitive_left(WeightedVelocityX3, k),
+                    primitive_left(MagneticFieldX1, k),
+                    primitive_left(MagneticFieldX2, k),
+                    primitive_left(MagneticFieldX3, k),
                 };
-                const Real PrimitiveRightCArray[PrimitiveVariableNumber] = {
-                    primitiveRight(DensityIndex, k),
-                    primitiveRight(EnergyIndex, k),
-                    primitiveRight(WeightedVelocityX1, k),
-                    primitiveRight(WeightedVelocityX2, k),
-                    primitiveRight(WeightedVelocityX3, k),
-                    primitiveRight(MagneticFieldX1, k),
-                    primitiveRight(MagneticFieldX2, k),
-                    primitiveRight(MagneticFieldX3, k),
+                const Real primitive_right_c_array[PrimitiveVariableNumber] = {
+                    primitive_right(DensityIndex, k),
+                    primitive_right(EnergyIndex, k),
+                    primitive_right(WeightedVelocityX1, k),
+                    primitive_right(WeightedVelocityX2, k),
+                    primitive_right(WeightedVelocityX3, k),
+                    primitive_right(MagneticFieldX1, k),
+                    primitive_right(MagneticFieldX2, k),
+                    primitive_right(MagneticFieldX3, k),
                 };
 
-                const auto SquaredWeightedVelocityLeft = Kokkos::pow(PrimitiveLeftCArray[WeightedVelocityX1], 2) + Kokkos::pow(PrimitiveLeftCArray[WeightedVelocityX2], 2) + Kokkos::pow(PrimitiveLeftCArray[WeightedVelocityX3], 2);
-                const auto SquaredLorentzFactorLeft = 1 + SquaredWeightedVelocityLeft;
-                const auto LorentzFactorLeft = Kokkos::sqrt(SquaredLorentzFactorLeft);
-                const auto MagneticFieldThreeVectorDotWeightedVelocityLeft = PrimitiveLeftCArray[WeightedVelocityX1] * PrimitiveLeftCArray[MagneticFieldX1] + PrimitiveLeftCArray[WeightedVelocityX2] * PrimitiveLeftCArray[MagneticFieldX2] + PrimitiveLeftCArray[WeightedVelocityX3] * PrimitiveLeftCArray[MagneticFieldX3];
+                const auto squared_weighted_velocity_left = Kokkos::pow(primitive_left_c_array[WeightedVelocityX1], 2) + Kokkos::pow(primitive_left_c_array[WeightedVelocityX2], 2) + Kokkos::pow(primitive_left_c_array[WeightedVelocityX3], 2);
+                const auto squared_lorentz_factor_left = 1 + squared_weighted_velocity_left;
+                const auto lorentz_factor_left = Kokkos::sqrt(squared_lorentz_factor_left);
+                const auto magnetic_field_three_vector_dot_weighted_velocity_left = primitive_left_c_array[WeightedVelocityX1] * primitive_left_c_array[MagneticFieldX1] + primitive_left_c_array[WeightedVelocityX2] * primitive_left_c_array[MagneticFieldX2] + primitive_left_c_array[WeightedVelocityX3] * primitive_left_c_array[MagneticFieldX3];
 
-                const auto SquaredWeightedVelocityRight = Kokkos::pow(PrimitiveRightCArray[WeightedVelocityX1], 2) + Kokkos::pow(PrimitiveRightCArray[WeightedVelocityX2], 2) + Kokkos::pow(PrimitiveRightCArray[WeightedVelocityX3], 2);
-                const auto SquaredLorentzFactorRight = 1 + SquaredWeightedVelocityRight;
-                const auto LorentzFactorRight = Kokkos::sqrt(SquaredLorentzFactorRight);
-                const auto MagneticFieldThreeVectorDotWeightedVelocityRight = PrimitiveRightCArray[WeightedVelocityX1] * PrimitiveRightCArray[MagneticFieldX1] + PrimitiveRightCArray[WeightedVelocityX2] * PrimitiveRightCArray[MagneticFieldX2] + PrimitiveRightCArray[WeightedVelocityX3] * PrimitiveRightCArray[MagneticFieldX3];
+                const auto squared_weighted_velocity_right = Kokkos::pow(primitive_right_c_array[WeightedVelocityX1], 2) + Kokkos::pow(primitive_right_c_array[WeightedVelocityX2], 2) + Kokkos::pow(primitive_right_c_array[WeightedVelocityX3], 2);
+                const auto squared_lorentz_factor_right = 1 + squared_weighted_velocity_right;
+                const auto lorentz_factor_right = Kokkos::sqrt(squared_lorentz_factor_right);
+                const auto magnetic_field_three_vector_dot_weighted_velocity_right = primitive_right_c_array[WeightedVelocityX1] * primitive_right_c_array[MagneticFieldX1] + primitive_right_c_array[WeightedVelocityX2] * primitive_right_c_array[MagneticFieldX2] + primitive_right_c_array[WeightedVelocityX3] * primitive_right_c_array[MagneticFieldX3];
 
-                Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
-                Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitiveLeftCArray, X3DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitiveRightCArray, X3DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
-                const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft), maximumAlfvenVelocityRight));
-                const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft), -minimumAlfvenVelocityRight));
-                const auto AlfvenVelocityCenter = Kokkos::max(MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
+                const auto alfven_velocity_center =
+                    ComputeAlfvenVelocityCenter(adiabatic_index,
+                                                primitive_left_c_array,
+                                                primitive_right_c_array, X3DIR,
+                                                is_gr);
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveLeftCArray, X0DIR, directedEnergyMomentumTensorLeft);
-                conservativeLeft[DensityIndex] = PrimitiveLeftCArray[DensityIndex] * LorentzFactorLeft;
-                conservativeLeft[EnergyIndex] = directedEnergyMomentumTensorLeft[0] + conservativeLeft[DensityIndex];
-                conservativeLeft[WeightedVelocityX1] = directedEnergyMomentumTensorLeft[1];
-                conservativeLeft[WeightedVelocityX2] = directedEnergyMomentumTensorLeft[2];
-                conservativeLeft[WeightedVelocityX3] = directedEnergyMomentumTensorLeft[3];
-                conservativeLeft[MagneticFieldX1] = PrimitiveLeftCArray[MagneticFieldX1];
-                conservativeLeft[MagneticFieldX2] = PrimitiveLeftCArray[MagneticFieldX2];
-                conservativeLeft[MagneticFieldX3] = PrimitiveLeftCArray[MagneticFieldX3];
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_left_c_array, X0DIR, directed_energy_momentum_tensor_left);
+                conservative_left[DensityIndex] = primitive_left_c_array[DensityIndex] * lorentz_factor_left;
+                conservative_left[EnergyIndex] = directed_energy_momentum_tensor_left[0] + conservative_left[DensityIndex];
+                conservative_left[WeightedVelocityX1] = directed_energy_momentum_tensor_left[1];
+                conservative_left[WeightedVelocityX2] = directed_energy_momentum_tensor_left[2];
+                conservative_left[WeightedVelocityX3] = directed_energy_momentum_tensor_left[3];
+                conservative_left[MagneticFieldX1] = primitive_left_c_array[MagneticFieldX1];
+                conservative_left[MagneticFieldX2] = primitive_left_c_array[MagneticFieldX2];
+                conservative_left[MagneticFieldX3] = primitive_left_c_array[MagneticFieldX3];
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveLeftCArray, X3DIR, directedEnergyMomentumTensorLeft);
-                fluxLeft[DensityIndex] = PrimitiveLeftCArray[DensityIndex] * PrimitiveLeftCArray[WeightedVelocityX3];
-                fluxLeft[EnergyIndex] = directedEnergyMomentumTensorLeft[0] + fluxLeft[DensityIndex];
-                fluxLeft[WeightedVelocityX1] = directedEnergyMomentumTensorLeft[1];
-                fluxLeft[WeightedVelocityX2] = directedEnergyMomentumTensorLeft[2];
-                fluxLeft[WeightedVelocityX3] = directedEnergyMomentumTensorLeft[3];
-                fluxLeft[MagneticFieldX1] = ((PrimitiveLeftCArray[MagneticFieldX1] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX1]) * PrimitiveLeftCArray[WeightedVelocityX3] - (PrimitiveLeftCArray[MagneticFieldX3] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX3]) * PrimitiveLeftCArray[WeightedVelocityX1]) / LorentzFactorLeft;
-                fluxLeft[MagneticFieldX2] = ((PrimitiveLeftCArray[MagneticFieldX2] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX2]) * PrimitiveLeftCArray[WeightedVelocityX3] - (PrimitiveLeftCArray[MagneticFieldX3] + MagneticFieldThreeVectorDotWeightedVelocityLeft * PrimitiveLeftCArray[WeightedVelocityX3]) * PrimitiveLeftCArray[WeightedVelocityX2]) / LorentzFactorLeft;
-                fluxLeft[MagneticFieldX3] = 0;
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_left_c_array, X3DIR, directed_energy_momentum_tensor_left);
+                flux_left[DensityIndex] = primitive_left_c_array[DensityIndex] * primitive_left_c_array[WeightedVelocityX3];
+                flux_left[EnergyIndex] = directed_energy_momentum_tensor_left[0] + flux_left[DensityIndex];
+                flux_left[WeightedVelocityX1] = directed_energy_momentum_tensor_left[1];
+                flux_left[WeightedVelocityX2] = directed_energy_momentum_tensor_left[2];
+                flux_left[WeightedVelocityX3] = directed_energy_momentum_tensor_left[3];
+                flux_left[MagneticFieldX1] = ((primitive_left_c_array[MagneticFieldX1] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX1]) * primitive_left_c_array[WeightedVelocityX3] - (primitive_left_c_array[MagneticFieldX3] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX3]) * primitive_left_c_array[WeightedVelocityX1]) / lorentz_factor_left;
+                flux_left[MagneticFieldX2] = ((primitive_left_c_array[MagneticFieldX2] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX2]) * primitive_left_c_array[WeightedVelocityX3] - (primitive_left_c_array[MagneticFieldX3] + magnetic_field_three_vector_dot_weighted_velocity_left * primitive_left_c_array[WeightedVelocityX3]) * primitive_left_c_array[WeightedVelocityX2]) / lorentz_factor_left;
+                flux_left[MagneticFieldX3] = 0;
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveRightCArray, X0DIR, directedEnergyMomentumTensorRight);
-                conservativeRight[DensityIndex] = PrimitiveRightCArray[DensityIndex] * LorentzFactorRight;
-                conservativeRight[EnergyIndex] = directedEnergyMomentumTensorRight[0] + conservativeRight[DensityIndex];
-                conservativeRight[WeightedVelocityX1] = directedEnergyMomentumTensorRight[1];
-                conservativeRight[WeightedVelocityX2] = directedEnergyMomentumTensorRight[2];
-                conservativeRight[WeightedVelocityX3] = directedEnergyMomentumTensorRight[3];
-                conservativeRight[MagneticFieldX1] = PrimitiveRightCArray[MagneticFieldX1];
-                conservativeRight[MagneticFieldX2] = PrimitiveRightCArray[MagneticFieldX2];
-                conservativeRight[MagneticFieldX3] = PrimitiveRightCArray[MagneticFieldX3];
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_right_c_array, X0DIR, directed_energy_momentum_tensor_right);
+                conservative_right[DensityIndex] = primitive_right_c_array[DensityIndex] * lorentz_factor_right;
+                conservative_right[EnergyIndex] = directed_energy_momentum_tensor_right[0] + conservative_right[DensityIndex];
+                conservative_right[WeightedVelocityX1] = directed_energy_momentum_tensor_right[1];
+                conservative_right[WeightedVelocityX2] = directed_energy_momentum_tensor_right[2];
+                conservative_right[WeightedVelocityX3] = directed_energy_momentum_tensor_right[3];
+                conservative_right[MagneticFieldX1] = primitive_right_c_array[MagneticFieldX1];
+                conservative_right[MagneticFieldX2] = primitive_right_c_array[MagneticFieldX2];
+                conservative_right[MagneticFieldX3] = primitive_right_c_array[MagneticFieldX3];
 
-                CalculateEnergyMomentumTensor(AdiabaticIndex, PrimitiveRightCArray, X3DIR, directedEnergyMomentumTensorRight);
-                fluxRight[DensityIndex] = PrimitiveRightCArray[DensityIndex] * PrimitiveRightCArray[WeightedVelocityX3];
-                fluxRight[EnergyIndex] = directedEnergyMomentumTensorRight[0] + fluxRight[DensityIndex];
-                fluxRight[WeightedVelocityX1] = directedEnergyMomentumTensorRight[1];
-                fluxRight[WeightedVelocityX2] = directedEnergyMomentumTensorRight[2];
-                fluxRight[WeightedVelocityX3] = directedEnergyMomentumTensorRight[3];
-                fluxRight[MagneticFieldX1] = ((PrimitiveRightCArray[MagneticFieldX1] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX1]) * PrimitiveRightCArray[WeightedVelocityX3] - (PrimitiveRightCArray[MagneticFieldX3] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX3]) * PrimitiveRightCArray[WeightedVelocityX1]) / LorentzFactorRight;
-                fluxRight[MagneticFieldX2] = ((PrimitiveRightCArray[MagneticFieldX2] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX2]) * PrimitiveRightCArray[WeightedVelocityX3] - (PrimitiveRightCArray[MagneticFieldX3] + MagneticFieldThreeVectorDotWeightedVelocityRight * PrimitiveRightCArray[WeightedVelocityX3]) * PrimitiveRightCArray[WeightedVelocityX2]) / LorentzFactorRight;
-                fluxRight[MagneticFieldX3] = 0;
+                CalculateEnergyMomentumTensorInDir(adiabatic_index, primitive_right_c_array, X3DIR, directed_energy_momentum_tensor_right);
+                flux_right[DensityIndex] = primitive_right_c_array[DensityIndex] * primitive_right_c_array[WeightedVelocityX3];
+                flux_right[EnergyIndex] = directed_energy_momentum_tensor_right[0] + flux_right[DensityIndex];
+                flux_right[WeightedVelocityX1] = directed_energy_momentum_tensor_right[1];
+                flux_right[WeightedVelocityX2] = directed_energy_momentum_tensor_right[2];
+                flux_right[WeightedVelocityX3] = directed_energy_momentum_tensor_right[3];
+                flux_right[MagneticFieldX1] = ((primitive_right_c_array[MagneticFieldX1] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX1]) * primitive_right_c_array[WeightedVelocityX3] - (primitive_right_c_array[MagneticFieldX3] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX3]) * primitive_right_c_array[WeightedVelocityX1]) / lorentz_factor_right;
+                flux_right[MagneticFieldX2] = ((primitive_right_c_array[MagneticFieldX2] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX2]) * primitive_right_c_array[WeightedVelocityX3] - (primitive_right_c_array[MagneticFieldX3] + magnetic_field_three_vector_dot_weighted_velocity_right * primitive_right_c_array[WeightedVelocityX3]) * primitive_right_c_array[WeightedVelocityX2]) / lorentz_factor_right;
+                flux_right[MagneticFieldX3] = 0;
 
-                for(int index = 0; index < PrimitiveVariableNumber; index++)
-                    conservative.flux(X3DIR, index, k, j, i) = 0.5 * (fluxLeft[index] + fluxRight[index] - AlfvenVelocityCenter * (conservativeRight[index] - conservativeLeft[index]));
+                for (int index = 0; index < PrimitiveVariableNumber; ++index) {
+                    conservative.flux(X3DIR, index, k, j, i) = is_gr
+                        ? HLLFluxGRMHD(flux_left[index], flux_right[index], conservative_left[index], conservative_right[index], alfven_velocity_center)
+                        : HLLFluxSRMHD(flux_left[index], flux_right[index], conservative_left[index], conservative_right[index], alfven_velocity_center);
+                }
             });
         });
+    }
 
     return TaskStatus::complete;
 }

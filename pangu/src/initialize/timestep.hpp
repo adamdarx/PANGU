@@ -7,214 +7,321 @@
 #include <parthenon/package.hpp>
 
 #include "../initialize/mnemonic.hpp"
-#include "../physics/AlfvenVelocity.hpp"
+#include "../physics/alfven_velocity.hpp"
 #include "../reconstruct/InterpolaterMC.hpp"
 
-parthenon::Real EstimateTimestepBlock(parthenon::MeshBlockData<parthenon::Real> *resource) {
+KOKKOS_INLINE_FUNCTION
+parthenon::Real ComputeAlfvenVelocityCenter(
+    const parthenon::Real adiabatic_index,
+    const parthenon::Real primitive_left_c_array[PrimitiveVariableNumber],
+    const parthenon::Real primitive_right_c_array[PrimitiveVariableNumber],
+    const int direction, const int is_gr) {
+    parthenon::Real maximum_alfven_velocity_left, maximum_alfven_velocity_right;
+    parthenon::Real minimum_alfven_velocity_left, minimum_alfven_velocity_right;
+
+    if (is_gr) {
+        CalculateAlfvenVelocityGRMHD(adiabatic_index, primitive_left_c_array, direction,
+                                     maximum_alfven_velocity_left,
+                                     minimum_alfven_velocity_left);
+        CalculateAlfvenVelocityGRMHD(adiabatic_index, primitive_right_c_array,
+                                     direction, maximum_alfven_velocity_right,
+                                     minimum_alfven_velocity_right);
+    } else {
+        CalculateAlfvenVelocitySRMHD(adiabatic_index, primitive_left_c_array, direction,
+                                     maximum_alfven_velocity_left,
+                                     minimum_alfven_velocity_left);
+        CalculateAlfvenVelocitySRMHD(adiabatic_index, primitive_right_c_array,
+                                     direction, maximum_alfven_velocity_right,
+                                     minimum_alfven_velocity_right);
+    }
+
+    const auto maximum_alfven_velocity_center =
+        Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximum_alfven_velocity_left),
+                                 maximum_alfven_velocity_right));
+    const auto minimum_alfven_velocity_center =
+        Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimum_alfven_velocity_left),
+                                 -minimum_alfven_velocity_right));
+    return Kokkos::max(maximum_alfven_velocity_center,
+                       minimum_alfven_velocity_center);
+}
+
+parthenon::Real EstimateTimestepBlock(
+    parthenon::MeshBlockData<parthenon::Real> *resource) {
     using namespace parthenon;
-    const auto MeshblockPointer = resource->GetBlockPointer();
-    const auto Package = MeshblockPointer->packages.Get("PANGU");
-    const auto CFLNumber = Package->Param<Real>("CFLNumber");
-    const auto AdiabaticIndex = Package->Param<Real>("AdiabaticIndex");
 
-    const auto BoundX1 = MeshblockPointer->cellbounds.GetBoundsI(IndexDomain::interior);
-    const auto BoundX2 = MeshblockPointer->cellbounds.GetBoundsJ(IndexDomain::interior);
-    const auto BoundX3 = MeshblockPointer->cellbounds.GetBoundsK(IndexDomain::interior);
+    const auto meshblock_pointer = resource->GetBlockPointer();
+    const auto package = meshblock_pointer->packages.Get("PANGU");
+    const auto cfl_number = package->Param<Real>("CFLNumber");
+    const auto adiabatic_index = package->Param<Real>("AdiabaticIndex");
+    const auto mode = package->Param<std::string>("Mode");
+    const int is_gr = (mode == "GR");
 
-    const auto &Coords = MeshblockPointer->coords;
+    const auto bound_x1 =
+        meshblock_pointer->cellbounds.GetBoundsI(IndexDomain::interior);
+    const auto bound_x2 =
+        meshblock_pointer->cellbounds.GetBoundsJ(IndexDomain::interior);
+    const auto bound_x3 =
+        meshblock_pointer->cellbounds.GetBoundsK(IndexDomain::interior);
 
-    Real minimumOfTimestepX1 = std::numeric_limits<double>::max();
-    Real minimumOfTimestepX2 = std::numeric_limits<double>::max();
-    Real minimumOfTimestepX3 = std::numeric_limits<double>::max();
+    const auto &coords = meshblock_pointer->coords;
 
-    PackIndexMap primitiveIndexMap;
-    const std::vector<std::string> PrimitiveTags = {"Density", "Energy", "WeightedVelocity", "MagneticField"};
-    const auto Primitive = resource->PackVariables(PrimitiveTags, primitiveIndexMap);
-    PackIndexMap alfvenVelocityIndexMap;
-    const std::vector<std::string> AlfvenTags = {"Alfven"};
-    auto AlfvenVelocity = resource->PackVariables(AlfvenTags, alfvenVelocityIndexMap);
+    Real minimum_of_timestep_x1 = std::numeric_limits<Real>::max();
+    Real minimum_of_timestep_x2 = std::numeric_limits<Real>::max();
+    Real minimum_of_timestep_x3 = std::numeric_limits<Real>::max();
 
-    const int ScratchLevel = 1;
-    const int MeshgridSizeX1 = MeshblockPointer->cellbounds.ncellsi(IndexDomain::entire);
-    const int MeshgridSizeX2 = MeshblockPointer->cellbounds.ncellsj(IndexDomain::entire);
-    const int MeshgridSizeX3 = MeshblockPointer->cellbounds.ncellsk(IndexDomain::entire);
+    PackIndexMap primitive_index_map;
+    const std::vector<std::string> primitive_tags = {
+        "Density", "Energy", "WeightedVelocity", "MagneticField"};
+    const auto primitive = resource->PackVariables(primitive_tags, primitive_index_map);
 
-    const size_t ScratchSizeInBytesX1 = ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, MeshgridSizeX1);
-    const size_t ScratchSizeInBytesX2 = ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, MeshgridSizeX2);
-    const size_t ScratchSizeInBytesX3 = ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, MeshgridSizeX3);
+    PackIndexMap alfven_velocity_index_map;
+    const std::vector<std::string> alfven_tags = {"Alfven"};
+    auto alfven_velocity =
+        resource->PackVariables(alfven_tags, alfven_velocity_index_map);
 
-    const int OffsetX1 = (MeshgridSizeX1 > 1) ? 1 : 0;
-    const int OffsetX2 = (MeshgridSizeX2 > 1) ? 1 : 0;
-    const int OffsetX3 = (MeshgridSizeX3 > 1) ? 1 : 0;
+    const int scratch_level = 1;
+    const int meshgrid_size_x1 =
+        meshblock_pointer->cellbounds.ncellsi(IndexDomain::entire);
+    const int meshgrid_size_x2 =
+        meshblock_pointer->cellbounds.ncellsj(IndexDomain::entire);
+    const int meshgrid_size_x3 =
+        meshblock_pointer->cellbounds.ncellsk(IndexDomain::entire);
 
-    if(OffsetX1)
-    MeshblockPointer->par_for_outer(
-        PARTHENON_AUTO_LABEL, 2 * ScratchSizeInBytesX1, ScratchLevel, BoundX3.s - OffsetX3, BoundX3.e + OffsetX3, BoundX2.s - OffsetX2, BoundX2.e + OffsetX2,
-        KOKKOS_LAMBDA(team_mbr_t member, const int k, const int j) {
-            ScratchPad2D<Real> PrimitiveLeft(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX1);
-            ScratchPad2D<Real> PrimitiveRight(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX1);
+    const size_t scratch_size_in_bytes_x1 =
+        ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, meshgrid_size_x1);
+    const size_t scratch_size_in_bytes_x2 =
+        ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, meshgrid_size_x2);
+    const size_t scratch_size_in_bytes_x3 =
+        ScratchPad2D<Real>::shmem_size(PrimitiveVariableNumber, meshgrid_size_x3);
 
-            par_for_inner(member, 0, PrimitiveVariableNumber - 1, BoundX1.s, BoundX1.e + 1, [&](const int n, const int i) {
-                PrimitiveLeft(n, i) = Primitive(n, k, j, i - 1) + 0.5 * InterpolateMC(Primitive(n, k, j, i - 2), Primitive(n, k, j, i - 1), Primitive(n, k, j, i));
-                PrimitiveRight(n, i) = Primitive(n, k, j, i) - 0.5 * InterpolateMC(Primitive(n, k, j, i - 1), Primitive(n, k, j, i), Primitive(n, k, j, i + 1));
+    const int offset_x1 = (meshgrid_size_x1 > 1) ? 1 : 0;
+    const int offset_x2 = (meshgrid_size_x2 > 1) ? 1 : 0;
+    const int offset_x3 = (meshgrid_size_x3 > 1) ? 1 : 0;
+
+    if (offset_x1) {
+        meshblock_pointer->par_for_outer(
+            PARTHENON_AUTO_LABEL, 2 * scratch_size_in_bytes_x1, scratch_level,
+            bound_x3.s - offset_x3, bound_x3.e + offset_x3,
+            bound_x2.s - offset_x2, bound_x2.e + offset_x2,
+            KOKKOS_LAMBDA(team_mbr_t member, const int k, const int j) {
+                ScratchPad2D<Real> primitive_left(
+                    member.team_scratch(scratch_level), PrimitiveVariableNumber,
+                    meshgrid_size_x1);
+                ScratchPad2D<Real> primitive_right(
+                    member.team_scratch(scratch_level), PrimitiveVariableNumber,
+                    meshgrid_size_x1);
+
+                par_for_inner(
+                    member, 0, PrimitiveVariableNumber - 1, bound_x1.s,
+                    bound_x1.e + 1, [&](const int n, const int i) {
+                        primitive_left(n, i) =
+                            primitive(n, k, j, i - 1) +
+                            0.5 * InterpolateMC(primitive(n, k, j, i - 2),
+                                                primitive(n, k, j, i - 1),
+                                                primitive(n, k, j, i));
+                        primitive_right(n, i) =
+                            primitive(n, k, j, i) -
+                            0.5 * InterpolateMC(primitive(n, k, j, i - 1),
+                                                primitive(n, k, j, i),
+                                                primitive(n, k, j, i + 1));
+                    });
+
+                member.team_barrier();
+
+                par_for_inner(member, bound_x1.s, bound_x1.e + 1,
+                              [&](const int i) {
+                                  const Real primitive_left_c_array
+                                      [PrimitiveVariableNumber] = {
+                                          primitive_left(DensityIndex, i),
+                                          primitive_left(EnergyIndex, i),
+                                          primitive_left(WeightedVelocityX1, i),
+                                          primitive_left(WeightedVelocityX2, i),
+                                          primitive_left(WeightedVelocityX3, i),
+                                          primitive_left(MagneticFieldX1, i),
+                                          primitive_left(MagneticFieldX2, i),
+                                          primitive_left(MagneticFieldX3, i),
+                                      };
+                                  const Real primitive_right_c_array
+                                      [PrimitiveVariableNumber] = {
+                                          primitive_right(DensityIndex, i),
+                                          primitive_right(EnergyIndex, i),
+                                          primitive_right(WeightedVelocityX1, i),
+                                          primitive_right(WeightedVelocityX2, i),
+                                          primitive_right(WeightedVelocityX3, i),
+                                          primitive_right(MagneticFieldX1, i),
+                                          primitive_right(MagneticFieldX2, i),
+                                          primitive_right(MagneticFieldX3, i),
+                                      };
+
+                                  alfven_velocity(Vector3D::X1, k, j, i) =
+                                      ComputeAlfvenVelocityCenter(
+                                          adiabatic_index, primitive_left_c_array,
+                                          primitive_right_c_array, X1DIR, is_gr);
+                              });
             });
-            
-            member.team_barrier();
+    }
 
-            par_for_inner(member, BoundX1.s, BoundX1.e + 1, [&](const int i) {
-                const Real PrimitveLeftCArray[PrimitiveVariableNumber] = {
-                    PrimitiveLeft(DensityIndex, i),
-                    PrimitiveLeft(EnergyIndex, i),
-                    PrimitiveLeft(WeightedVelocityX1, i),
-                    PrimitiveLeft(WeightedVelocityX2, i),
-                    PrimitiveLeft(WeightedVelocityX3, i),
-                    PrimitiveLeft(MagneticFieldX1, i),
-                    PrimitiveLeft(MagneticFieldX2, i),
-                    PrimitiveLeft(MagneticFieldX3, i),
-                };
+    if (offset_x2) {
+        meshblock_pointer->par_for_outer(
+            PARTHENON_AUTO_LABEL, 2 * scratch_size_in_bytes_x2, scratch_level,
+            bound_x3.s - offset_x3, bound_x3.e + offset_x3,
+            bound_x1.s - offset_x1, bound_x1.e + offset_x1,
+            KOKKOS_LAMBDA(team_mbr_t member, const int k, const int i) {
+                ScratchPad2D<Real> primitive_left(
+                    member.team_scratch(scratch_level), PrimitiveVariableNumber,
+                    meshgrid_size_x2);
+                ScratchPad2D<Real> primitive_right(
+                    member.team_scratch(scratch_level), PrimitiveVariableNumber,
+                    meshgrid_size_x2);
 
-                const Real PrimitveRightCArray[PrimitiveVariableNumber] = {
-                    PrimitiveRight(DensityIndex, i),
-                    PrimitiveRight(EnergyIndex, i),
-                    PrimitiveRight(WeightedVelocityX1, i),
-                    PrimitiveRight(WeightedVelocityX2, i),
-                    PrimitiveRight(WeightedVelocityX3, i),
-                    PrimitiveRight(MagneticFieldX1, i),
-                    PrimitiveRight(MagneticFieldX2, i),
-                    PrimitiveRight(MagneticFieldX3, i),
-                };
+                par_for_inner(
+                    member, 0, PrimitiveVariableNumber - 1, bound_x2.s,
+                    bound_x2.e + 1, [&](const int n, const int j) {
+                        primitive_left(n, j) =
+                            primitive(n, k, j - 1, i) +
+                            0.5 * InterpolateMC(primitive(n, k, j - 2, i),
+                                                primitive(n, k, j - 1, i),
+                                                primitive(n, k, j, i));
+                        primitive_right(n, j) =
+                            primitive(n, k, j, i) -
+                            0.5 * InterpolateMC(primitive(n, k, j - 1, i),
+                                                primitive(n, k, j, i),
+                                                primitive(n, k, j + 1, i));
+                    });
 
-                Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
-                Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveLeftCArray, X1DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveRightCArray, X1DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
-                const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft), maximumAlfvenVelocityRight));
-                const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft), -minimumAlfvenVelocityRight));
-                AlfvenVelocity(Vector3D::X1, k, j, i) = Kokkos::max(MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
+                member.team_barrier();
+
+                par_for_inner(member, bound_x2.s, bound_x2.e + 1,
+                              [&](const int j) {
+                                  const Real primitive_left_c_array
+                                      [PrimitiveVariableNumber] = {
+                                          primitive_left(DensityIndex, j),
+                                          primitive_left(EnergyIndex, j),
+                                          primitive_left(WeightedVelocityX1, j),
+                                          primitive_left(WeightedVelocityX2, j),
+                                          primitive_left(WeightedVelocityX3, j),
+                                          primitive_left(MagneticFieldX1, j),
+                                          primitive_left(MagneticFieldX2, j),
+                                          primitive_left(MagneticFieldX3, j),
+                                      };
+                                  const Real primitive_right_c_array
+                                      [PrimitiveVariableNumber] = {
+                                          primitive_right(DensityIndex, j),
+                                          primitive_right(EnergyIndex, j),
+                                          primitive_right(WeightedVelocityX1, j),
+                                          primitive_right(WeightedVelocityX2, j),
+                                          primitive_right(WeightedVelocityX3, j),
+                                          primitive_right(MagneticFieldX1, j),
+                                          primitive_right(MagneticFieldX2, j),
+                                          primitive_right(MagneticFieldX3, j),
+                                      };
+
+                                  alfven_velocity(Vector3D::X2, k, j, i) =
+                                      ComputeAlfvenVelocityCenter(
+                                          adiabatic_index, primitive_left_c_array,
+                                          primitive_right_c_array, X2DIR, is_gr);
+                              });
             });
-        });
+    }
 
-    if(OffsetX2)
-    MeshblockPointer->par_for_outer(
-        PARTHENON_AUTO_LABEL, 2 * ScratchSizeInBytesX2, ScratchLevel, BoundX3.s - OffsetX3, BoundX3.e + OffsetX3, BoundX1.s - OffsetX1, BoundX1.e + OffsetX1,
-        KOKKOS_LAMBDA(team_mbr_t member, const int k, const int i) {
-            ScratchPad2D<Real> PrimitiveLeft(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX2);
-            ScratchPad2D<Real> PrimitiveRight(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX2);
+    if (offset_x3) {
+        meshblock_pointer->par_for_outer(
+            PARTHENON_AUTO_LABEL, 2 * scratch_size_in_bytes_x3, scratch_level,
+            bound_x2.s - offset_x2, bound_x2.e + offset_x2,
+            bound_x1.s - offset_x1, bound_x1.e + offset_x1,
+            KOKKOS_LAMBDA(team_mbr_t member, const int j, const int i) {
+                ScratchPad2D<Real> primitive_left(
+                    member.team_scratch(scratch_level), PrimitiveVariableNumber,
+                    meshgrid_size_x3);
+                ScratchPad2D<Real> primitive_right(
+                    member.team_scratch(scratch_level), PrimitiveVariableNumber,
+                    meshgrid_size_x3);
 
-            par_for_inner(member, 0, PrimitiveVariableNumber - 1, BoundX2.s, BoundX2.e + 1, [&](const int n, const int j) {
-                PrimitiveLeft(n, i) = Primitive(n, k, j - 1, i) + 0.5 * InterpolateMC(Primitive(n, k, j - 2, i), Primitive(n, k, j - 1, i), Primitive(n, k, j, i));
-                PrimitiveRight(n, i) = Primitive(n, k, j, i) - 0.5 * InterpolateMC(Primitive(n, k, j - 1, i), Primitive(n, k, j, i), Primitive(n, k, j + 1, i));
+                par_for_inner(
+                    member, 0, PrimitiveVariableNumber - 1, bound_x3.s,
+                    bound_x3.e + 1, [&](const int n, const int k) {
+                        primitive_left(n, k) =
+                            primitive(n, k - 1, j, i) +
+                            0.5 * InterpolateMC(primitive(n, k - 2, j, i),
+                                                primitive(n, k - 1, j, i),
+                                                primitive(n, k, j, i));
+                        primitive_right(n, k) =
+                            primitive(n, k, j, i) -
+                            0.5 * InterpolateMC(primitive(n, k - 1, j, i),
+                                                primitive(n, k, j, i),
+                                                primitive(n, k + 1, j, i));
+                    });
+
+                member.team_barrier();
+
+                par_for_inner(member, bound_x3.s, bound_x3.e + 1,
+                              [&](const int k) {
+                                  const Real primitive_left_c_array
+                                      [PrimitiveVariableNumber] = {
+                                          primitive_left(DensityIndex, k),
+                                          primitive_left(EnergyIndex, k),
+                                          primitive_left(WeightedVelocityX1, k),
+                                          primitive_left(WeightedVelocityX2, k),
+                                          primitive_left(WeightedVelocityX3, k),
+                                          primitive_left(MagneticFieldX1, k),
+                                          primitive_left(MagneticFieldX2, k),
+                                          primitive_left(MagneticFieldX3, k),
+                                      };
+                                  const Real primitive_right_c_array
+                                      [PrimitiveVariableNumber] = {
+                                          primitive_right(DensityIndex, k),
+                                          primitive_right(EnergyIndex, k),
+                                          primitive_right(WeightedVelocityX1, k),
+                                          primitive_right(WeightedVelocityX2, k),
+                                          primitive_right(WeightedVelocityX3, k),
+                                          primitive_right(MagneticFieldX1, k),
+                                          primitive_right(MagneticFieldX2, k),
+                                          primitive_right(MagneticFieldX3, k),
+                                      };
+
+                                  alfven_velocity(Vector3D::X3, k, j, i) =
+                                      ComputeAlfvenVelocityCenter(
+                                          adiabatic_index, primitive_left_c_array,
+                                          primitive_right_c_array, X3DIR, is_gr);
+                              });
             });
-            
-            member.team_barrier();
+    }
 
-            par_for_inner(member, BoundX2.s, BoundX2.e + 1, [&](const int j) {
-                Real PrimitveLeftCArray[PrimitiveVariableNumber] = {
-                    PrimitiveLeft(DensityIndex, j),
-                    PrimitiveLeft(EnergyIndex, j),
-                    PrimitiveLeft(WeightedVelocityX1, j),
-                    PrimitiveLeft(WeightedVelocityX2, j),
-                    PrimitiveLeft(WeightedVelocityX3, j),
-                    PrimitiveLeft(MagneticFieldX1, j),
-                    PrimitiveLeft(MagneticFieldX2, j),
-                    PrimitiveLeft(MagneticFieldX3, j),
-                };
+    auto reduce_directional_dt =
+        [&](const int component, const Real dx, Real &minimum_of_timestep) {
+            meshblock_pointer->par_reduce(
+                PARTHENON_AUTO_LABEL, bound_x3.s, bound_x3.e, bound_x2.s,
+                bound_x2.e, bound_x1.s, bound_x1.e,
+                KOKKOS_LAMBDA(const int k, const int j, const int i, Real &dt_local) {
+                    const Real local_dt = dx / alfven_velocity(component, k, j, i);
+                    if (dt_local > local_dt) {
+                        dt_local = local_dt;
+                    }
+                },
+                Kokkos::Min<Real>(minimum_of_timestep));
+        };
 
-                Real PrimitveRightCArray[PrimitiveVariableNumber] = {
-                    PrimitiveRight(DensityIndex, j),
-                    PrimitiveRight(EnergyIndex, j),
-                    PrimitiveRight(WeightedVelocityX1, j),
-                    PrimitiveRight(WeightedVelocityX2, j),
-                    PrimitiveRight(WeightedVelocityX3, j),
-                    PrimitiveRight(MagneticFieldX1, j),
-                    PrimitiveRight(MagneticFieldX2, j),
-                    PrimitiveRight(MagneticFieldX3, j),
-                };
+    if (offset_x1) {
+        reduce_directional_dt(Vector3D::X1, coords.Dx<X1DIR>(), minimum_of_timestep_x1);
+    }
+    if (offset_x2) {
+        reduce_directional_dt(Vector3D::X2, coords.Dx<X2DIR>(), minimum_of_timestep_x2);
+    }
+    if (offset_x3) {
+        reduce_directional_dt(Vector3D::X3, coords.Dx<X3DIR>(), minimum_of_timestep_x3);
+    }
 
-                Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
-                Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveLeftCArray, X2DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveRightCArray, X2DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
-                const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft), maximumAlfvenVelocityRight));
-                const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft), -minimumAlfvenVelocityRight));
-                AlfvenVelocity(Vector3D::X2, k, j, i) = Kokkos::max(MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
-            });
-        });
-    
-    if(OffsetX3)
-    MeshblockPointer->par_for_outer(
-        PARTHENON_AUTO_LABEL, 2 * ScratchSizeInBytesX3, ScratchLevel, BoundX2.s - OffsetX2, BoundX2.e + OffsetX2, BoundX1.s - OffsetX1, BoundX1.e + OffsetX1,
-        KOKKOS_LAMBDA(team_mbr_t member, const int j, const int i) {
-            ScratchPad2D<Real> PrimitiveLeft(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX3);
-            ScratchPad2D<Real> PrimitiveRight(member.team_scratch(ScratchLevel), PrimitiveVariableNumber, MeshgridSizeX3);
+    Real inverse_timestep_sum = 0.0;
+    if (offset_x1) {
+        inverse_timestep_sum += 1.0 / minimum_of_timestep_x1;
+    }
+    if (offset_x2) {
+        inverse_timestep_sum += 1.0 / minimum_of_timestep_x2;
+    }
+    if (offset_x3) {
+        inverse_timestep_sum += 1.0 / minimum_of_timestep_x3;
+    }
 
-            par_for_inner(member, 0, PrimitiveVariableNumber - 1, BoundX3.s, BoundX3.e + 1, [&](const int n, const int k) {
-                PrimitiveLeft(n, i) = Primitive(n, k - 1, j, i) + 0.5 * InterpolateMC(Primitive(n, k - 2, j, i), Primitive(n, k - 1, j, i), Primitive(n, k, j, i));
-                PrimitiveRight(n, i) = Primitive(n, k, j, i) - 0.5 * InterpolateMC(Primitive(n, k - 1, j, i), Primitive(n, k, j, i), Primitive(n, k + 1, j, i));
-            });
-            
-            member.team_barrier();
-
-            par_for_inner(member, BoundX3.s, BoundX3.e + 1, [&](const int k) {
-                Real PrimitveLeftCArray[PrimitiveVariableNumber] = {
-                    PrimitiveLeft(DensityIndex, k),
-                    PrimitiveLeft(EnergyIndex, k),
-                    PrimitiveLeft(WeightedVelocityX1, k),
-                    PrimitiveLeft(WeightedVelocityX2, k),
-                    PrimitiveLeft(WeightedVelocityX3, k),
-                    PrimitiveLeft(MagneticFieldX1, k),
-                    PrimitiveLeft(MagneticFieldX2, k),
-                    PrimitiveLeft(MagneticFieldX3, k),
-                };
-
-                Real PrimitveRightCArray[PrimitiveVariableNumber] = {
-                    PrimitiveRight(DensityIndex, k),
-                    PrimitiveRight(EnergyIndex, k),
-                    PrimitiveRight(WeightedVelocityX1, k),
-                    PrimitiveRight(WeightedVelocityX2, k),
-                    PrimitiveRight(WeightedVelocityX3, k),
-                    PrimitiveRight(MagneticFieldX1, k),
-                    PrimitiveRight(MagneticFieldX2, k),
-                    PrimitiveRight(MagneticFieldX3, k),
-                };
-
-                Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
-                Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveLeftCArray, X3DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveRightCArray, X3DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
-                const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft), maximumAlfvenVelocityRight));
-                const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft), -minimumAlfvenVelocityRight));
-                AlfvenVelocity(Vector3D::X3, k, j, i) = Kokkos::max(MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
-            });
-        });
-
-    if(OffsetX1)
-    MeshblockPointer->par_reduce(
-        PARTHENON_AUTO_LABEL, BoundX3.s, BoundX3.e, BoundX2.s, BoundX2.e, BoundX1.s, BoundX1.e,
-        KOKKOS_LAMBDA(const int k, const int j, const int i, Real& timestepX1) {
-            if(timestepX1 > Coords.Dx<X1DIR>() / AlfvenVelocity(Vector3D::X1, k, j, i))
-                timestepX1 = Coords.Dx<X1DIR>() / AlfvenVelocity(Vector3D::X1, k, j, i);
-        },
-        Kokkos::Min<Real>(minimumOfTimestepX1));
-
-    if(OffsetX2)
-    MeshblockPointer->par_reduce(
-        PARTHENON_AUTO_LABEL, BoundX3.s, BoundX3.e, BoundX2.s, BoundX2.e, BoundX1.s, BoundX1.e,
-        KOKKOS_LAMBDA(const int k, const int j, const int i, Real& timestepX2) {
-            if(timestepX2 > Coords.Dx<X2DIR>() / AlfvenVelocity(Vector3D::X2, k, j, i))
-                timestepX2 = Coords.Dx<X2DIR>() / AlfvenVelocity(Vector3D::X2, k, j, i);
-        },
-        Kokkos::Min<Real>(minimumOfTimestepX2));
-    
-    if(OffsetX3)
-    MeshblockPointer->par_reduce(
-        PARTHENON_AUTO_LABEL, BoundX3.s, BoundX3.e, BoundX2.s, BoundX2.e, BoundX1.s, BoundX1.e,
-        KOKKOS_LAMBDA(const int k, const int j, const int i, Real& timestepX3) {
-            if(timestepX3 > Coords.Dx<X3DIR>() / AlfvenVelocity(Vector3D::X3, k, j, i))
-                timestepX3 = Coords.Dx<X3DIR>() / AlfvenVelocity(Vector3D::X3, k, j, i);
-        },
-        Kokkos::Min<Real>(minimumOfTimestepX3));
-
-    const Real MinimumOfTimestep = 1 / (1 / minimumOfTimestepX1 + 1 / minimumOfTimestepX2 + 1 / minimumOfTimestepX3);
-    return CFLNumber * MinimumOfTimestep;
+    const Real minimum_of_timestep = 1.0 / inverse_timestep_sum;
+    return cfl_number * minimum_of_timestep;
 }
