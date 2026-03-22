@@ -22,7 +22,7 @@ problem_id = BrioWuShocktube
 refinement = none
 numlevel = 3
 
-nx1 = 2048
+nx1 = 256
 x1min = -0.5
 x1max = 0.5
 ix1_bc = outflow
@@ -42,14 +42,14 @@ ox3_bc = periodic
 
 <parthenon/meshblock>
 nx1 = 32
-nx2 = 32
+nx2 = 1
 nx3 = 1
 
 <parthenon/time>
 dt_factor = 1.3
 dt_init = 1e-5
 nlim = -1
-tlim = 0.1
+tlim = 1
 integrator = rk2
 ncycle_out_mesh = -10000
 
