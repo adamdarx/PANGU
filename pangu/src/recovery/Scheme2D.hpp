@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Restorer.hpp"
+#include "Invertor.hpp"
 
 namespace Scheme2D {
 KOKKOS_INLINE_FUNCTION
@@ -252,7 +252,7 @@ int general_newton_raphson(Real &Bsq, Real &QdotBsq, Real &Qtsq, Real &Qdotn,
 }
 
 KOKKOS_FUNCTION
-int restore(Real U[8], Real prim[8], Real gamma) {
+int invert(Real U[8], Real prim[8], Real gamma) {
   Real gcon[4][4] = {{-1., 0., 0., 0.},
                    {0., 1., 0., 0.},
                    {0., 0., 1., 0.},

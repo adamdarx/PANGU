@@ -14,9 +14,9 @@
 
 void ProblemGenerator(parthenon::MeshBlock *pmb, parthenon::ParameterInput *pin) {
     using namespace parthenon;
-    const auto Package = pmb->packages.Get("PANGU");
+    const auto PackageCORE = pmb->packages.Get("CORE");
     auto &resource = pmb->meshblock_data.Get();
-    const auto AdiabaticIndex = Package->Param<Real>("AdiabaticIndex");
+    const auto AdiabaticIndex = PackageCORE->Param<Real>("AdiabaticIndex");
     PackIndexMap primitiveIndexMap;
     const std::vector<std::string> PrimitiveTags = {"Density", "Energy", "WeightedVelocity", "MagneticField"};
     auto primitive = resource->PackVariables(PrimitiveTags, primitiveIndexMap);

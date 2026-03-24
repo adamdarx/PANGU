@@ -12,8 +12,8 @@ parthenon::TaskStatus ConstraintedTransport(std::shared_ptr<parthenon::MeshBlock
     PARTHENON_INSTRUMENT
 
     const auto MeshblockPointer = resource->GetBlockPointer();
-    const auto Package = MeshblockPointer->packages.Get("PANGU");
-    const auto &AdiabaticIndex = Package->Param<parthenon::Real>("AdiabaticIndex");
+    const auto PackageCORE = MeshblockPointer->packages.Get("CORE");
+    const auto &AdiabaticIndex = PackageCORE->Param<parthenon::Real>("AdiabaticIndex");
 
     const auto BoundX1 = MeshblockPointer->cellbounds.GetBoundsI(parthenon::IndexDomain::interior);
     const auto BoundX2 = MeshblockPointer->cellbounds.GetBoundsJ(parthenon::IndexDomain::interior);

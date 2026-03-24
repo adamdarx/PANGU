@@ -1,7 +1,7 @@
 #include "Simulator.hpp"
 #include "../initialize/initialize.hpp"
 #include "../flux/conservative.hpp"
-#include "../flux/flux.hpp"
+#include "../flux/flux_lax.hpp"
 #include "../constrainted_transport/constrainted_transport.hpp"
 #include "../mesh/q_factor.hpp"
 #include "../recovery/Recovery.hpp"
@@ -30,10 +30,10 @@ Simulator::Simulator(ParameterInput *pin, ApplicationInput *app_in, Mesh *pm)
     pin->CheckRequired("parthenon/mesh", "ix2_bc");
     pin->CheckRequired("parthenon/mesh", "ox2_bc");
 
-    pin->CheckDesired("PANGU", "CFLNumber");
-    pin->CheckDesired("PANGU", "AdiabaticIndex");
-    pin->CheckDesired("PANGU", "QFactorFloor");
-    pin->CheckDesired("PANGU", "QFactorCeiling");
+    pin->CheckDesired("CORE", "CFLNumber");
+    pin->CheckDesired("CORE", "AdiabaticIndex");
+    pin->CheckDesired("CORE", "QFactorFloor");
+    pin->CheckDesired("CORE", "QFactorCeiling");
 }
 
 TaskCollection Simulator::MakeTaskCollection(BlockList_t &blocks, const int stage) {
@@ -73,7 +73,7 @@ TaskCollection Simulator::MakeTaskCollection(BlockList_t &blocks, const int stag
         auto &dudt = pmb->meshblock_data.Get("dUdt");
     
         auto &sc1 = pmb->meshblock_data.Get(stage_name[stage]);
-        auto calc_cons = tl.AddTask(none, CalculateConservative, sc0);
+        auto calc_cons = tl.AddTask(none, CalculateConservativeSRMHD, sc0);
         auto calc_flux = tl.AddTask(calc_cons, CalculateFluxes, sc0);
         auto ct_task = tl.AddTask(calc_flux, ConstraintedTransport, sc0);
     }
@@ -153,8 +153,8 @@ TaskCollection Simulator::MakeTaskCollection(BlockList_t &blocks, const int stag
 
 parthenon::Packages_t ProcessPackages(std::unique_ptr<parthenon::ParameterInput> &pin) {
     Packages_t packages;
-    auto Package = Initialize(pin.get());
-    packages.Add(Package);
+    auto PackageCORE = CORE::Initialize(pin.get());
+    packages.Add(PackageCORE);
 
     return packages;
 }

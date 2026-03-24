@@ -53,7 +53,7 @@ tlim = 1
 integrator = rk2
 ncycle_out_mesh = -10000
 
-<PANGU>
+<CORE>
 CFLNumber = 0.8
 AdiabaticIndex = 1.666666667
 QFactorFloor = 1

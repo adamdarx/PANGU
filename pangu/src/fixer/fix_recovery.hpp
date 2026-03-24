@@ -10,7 +10,7 @@
 parthenon::TaskStatus FixRecovery(std::shared_ptr<parthenon::MeshBlockData<parthenon::Real>> &resource) {
     PARTHENON_INSTRUMENT
     const auto MeshblockPointer = resource->GetBlockPointer();
-    const auto Package = MeshblockPointer->packages.Get("PANGU");
+    const auto PackageCORE = MeshblockPointer->packages.Get("CORE");
 
     auto &flag = resource->Get("Flag").data;
 

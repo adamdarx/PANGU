@@ -10,6 +10,7 @@ ENABLE_CUDA="${ENABLE_CUDA:-ON}"
 BUILD_DIR="${BUILD_DIR:-build}"
 BUILD_TYPE="${BUILD_TYPE:-Release}"
 PROBLEM="${PROBLEM:-BrioWuShocktube}"
+PANGU_GR="${PANGU_GR:-OFF}"
 BUILD_JOBS="${BUILD_JOBS:-4}"
 CMAKE_GENERATOR="${CMAKE_GENERATOR:-}"
 KOKKOS_ARCH="${KOKKOS_ARCH:-}"
@@ -23,11 +24,16 @@ if [[ "$ENABLE_CUDA" != "ON" && "$ENABLE_CUDA" != "OFF" ]]; then
   echo "ERROR: ENABLE_CUDA must be ON or OFF"
   exit 1
 fi
+if [[ "$PANGU_GR" != "ON" && "$PANGU_GR" != "OFF" ]]; then
+  echo "ERROR: PANGU_GR must be ON or OFF"
+  exit 1
+fi
 
 cmake_args=(
   -S .
   -B "$BUILD_DIR"
   -DPROBLEM="$PROBLEM"
+  -DPANGU_GR="$PANGU_GR"
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
   -DKokkos_ENABLE_OPENMP="$ENABLE_OPENMP"
   -DKokkos_ENABLE_CUDA="$ENABLE_CUDA"
@@ -53,6 +59,12 @@ cmake "${cmake_args[@]}"
 echo "[make.sh] Building project"
 cmake --build "$BUILD_DIR" -j "$BUILD_JOBS"
 
+if [[ "$PANGU_GR" == "ON" ]]; then
+  simulator_mode="GRMHD"
+else
+  simulator_mode="SRMHD"
+fi
+
 if [[ "$ENABLE_CUDA" == "ON" ]]; then
   exe_name="pangu.cuda"
 else
@@ -71,6 +83,8 @@ cat > .pangu_build.env <<EOF
 BUILD_DIR=$BUILD_DIR
 BUILD_TYPE=$BUILD_TYPE
 PROBLEM=$PROBLEM
+PANGU_GR=$PANGU_GR
+SIMULATOR_MODE=$simulator_mode
 ENABLE_OPENMP=$ENABLE_OPENMP
 ENABLE_CUDA=$ENABLE_CUDA
 EXE_NAME=$exe_name
@@ -78,5 +92,6 @@ EXE_PATH=$exe_path
 EOF
 
 echo "[make.sh] Done"
+echo "[make.sh] Simulator mode: $simulator_mode"
 echo "[make.sh] Executable: $exe_path"
 echo "[make.sh] Build config saved to .pangu_build.env"

@@ -13,9 +13,9 @@
 parthenon::Real EstimateTimestepBlock(parthenon::MeshBlockData<parthenon::Real> *resource) {
     using namespace parthenon;
     const auto MeshblockPointer = resource->GetBlockPointer();
-    const auto Package = MeshblockPointer->packages.Get("PANGU");
-    const auto CFLNumber = Package->Param<Real>("CFLNumber");
-    const auto AdiabaticIndex = Package->Param<Real>("AdiabaticIndex");
+    const auto PackageCORE = MeshblockPointer->packages.Get("CORE");
+    const auto CFLNumber = PackageCORE->Param<Real>("CFLNumber");
+    const auto AdiabaticIndex = PackageCORE->Param<Real>("AdiabaticIndex");
 
     const auto BoundX1 = MeshblockPointer->cellbounds.GetBoundsI(IndexDomain::interior);
     const auto BoundX2 = MeshblockPointer->cellbounds.GetBoundsJ(IndexDomain::interior);
@@ -86,8 +86,8 @@ parthenon::Real EstimateTimestepBlock(parthenon::MeshBlockData<parthenon::Real> 
 
                 Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
                 Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveLeftCArray, X1DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveRightCArray, X1DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
+                CalculateAlfvenVelocitySRMHD(AdiabaticIndex, PrimitveLeftCArray, X1DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
+                CalculateAlfvenVelocitySRMHD(AdiabaticIndex, PrimitveRightCArray, X1DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
                 const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft), maximumAlfvenVelocityRight));
                 const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft), -minimumAlfvenVelocityRight));
                 AlfvenVelocity(Vector3D::X1, k, j, i) = Kokkos::max(MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
@@ -133,8 +133,8 @@ parthenon::Real EstimateTimestepBlock(parthenon::MeshBlockData<parthenon::Real> 
 
                 Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
                 Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveLeftCArray, X2DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveRightCArray, X2DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
+                CalculateAlfvenVelocitySRMHD(AdiabaticIndex, PrimitveLeftCArray, X2DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
+                CalculateAlfvenVelocitySRMHD(AdiabaticIndex, PrimitveRightCArray, X2DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
                 const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft), maximumAlfvenVelocityRight));
                 const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft), -minimumAlfvenVelocityRight));
                 AlfvenVelocity(Vector3D::X2, k, j, i) = Kokkos::max(MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
@@ -180,8 +180,8 @@ parthenon::Real EstimateTimestepBlock(parthenon::MeshBlockData<parthenon::Real> 
 
                 Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
                 Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveLeftCArray, X3DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-                CalculateAlfvenVelocity(AdiabaticIndex, PrimitveRightCArray, X3DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
+                CalculateAlfvenVelocitySRMHD(AdiabaticIndex, PrimitveLeftCArray, X3DIR, maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
+                CalculateAlfvenVelocitySRMHD(AdiabaticIndex, PrimitveRightCArray, X3DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
                 const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft), maximumAlfvenVelocityRight));
                 const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft), -minimumAlfvenVelocityRight));
                 AlfvenVelocity(Vector3D::X3, k, j, i) = Kokkos::max(MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);

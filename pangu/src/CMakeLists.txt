@@ -12,6 +12,28 @@ file(GLOB_RECURSE EXE_NAME_SRC CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
 )
 
+option(PANGU_GR "Build pangu with GRMHD simulator" OFF)
+
+set(SIMULATOR_SRMHD_SRC "${CMAKE_CURRENT_SOURCE_DIR}/simulator/SimulatorSRMHD.cpp")
+set(SIMULATOR_GRMHD_SRC "${CMAKE_CURRENT_SOURCE_DIR}/simulator/SimulatorGRMHD.cpp")
+
+list(REMOVE_ITEM EXE_NAME_SRC "${SIMULATOR_SRMHD_SRC}")
+list(REMOVE_ITEM EXE_NAME_SRC "${SIMULATOR_GRMHD_SRC}")
+
+if(PANGU_GR)
+    if(NOT EXISTS "${SIMULATOR_GRMHD_SRC}")
+        message(FATAL_ERROR "Cannot find ${SIMULATOR_GRMHD_SRC}")
+    endif()
+    list(APPEND EXE_NAME_SRC "${SIMULATOR_GRMHD_SRC}")
+    message(STATUS "Pangu simulator mode: GRMHD")
+else()
+    if(NOT EXISTS "${SIMULATOR_SRMHD_SRC}")
+        message(FATAL_ERROR "Cannot find ${SIMULATOR_SRMHD_SRC}")
+    endif()
+    list(APPEND EXE_NAME_SRC "${SIMULATOR_SRMHD_SRC}")
+    message(STATUS "Pangu simulator mode: SRMHD")
+endif()
+
 # Select the problem implementation from pangu/problem/<PROBLEM>/ProblemGenerator.cpp.
 set(PROBLEM "" CACHE STRING "Problem directory under pangu/problem used for ProblemGenerator.cpp")
 if("${PROBLEM}" STREQUAL "")

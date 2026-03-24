@@ -15,9 +15,9 @@ using namespace parthenon::package::prelude;
 
 AmrTag CheckRefinement(MeshBlockData<Real> *resource) {
     const auto MeshblockPointer = resource->GetBlockPointer();
-    const auto Package = MeshblockPointer->packages.Get("PANGU");
-    const auto QFactorFloor = Package->Param<Real>("QFactorFloor");
-    const auto QFactorCeiling = Package->Param<Real>("QFactorCeiling");
+    const auto PackageCORE = MeshblockPointer->packages.Get("CORE");
+    const auto QFactorFloor = PackageCORE->Param<Real>("QFactorFloor");
+    const auto QFactorCeiling = PackageCORE->Param<Real>("QFactorCeiling");
     const auto QFactor = resource->Get("QFactor").data;
 
     const auto BoundX1 = MeshblockPointer->cellbounds.GetBoundsI(IndexDomain::entire);

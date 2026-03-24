@@ -10,6 +10,7 @@ Options:
   -p, --problem <name>        Problem name under data/ (optional if run from data/<problem>)
   -f, --field <name>          Field name for contour1d.py (default: Density)
   -w, --workers <n>           Worker processes for contour1d.py (default: 4)
+      --movie2d               Use movie2d.py to generate 2D frame images
       --data-root <path>      Data root directory (default: <repo>/data)
       --pic-root <path>       Picture root directory (default: <repo>/pic)
       --savename <name.png>   Output image filename (default: contour_<field>.png)
@@ -24,6 +25,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PROBLEM=""
 FIELD="Density"
 WORKERS="4"
+USE_MOVIE2D="OFF"
 DATA_ROOT="${DATA_ROOT:-$ROOT_DIR/data}"
 PIC_ROOT="${PIC_ROOT:-$ROOT_DIR/pic}"
 SAVENAME=""
@@ -42,6 +44,10 @@ while [[ $# -gt 0 ]]; do
     -w|--workers)
       WORKERS="$2"
       shift 2
+      ;;
+    --movie2d)
+      USE_MOVIE2D="ON"
+      shift
       ;;
     --data-root)
       DATA_ROOT="$2"
@@ -100,16 +106,17 @@ if [[ ! -d "$DATA_DIR" ]]; then
 fi
 
 CONTOUR_SCRIPT="$ROOT_DIR/parthenon/scripts/python/packages/parthenon_tools/parthenon_tools/contour1d.py"
-if [[ ! -f "$CONTOUR_SCRIPT" ]]; then
-  echo "ERROR: contour1d.py not found: $CONTOUR_SCRIPT"
-  exit 4
-fi
+MOVIE2D_SCRIPT="$ROOT_DIR/parthenon/scripts/python/packages/parthenon_tools/parthenon_tools/movie2d.py"
 
 mkdir -p "$PIC_ROOT/$PROBLEM"
 
 if [[ -z "$SAVENAME" ]]; then
   safe_field="${FIELD//\//_}"
-  SAVENAME="contour_${safe_field}.png"
+  if [[ "$USE_MOVIE2D" == "ON" ]]; then
+    SAVENAME="movie2d_${safe_field}"
+  else
+    SAVENAME="contour_${safe_field}.png"
+  fi
 fi
 if [[ "$SAVENAME" = /* ]]; then
   OUT_PNG="$SAVENAME"
@@ -134,13 +141,37 @@ echo "[analyze.sh] Problem: $PROBLEM"
 echo "[analyze.sh] Field: $FIELD"
 echo "[analyze.sh] Input dir: $DATA_DIR"
 echo "[analyze.sh] Files: ${#files[@]}"
-echo "[analyze.sh] Output: $OUT_PNG"
+if [[ "$USE_MOVIE2D" == "ON" ]]; then
+  echo "[analyze.sh] Mode: movie2d"
+  echo "[analyze.sh] Output dir: $OUT_PNG"
+else
+  echo "[analyze.sh] Mode: contour1d"
+  echo "[analyze.sh] Output: $OUT_PNG"
+fi
 
-python3 "$CONTOUR_SCRIPT" \
-  --workers "$WORKERS" \
-  --savename "$OUT_PNG" \
-  --colorbar "$COLORBAR" \
-  "$FIELD" \
-  "${files[@]}"
+if [[ "$USE_MOVIE2D" == "ON" ]]; then
+  if [[ ! -f "$MOVIE2D_SCRIPT" ]]; then
+    echo "ERROR: movie2d.py not found: $MOVIE2D_SCRIPT"
+    exit 4
+  fi
+  mkdir -p "$OUT_PNG"
+  python3 "$MOVIE2D_SCRIPT" \
+    --workers "$WORKERS" \
+    --output-directory "$OUT_PNG" \
+    --prefix "${FIELD//\//_}" \
+    "$FIELD" \
+    "${files[@]}"
+else
+  if [[ ! -f "$CONTOUR_SCRIPT" ]]; then
+    echo "ERROR: contour1d.py not found: $CONTOUR_SCRIPT"
+    exit 4
+  fi
+  python3 "$CONTOUR_SCRIPT" \
+    --workers "$WORKERS" \
+    --savename "$OUT_PNG" \
+    --colorbar "$COLORBAR" \
+    "$FIELD" \
+    "${files[@]}"
+fi
 
 echo "[analyze.sh] Done"

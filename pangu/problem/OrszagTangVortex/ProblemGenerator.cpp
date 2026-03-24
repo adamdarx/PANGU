@@ -2,8 +2,8 @@
 #include <string>
 #include <vector>
 
-#include "../../Simulator.hpp"
-#include "../../SRMHD/SRMHD.hpp"
+#include "../../src/simulator/Simulator.hpp"
+#include "../../src/initialize/mnemonic.hpp"
 #include "amr_criteria/refinement_package.hpp"
 #include "bvals/comms/bvals_in_one.hpp"
 #include "interface/metadata.hpp"
@@ -12,22 +12,19 @@
 #include "parthenon/driver.hpp"
 #include "prolong_restrict/prolong_restrict.hpp"
 
-using namespace parthenon::driver::prelude;
-
-namespace SRMHD {
-void ProblemGenerator(MeshBlock *pmb, parthenon::ParameterInput *pin) {
-    using parthenon::MetadataFlag;
-    const auto Package = pmb->packages.Get("SRMHD");
+void ProblemGenerator(parthenon::MeshBlock *pmb, parthenon::ParameterInput *pin) {
+    using namespace parthenon;
+    const auto PackageCORE = pmb->packages.Get("CORE");
     auto &resource = pmb->meshblock_data.Get();
-    const auto &AdiabaticIndex = Package->Param<Real>("AdiabaticIndex");
+    const auto AdiabaticIndex = PackageCORE->Param<Real>("AdiabaticIndex");
     PackIndexMap primitiveIndexMap;
     const std::vector<std::string> PrimitiveTags = {"Density", "Energy", "WeightedVelocity", "MagneticField"};
     auto primitive = resource->PackVariables(PrimitiveTags, primitiveIndexMap);
 
     auto cellbounds = pmb->cellbounds;
-    IndexRange ib = cellbounds.GetBoundsI(IndexDomain::interior);
-    IndexRange jb = cellbounds.GetBoundsJ(IndexDomain::interior);
-    IndexRange kb = cellbounds.GetBoundsK(IndexDomain::interior);
+    const auto ib = cellbounds.GetBoundsI(IndexDomain::entire);
+    const auto jb = cellbounds.GetBoundsJ(IndexDomain::entire);
+    const auto kb = cellbounds.GetBoundsK(IndexDomain::entire);
     auto coords = pmb->coords;
     
     const Real LorentzFactor = 1 / Kokkos::sqrt(1 - 0.99 * 0.99);
@@ -45,5 +42,4 @@ void ProblemGenerator(MeshBlock *pmb, parthenon::ParameterInput *pin) {
             primitive(MagneticFieldX3, k, j, i) = 0.;
         }
     );
-}
 }

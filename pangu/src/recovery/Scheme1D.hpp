@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Restorer.hpp"
+#include "Invertor.hpp"
 
 namespace Scheme1D {
 KOKKOS_INLINE_FUNCTION
@@ -407,7 +407,7 @@ void func_1d_orig2(Real &W_for_gnr2_old, Real &W_for_gnr2,
 }
 
 KOKKOS_FUNCTION
-int restore(Real U[8], Real prim[8], Real gamma) {
+int invert(Real U[8], Real prim[8], Real gamma) {
   Real gcon[4][4] = {{-1., 0., 0., 0.},
                    {0., 1., 0., 0.},
                    {0., 0., 1., 0.},
