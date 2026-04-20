@@ -1,0 +1,91 @@
+// Copyright (c) 2026 Yuehang Li.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
+// This file in the src/initialization module defines timestep_estimation.cc
+// responsibilities for the Pangu runtime. It centers on initialization to express core data
+// flow, keep interfaces readable, and preserve predictable behavior across task
+// coordination, recovery paths, and performance-sensitive execution.
+
+#include "initialization/timestep_estimation.h"
+
+#include <limits>
+#include <parthenon/package.hpp>
+#include <string>
+#include <vector>
+
+#include "initialization/variable_mnemonics.h"
+
+parthenon::Real EstimateTimestepBlock(
+    parthenon::MeshBlockData<parthenon::Real> *resource) {
+  using namespace parthenon;
+  const auto pmb = resource->GetBlockPointer();
+  const auto package_core = pmb->packages.Get("core");
+  const auto kCflNumber = package_core->Param<Real>("cfl_number");
+
+  const auto bound_x1_interior =
+      pmb->cellbounds.GetBoundsI(IndexDomain::interior);
+  const auto bound_x2_interior =
+      pmb->cellbounds.GetBoundsJ(IndexDomain::interior);
+  const auto bound_x3_interior =
+      pmb->cellbounds.GetBoundsK(IndexDomain::interior);
+
+  const auto &Coords = pmb->coords;
+
+  Real minimumOfTimestepX1 = std::numeric_limits<Real>::max();
+  Real minimumOfTimestepX2 = std::numeric_limits<Real>::max();
+  Real minimumOfTimestepX3 = std::numeric_limits<Real>::max();
+
+  PackIndexMap alfvenVelocityIndexMap;
+  const std::vector<std::string> alfven_tags = {"alfven"};
+  const auto AlfvenVelocity =
+      resource->PackVariables(alfven_tags, alfvenVelocityIndexMap);
+
+  const auto meshgrid_size_x1 =
+      pmb->cellbounds.ncellsi(IndexDomain::entire);
+  const auto meshgrid_size_x2 =
+      pmb->cellbounds.ncellsj(IndexDomain::entire);
+  const auto meshgrid_size_x3 =
+      pmb->cellbounds.ncellsk(IndexDomain::entire);
+
+  const int offset_x1 = (meshgrid_size_x1 > 1) ? 1 : 0;
+  const int offset_x2 = (meshgrid_size_x2 > 1) ? 1 : 0;
+  const int offset_x3 = (meshgrid_size_x3 > 1) ? 1 : 0;
+
+  if (offset_x1)
+    pmb->par_reduce(
+        PARTHENON_AUTO_LABEL, bound_x3_interior.s, bound_x3_interior.e, bound_x2_interior.s, bound_x2_interior.e,
+        bound_x1_interior.s, bound_x1_interior.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i, Real &timestepX1) {
+          const Real c = AlfvenVelocity(Vector3D::X1, k, j, i);
+          const Real dt = kCflNumber * Coords.Dx<X1DIR>() / c;
+          if (timestepX1 > dt) timestepX1 = dt;
+        },
+        Kokkos::Min<Real>(minimumOfTimestepX1));
+
+  if (offset_x2)
+    pmb->par_reduce(
+        PARTHENON_AUTO_LABEL, bound_x3_interior.s, bound_x3_interior.e, bound_x2_interior.s, bound_x2_interior.e,
+        bound_x1_interior.s, bound_x1_interior.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i, Real &timestepX2) {
+          const Real c = AlfvenVelocity(Vector3D::X2, k, j, i);
+          const Real dt = kCflNumber * Coords.Dx<X2DIR>() / c;
+          if (timestepX2 > dt) timestepX2 = dt;
+        },
+        Kokkos::Min<Real>(minimumOfTimestepX2));
+
+  if (offset_x3)
+    pmb->par_reduce(
+        PARTHENON_AUTO_LABEL, bound_x3_interior.s, bound_x3_interior.e, bound_x2_interior.s, bound_x2_interior.e,
+        bound_x1_interior.s, bound_x1_interior.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i, Real &timestepX3) {
+          const Real c = AlfvenVelocity(Vector3D::X3, k, j, i);
+          const Real dt = kCflNumber * Coords.Dx<X3DIR>() / c;
+          if (timestepX3 > dt) timestepX3 = dt;
+        },
+        Kokkos::Min<Real>(minimumOfTimestepX3));
+
+  const Real MinimumOfTimestep =
+      1.0 / (1.0 / minimumOfTimestepX1 + 1.0 / minimumOfTimestepX2 +
+             1.0 / minimumOfTimestepX3);
+  return MinimumOfTimestep;
+}

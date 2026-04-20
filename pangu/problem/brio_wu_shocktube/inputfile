@@ -1,17 +1,17 @@
 <parthenon/job>
-problem_id = kelvin_helmholtz
+problem_id = brio_wu_shocktube
 
 <parthenon/mesh>
-refinement = static
+refinement = none
 numlevel = 3
 
-nx1 = 64
+nx1 = 1024
 x1min = -0.5
 x1max = 0.5
-ix1_bc = periodic
-ox1_bc = periodic
+ix1_bc = outflow
+ox1_bc = outflow
 
-nx2 = 64
+nx2 = 1
 x2min = -0.5
 x2max = 0.5
 ix2_bc = periodic
@@ -24,40 +24,26 @@ ix3_bc = periodic
 ox3_bc = periodic
 
 <parthenon/meshblock>
-nx1 = 16
-nx2 = 16
+nx1 = 1024
+nx2 = 1
 nx3 = 1
-
-<parthenon/static_refinement1>
-x1min = -0.5
-x1max = 0.5
-x2min = -0.28
-x2max = -0.22
-level = 2
-
-<parthenon/static_refinement2>
-x1min = -0.5
-x1max = 0.5
-x2min = 0.22
-x2max = 0.28
-level = 2
 
 <parthenon/time>
 dt_factor = 1.3
 dt_init = 1e-5
 nlim = -1
-tlim = 20
+tlim = 1
 integrator = rk2
 ncycle_out_mesh = -10000
 
 <core>
 cfl_number = 0.8
-adiabatic_index = 1.33333333333
-q_factor_floor = 10.0
-q_factor_ceiling = 20.0
+adiabatic_index = 1.666666667
+q_factor_floor = 1
+q_factor_ceiling = 1.0
 
 <parthenon/output0>
 file_type = hdf5
 write_xdmf = true
-dt = 0.1
+dt = 0.01
 variables = density
