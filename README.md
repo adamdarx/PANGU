@@ -1,1 +1,1 @@
-# Kuafu
+# Pangu

@@ -1,6 +1,3 @@
-build_srmhd/
-build_grmhd/
+build*/
 data/
 pic/
-athenak/
-Sisyphus/

@@ -1,0 +1,53 @@
+<parthenon/job>
+problem_id = brio_wu_shocktube_sr
+
+<parthenon/mesh>
+refinement = none
+numlevel = 3
+
+nx1 = 256
+x1min = -0.5
+x1max = 0.5
+ix1_bc = outflow
+ox1_bc = outflow
+
+nx2 = 1
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 256
+nx2 = 1
+nx3 = 1
+
+<parthenon/time>
+dt_factor = 1.3
+dt_init = 1e-5
+nlim = -1
+tlim = 1
+integrator = rk2
+ncycle_out_mesh = -10000
+
+<core>
+cfl_number = 0.8
+adiabatic_index = 1.666666667
+q_factor_floor = 1
+q_factor_ceiling = 1.0
+
+<metric>
+h = 0.0
+a = 0.0
+
+<parthenon/output0>
+file_type = hdf5
+write_xdmf = true
+dt = 0.01
+variables = density
