@@ -56,8 +56,26 @@ adiabatic_index = 1.33333333333
 q_factor_floor = 10.0
 q_factor_ceiling = 20.0
 
+<metric>
+name = Minkowski
+h = 0.0
+a = 0.0
+
+<electrons>
+on = true
+model = constant
+gamma_e = 1.333333333
+gamma_p = 1.666666667
+limit_kel = true
+suppress_highb_heat = false
+enforce_positive_dissipation = false
+fel_0 = 0.1
+fel_constant = 0.1
+ratio_min = 0.001
+ratio_max = 1000.0
+
 <parthenon/output0>
 file_type = hdf5
 write_xdmf = true
 dt = 0.1
-variables = density
+variables = density, entropy, electron_entropy

@@ -1,11 +1,6 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-// This file in the src/interpolation module defines interpolater_mc.h responsibilities for
-// the Pangu runtime. It centers on basic_types to express core data flow, keep interfaces
-// readable, and preserve predictable behavior across task coordination, recovery paths, and
-// performance-sensitive execution.
-
 #ifndef PANGU_SRC_INTERPOLATION_INTERPOLATERMC_H
 #define PANGU_SRC_INTERPOLATION_INTERPOLATERMC_H
 #include "basic_types.hpp"

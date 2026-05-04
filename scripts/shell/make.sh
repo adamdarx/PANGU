@@ -9,8 +9,7 @@ ENABLE_OPENMP="${ENABLE_OPENMP:-ON}"
 ENABLE_CUDA="${ENABLE_CUDA:-ON}"
 BUILD_DIR="${BUILD_DIR:-build}"
 BUILD_TYPE="${BUILD_TYPE:-Release}"
-PROBLEM="${PROBLEM:-brio_wu_shocktube}"
-PANGU_GR="${PANGU_GR:-OFF}"
+PROBLEM="${PROBLEM:-shock_tube}"
 BUILD_JOBS="${BUILD_JOBS:-4}"
 CMAKE_GENERATOR="${CMAKE_GENERATOR:-}"
 KOKKOS_ARCH="${KOKKOS_ARCH:-}"
@@ -24,10 +23,6 @@ if [[ "$ENABLE_OPENMP" != "ON" && "$ENABLE_OPENMP" != "OFF" ]]; then
 fi
 if [[ "$ENABLE_CUDA" != "ON" && "$ENABLE_CUDA" != "OFF" ]]; then
   echo "ERROR: ENABLE_CUDA must be ON or OFF"
-  exit 1
-fi
-if [[ "$PANGU_GR" != "ON" && "$PANGU_GR" != "OFF" ]]; then
-  echo "ERROR: PANGU_GR must be ON or OFF"
   exit 1
 fi
 if [[ "$PROBLEM_PROXY_MODE" != "ON" && "$PROBLEM_PROXY_MODE" != "OFF" ]]; then
@@ -74,7 +69,6 @@ cmake_args=(
   -S .
   -B "$BUILD_DIR"
   -DPROBLEM="$PROBLEM_CMAKE_VALUE"
-  -DPANGU_GR="$PANGU_GR"
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
   -DKokkos_ENABLE_OPENMP="$ENABLE_OPENMP"
   -DKokkos_ENABLE_CUDA="$ENABLE_CUDA"
@@ -102,7 +96,6 @@ cat > "$tmp_config" <<EOF
 ENABLE_OPENMP=$ENABLE_OPENMP
 ENABLE_CUDA=$ENABLE_CUDA
 BUILD_TYPE=$BUILD_TYPE
-PANGU_GR=$PANGU_GR
 PROBLEM_CMAKE_VALUE=$PROBLEM_CMAKE_VALUE
 CMAKE_GENERATOR=$CMAKE_GENERATOR
 KOKKOS_ARCH=$KOKKOS_ARCH
@@ -126,11 +119,7 @@ fi
 echo "[make.sh] Building project"
 cmake --build "$BUILD_DIR" -j "$BUILD_JOBS"
 
-if [[ "$PANGU_GR" == "ON" ]]; then
-  simulator_mode="GRMHD"
-else
-  simulator_mode="SRMHD"
-fi
+simulator_mode="GRMHD"
 
 if [[ "$ENABLE_CUDA" == "ON" ]]; then
   exe_name="pangu.cuda"
@@ -152,7 +141,6 @@ BUILD_TYPE=$BUILD_TYPE
 PROBLEM=$PROBLEM
 PROBLEM_CMAKE_VALUE=$PROBLEM_CMAKE_VALUE
 PROBLEM_PROXY_MODE=$PROBLEM_PROXY_MODE
-PANGU_GR=$PANGU_GR
 SIMULATOR_MODE=$simulator_mode
 ENABLE_OPENMP=$ENABLE_OPENMP
 ENABLE_CUDA=$ENABLE_CUDA

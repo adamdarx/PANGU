@@ -1,11 +1,6 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-// This file in the src/metric module defines tensor_algebra.h responsibilities for the
-// Pangu runtime. It centers on Kokkos_Core to express core data flow, keep interfaces
-// readable, and preserve predictable behavior across task coordination, recovery paths, and
-// performance-sensitive execution.
-
 #ifndef PANGU_SRC_METRIC_TENSORALGEBRA_H
 #define PANGU_SRC_METRIC_TENSORALGEBRA_H
 

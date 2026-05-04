@@ -10,8 +10,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-# KHARMA-consistent temperature unit: code-temperature * TEMPERATURE_UNIT_K = Kelvin
-TEMPERATURE_UNIT_K = 1e13
+# Pangu/KHARMA electron-heating temperatures are dimensionless:
+#   Theta = k_B T / (m_p c^2)
+# so T[K] = Theta * m_p c^2 / k_B.
+PROTON_MASS_CGS = 1.67262171e-24
+LIGHT_SPEED_CGS = 2.99792458e10
+BOLTZMANN_CGS = 1.380649e-16
+TEMPERATURE_UNIT_K = PROTON_MASS_CGS * LIGHT_SPEED_CGS**2 / BOLTZMANN_CGS
 
 
 def parse_args():
@@ -30,6 +35,12 @@ def parse_args():
     parser.add_argument("--level-max", type=float, default=12.0, help="Upper contour level in log10(T/K)")
     parser.add_argument("--level-count", type=int, default=500, help="Number of contour levels")
     parser.add_argument("--cmap", default="plasma", help="Matplotlib colormap")
+    parser.add_argument(
+        "--temperature-unit-k",
+        type=float,
+        default=TEMPERATURE_UNIT_K,
+        help="Conversion factor from code temperature Theta to Kelvin",
+    )
     return parser.parse_args()
 
 
@@ -101,18 +112,12 @@ def _load_global_maps(phdf_file):
         gamma_p = float(_scalar_attr(params, "core/gamma_p", gamma))
         sim_time = float(_scalar_attr(h["Info"].attrs if "Info" in h else {}, "Time", 0.0))
 
-        # No automatic detection here; TEMPERATURE_UNIT_K is fixed to KHARMA-consistent value.
-        temp_unit_k = None
-
     rho_safe = np.maximum(rho, 1.0e-30)
-    ion_pressure = np.maximum(
-        entropy * np.power(rho_safe, gamma) - electron_entropy * np.power(rho_safe, gamma_e),
-        0.0,
-    )
-    ion_temp_code = ion_pressure / rho_safe
+    internal_energy = entropy * np.power(rho_safe, gamma) / (gamma - 1.0)
+    ion_temp_code = np.maximum((gamma_p - 1.0) * internal_energy / rho_safe, 0.0)
     electron_temp_code = np.maximum(electron_entropy * np.power(rho_safe, gamma_e - 1.0), 0.0)
 
-    return x1, x2, ion_temp_code, electron_temp_code, sim_time, gamma, gamma_p, gamma_e, temp_unit_k
+    return x1, x2, ion_temp_code, electron_temp_code, sim_time, gamma, gamma_p, gamma_e
 
 
 def _map_to_xz(x1, x2, q, args_dict):
@@ -126,12 +131,11 @@ def _map_to_xz(x1, x2, q, args_dict):
 
 def _make_frame(task):
     file_index, file_path, args_dict = task
-    x1, x2, ion_temp_code, electron_temp_code, sim_time, gamma, gamma_p, gamma_e, detected_temp_unit_k = _load_global_maps(file_path)
+    x1, x2, ion_temp_code, electron_temp_code, sim_time, gamma, gamma_p, gamma_e = _load_global_maps(file_path)
 
     x_plot, z_plot, ion_temp_code = _map_to_xz(x1, x2, ion_temp_code, args_dict)
     _, _, electron_temp_code = _map_to_xz(x1, x2, electron_temp_code, args_dict)
-    # Use KHARMA-consistent fixed conversion factor
-    temp_unit_k_use = TEMPERATURE_UNIT_K
+    temp_unit_k_use = args_dict["temperature_unit_k"]
 
     ion_temp_k = np.maximum(ion_temp_code * temp_unit_k_use, 1.0e-300)
     electron_temp_k = np.maximum(electron_temp_code * temp_unit_k_use, 1.0e-300)
@@ -211,6 +215,7 @@ def main():
         "level_max": args.level_max,
         "level_count": args.level_count,
         "cmap": args.cmap,
+        "temperature_unit_k": args.temperature_unit_k,
     }
 
     tasks = [(i, f, shared) for i, f in enumerate(files_sorted)]

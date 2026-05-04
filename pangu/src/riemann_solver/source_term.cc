@@ -1,11 +1,6 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-// This file in the src/riemann_solver module defines source_term.cc
-// responsibilities for the Pangu runtime. It centers on riemann_solver to express core data
-// flow, keep interfaces readable, and preserve predictable behavior across task
-// coordination, recovery paths, and performance-sensitive execution.
-
 #include "riemann_solver/source_term.h"
 
 #include <memory>

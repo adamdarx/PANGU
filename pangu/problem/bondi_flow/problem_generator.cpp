@@ -105,6 +105,7 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
   const auto package_core = pmb->packages.Get("core");
   auto &resource = pmb->meshblock_data.Get();
   const auto kAdiabaticIndex = package_core->Param<Real>("adiabatic_index");
+  const auto kFelInit = package_core->Param<Real>("fel_0");
 
   // Bondi parameters follow the Sisyphus defaults when not explicitly provided.
   const Real kBondiMdot = pin->GetOrAddReal("bondi", "mdot", 1.0);
@@ -120,7 +121,8 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
 
   PackIndexMap primitiveIndexMap;
   const std::vector<std::string> primitive_tags = {
-      "density", "energy", "weighted_velocity", "magnetic_field"};
+      "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
+      "electron_entropy"};
   auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
 
   auto covariant_metric = resource->Get("covariant_metric").data;
@@ -270,5 +272,9 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
         primitive(BX1, k, j, i) = 0.0;
         primitive(BX2, k, j, i) = 0.0;
         primitive(BX3, k, j, i) = 0.0;
+        primitive(ENT, k, j, i) =
+            (kAdiabaticIndex - 1.0) * primitive(ENY, k, j, i) *
+            Kokkos::pow(primitive(RHO, k, j, i), -kAdiabaticIndex);
+        primitive(KEL, k, j, i) = kFelInit * primitive(ENT, k, j, i);
       });
 }

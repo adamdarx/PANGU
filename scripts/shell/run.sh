@@ -10,7 +10,7 @@ if [[ -f .pangu_build.env ]]; then
 fi
 
 BUILD_DIR="${BUILD_DIR:-build}"
-PROBLEM="${PROBLEM:-BrioWuShocktube}"
+PROBLEM="${PROBLEM:-shock_tube}"
 ENABLE_CUDA="${ENABLE_CUDA:-ON}"
 MPI_NP="${MPI_NP:-1}"
 INPUT_FILE="${INPUT_FILE:-}"

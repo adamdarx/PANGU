@@ -7,43 +7,28 @@ else()
     set(EXE_NAME "pangu.host")
 endif()
 
-option(PANGU_GR "Build pangu with GRMHD simulator" OFF)
-
 # Collect all source files under pangu/src recursively.
 file(GLOB_RECURSE EXE_NAME_SRC CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
 )
 
-set(SIMULATOR_SRMHD_SRC "${CMAKE_CURRENT_SOURCE_DIR}/task_list/ideal_srmhd.cc")
 set(SIMULATOR_GRMHD_SRC "${CMAKE_CURRENT_SOURCE_DIR}/task_list/ideal_grmhd.cc")
 
-# Keep exactly one simulator implementation in the final target.
-list(REMOVE_ITEM EXE_NAME_SRC
-    "${SIMULATOR_SRMHD_SRC}"
-    "${SIMULATOR_GRMHD_SRC}"
-)
-
-if(PANGU_GR)
-    if(NOT EXISTS "${SIMULATOR_GRMHD_SRC}")
-        message(FATAL_ERROR "Cannot find ${SIMULATOR_GRMHD_SRC}")
-    endif()
-    list(APPEND EXE_NAME_SRC "${SIMULATOR_GRMHD_SRC}")
-    message(STATUS "Pangu simulator mode: GRMHD")
-else()
-    if(NOT EXISTS "${SIMULATOR_SRMHD_SRC}")
-        message(FATAL_ERROR "Cannot find ${SIMULATOR_SRMHD_SRC}")
-    endif()
-    list(APPEND EXE_NAME_SRC "${SIMULATOR_SRMHD_SRC}")
-    message(STATUS "Pangu simulator mode: SRMHD")
+# Keep the simulator implementation explicit.
+list(REMOVE_ITEM EXE_NAME_SRC "${SIMULATOR_GRMHD_SRC}")
+if(NOT EXISTS "${SIMULATOR_GRMHD_SRC}")
+    message(FATAL_ERROR "Cannot find ${SIMULATOR_GRMHD_SRC}")
 endif()
+list(APPEND EXE_NAME_SRC "${SIMULATOR_GRMHD_SRC}")
+message(STATUS "Pangu simulator mode: GRMHD")
 
 # Select problem implementation from pangu/problem/<PROBLEM>/problem_generator.cpp.
 set(PROBLEM "" CACHE STRING
     "Problem directory under pangu/problem used for problem_generator.cpp")
 if("${PROBLEM}" STREQUAL "")
     message(FATAL_ERROR
-        "Please configure with -DPROBLEM=<problem_name>, e.g. -DPROBLEM=brio_wu_shocktube")
+        "Please configure with -DPROBLEM=<problem_name>, e.g. -DPROBLEM=shock_tube")
 endif()
 
 set(PROBLEM_GENERATOR_SRC

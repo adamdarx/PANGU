@@ -1,11 +1,6 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-// This file in the src/constrained_transport module defines constrained_transport.cc
-// responsibilities for the Pangu runtime. It centers on constrained_transport to express
-// core data flow, keep interfaces readable, and preserve predictable behavior across task
-// coordination, recovery paths, and performance-sensitive execution.
-
 #include "constrained_transport/constrained_transport.h"
 
 #include <memory>

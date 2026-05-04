@@ -1,12 +1,6 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-// This file in the src/riemann_solver module defines electron_heating.cc
-// responsibilities for the Pangu runtime. It centers on post-UtoP electron heating
-// to express core data flow, keep interfaces readable, and preserve predictable
-// behavior across task coordination, recovery paths, and performance-sensitive
-// execution.
-
 #include "riemann_solver/electron_heating.h"
 
 #include <memory>
@@ -25,6 +19,8 @@ parthenon::TaskStatus ApplyElectronHeating(
 
   const auto pmb = resource->GetBlockPointer();
   const auto package_core = pmb->packages.Get("core");
+  const auto kModelName = package_core->Param<std::string>("model_name");
+  const auto kHeatingModel = two_temperature::StringToMODEL(kModelName);
   const auto kFelConstant = package_core->Param<Real>("fel_constant");
     const auto kGamma = package_core->Param<Real>("adiabatic_index");
     const auto kGammaP = package_core->Param<Real>("gamma_p");
@@ -33,6 +29,8 @@ parthenon::TaskStatus ApplyElectronHeating(
     const auto kRatioMin = package_core->Param<Real>("ratio_min");
     const auto kRatioMax = package_core->Param<Real>("ratio_max");
     const auto kSuppressHighbHeat = package_core->Param<bool>("suppress_highb_heat");
+    const auto kEnforcePositiveDissipation =
+        package_core->Param<bool>("enforce_positive_dissipation");
 
   const auto bound_x1_interior =
       pmb->cellbounds.GetBoundsI(IndexDomain::interior);
@@ -81,11 +79,12 @@ parthenon::TaskStatus ApplyElectronHeating(
             conservative(RHO, k, j, i), conservative(KEL, k, j, i));
         const Real recovered_total_entropy = primitive(ENT, k, j, i);
 
-                primitive(KEL, k, j, i) = two_temperature::ComputeConstantModelElectronEntropy(
-                        kGamma, kGammaP, kGammaE, primitive(RHO, k, j, i), state.bsq,
+                primitive(KEL, k, j, i) = two_temperature::ComputeModelElectronEntropy(
+                        kHeatingModel, kGamma, kGammaP, kGammaE,
+                        primitive(RHO, k, j, i), primitive(ENY, k, j, i), state.bsq,
                         advected_total_entropy, recovered_total_entropy,
                         advected_electron_entropy, kFelConstant, kLimitKel, kRatioMin,
-                        kRatioMax, kSuppressHighbHeat);
+                        kRatioMax, kSuppressHighbHeat, kEnforcePositiveDissipation);
       });
 
   return TaskStatus::complete;

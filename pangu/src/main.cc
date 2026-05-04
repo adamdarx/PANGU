@@ -1,11 +1,6 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-// This file in the src module defines main.cc responsibilities for the Pangu runtime. It
-// centers on parthenon_manager to express core data flow, keep interfaces readable, and
-// preserve predictable behavior across task coordination, recovery paths, and
-// performance-sensitive execution.
-
 #include "parthenon_manager.hpp"
 #include "task_list/task_list.h"
 

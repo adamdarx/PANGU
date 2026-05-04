@@ -1,11 +1,6 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-// This file in the src/fixer module defines primitive_fixer.cc
-// responsibilities for the Pangu runtime. It centers on fixer to express
-// core data flow, keep interfaces readable, and preserve predictable behavior across task
-// coordination, recovery paths, and performance-sensitive execution.
-
 #include "fixer/primitive_fixer.h"
 
 #include <memory>

@@ -1,11 +1,6 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-// This file in the src/task_list module defines task_list.h responsibilities for the Pangu
-// runtime. It centers on amr_criteria to express core data flow, keep interfaces readable,
-// and preserve predictable behavior across task coordination, recovery paths, and
-// performance-sensitive execution.
-
 #ifndef PANGU_SRC_TASKLIST_TASKLIST_H
 #define PANGU_SRC_TASKLIST_TASKLIST_H
 
@@ -30,7 +25,7 @@
 
 using namespace parthenon::driver::prelude;
 
-// Multi-stage simulation driver for ideal SRMHD and GRMHD task graphs.
+// Multi-stage simulation driver for the ideal GRMHD task graph.
 class Simulator : public MultiStageDriver {
  public:
   // Constructs the simulator driver from Parthenon runtime objects.
