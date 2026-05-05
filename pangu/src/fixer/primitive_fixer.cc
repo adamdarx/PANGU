@@ -10,7 +10,7 @@
 
 #include "initialization/variable_mnemonics.h"
 #include "physics/state_calculation.h"
-#include "physics/two_temperature.h"
+#include "physics/heating_model.h"
 
 parthenon::TaskStatus FixPrimitive(
     std::shared_ptr<parthenon::MeshBlockData<parthenon::Real>> &resource,
@@ -26,8 +26,8 @@ parthenon::TaskStatus FixPrimitive(
   const auto energy_floor_pow = package_core->Param<Real>("energy_floor_pow");
   const auto sigma_max = package_core->Param<Real>("sigma_max");
   const auto lorentz_max = package_core->Param<Real>("lorentz_max");
-  const auto ratio_min = package_core->Param<Real>("ratio_min");
-  const auto ratio_max = package_core->Param<Real>("ratio_max");
+  const RatioLimits ratio = {
+      package_core->Param<Real>("ratio_min"), package_core->Param<Real>("ratio_max")};
 
   const auto bound_x1_entire =
       pmb->cellbounds.GetBoundsI(IndexDomain::entire);
@@ -114,9 +114,8 @@ parthenon::TaskStatus FixPrimitive(
 
         primitive(ENT, k, j, i) = (kAdiabaticIndex - 1.0) * primitive(ENY, k, j, i) *
                                   Kokkos::pow(primitive(RHO, k, j, i), -kAdiabaticIndex);
-        primitive(KEL, k, j, i) = two_temperature::ClampElectronEntropyByRatio(
-          primitive(ENT, k, j, i), primitive(KEL, k, j, i), ratio_min,
-          ratio_max);
+        primitive(KEL, k, j, i) = clampByRatio(
+            ratio, primitive(ENT, k, j, i), primitive(KEL, k, j, i));
       });
 
   return TaskStatus::complete;

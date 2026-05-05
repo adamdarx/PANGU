@@ -11,7 +11,7 @@
 #include "initialization/variable_mnemonics.h"
 #include "initialization/timestep_estimation.h"
 #include "mesh/refinement_criteria.h"
-#include "physics/two_temperature.h"
+#include "physics/heating_model.h"
 
 namespace core {
 std::shared_ptr<parthenon::StateDescriptor> Initialize(
@@ -37,16 +37,16 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
   const auto kSigmaMax = pin->GetOrAddReal("core", "sigma_max", 50);
   const auto kLorentzMax = pin->GetOrAddReal("core", "lorentz_max", 50);
   const auto kModelName =
-      two_temperature::MODELToString(two_temperature::StringToMODEL(
+      modelName(parseModel(
           pin->GetOrAddString("electrons", "model", "constant")));
   const auto kFelConstant = pin->GetOrAddReal("electrons", "fel_constant", 0.1);
-    const auto kGammaE = pin->GetOrAddReal("electrons", "gamma_e", 4. / 3.);
-    const auto kGammaP = pin->GetOrAddReal("electrons", "gamma_p", 5. / 3.);
-    const auto kLimitKel = pin->GetOrAddBoolean("electrons", "limit_kel", true);
-    const auto kSuppressHighbHeat =
-            pin->GetOrAddBoolean("electrons", "suppress_highb_heat", false);
-    const auto kEnforcePositiveDissipation =
-            pin->GetOrAddBoolean("electrons", "enforce_positive_dissipation", false);
+  const auto kGammaE = pin->GetOrAddReal("electrons", "gamma_e", 4. / 3.);
+  const auto kGammaP = pin->GetOrAddReal("electrons", "gamma_p", 5. / 3.);
+  const auto kLimitKel = pin->GetOrAddBoolean("electrons", "limit_kel", true);
+  const auto kSuppressHighbHeat =
+      pin->GetOrAddBoolean("electrons", "suppress_highb_heat", false);
+  const auto kEnforcePositiveDissipation =
+      pin->GetOrAddBoolean("electrons", "enforce_positive_dissipation", false);
   const auto kRatioMin = pin->GetOrAddReal("electrons", "ratio_min", 0.001);
   const auto kRatioMax = pin->GetOrAddReal("electrons", "ratio_max", 1000.0);
   const auto kFelInit = pin->GetOrAddReal("electrons", "fel_0", 0.1);
@@ -61,16 +61,16 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
   package_core->AddParam<>("energy_floor_pow", kEnergyFloorPow);
   package_core->AddParam<>("sigma_max", kSigmaMax);
   package_core->AddParam<>("lorentz_max", kLorentzMax);
-    package_core->AddParam<>("model_name", kModelName);
-    package_core->AddParam<>("fel_constant", kFelConstant);
-    package_core->AddParam<>("gamma_e", kGammaE);
-    package_core->AddParam<>("gamma_p", kGammaP);
-    package_core->AddParam<>("limit_kel", kLimitKel);
-    package_core->AddParam<>("suppress_highb_heat", kSuppressHighbHeat);
-    package_core->AddParam<>("enforce_positive_dissipation", kEnforcePositiveDissipation);
-    package_core->AddParam<>("ratio_min", kRatioMin);
-    package_core->AddParam<>("ratio_max", kRatioMax);
-    package_core->AddParam<>("fel_0", kFelInit);
+  package_core->AddParam<>("model_name", kModelName);
+  package_core->AddParam<>("fel_constant", kFelConstant);
+  package_core->AddParam<>("gamma_e", kGammaE);
+  package_core->AddParam<>("gamma_p", kGammaP);
+  package_core->AddParam<>("limit_kel", kLimitKel);
+  package_core->AddParam<>("suppress_highb_heat", kSuppressHighbHeat);
+  package_core->AddParam<>("enforce_positive_dissipation", kEnforcePositiveDissipation);
+  package_core->AddParam<>("ratio_min", kRatioMin);
+  package_core->AddParam<>("ratio_max", kRatioMax);
+  package_core->AddParam<>("fel_0", kFelInit);
 
   parthenon::Metadata m;
   m = parthenon::Metadata(
