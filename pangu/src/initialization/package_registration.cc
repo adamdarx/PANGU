@@ -22,6 +22,8 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
   const auto kCflNumber = pin->GetOrAddReal("core", "cfl_number", 0.8);
   const auto kAdiabaticIndex =
       pin->GetOrAddReal("core", "adiabatic_index", 5. / 3.);
+  const auto kRiemannSolver =
+      pin->GetOrAddString("core", "riemann_solver", "laxf");
   const auto kQFactorFloor =
       pin->GetOrAddReal("core", "q_factor_floor", 0.3);
   const auto kQFactorCeiling =
@@ -53,6 +55,7 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
 
   package_core->AddParam<>("cfl_number", kCflNumber);
   package_core->AddParam<>("adiabatic_index", kAdiabaticIndex);
+  package_core->AddParam<>("riemann_solver", kRiemannSolver);
   package_core->AddParam<>("q_factor_floor", kQFactorFloor);
   package_core->AddParam<>("q_factor_ceiling", kQFactorCeiling);
   package_core->AddParam<>("density_floor", kDensityFloor);

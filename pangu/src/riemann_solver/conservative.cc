@@ -48,7 +48,9 @@ parthenon::TaskStatus CalculateConservative(
   auto metric_determinant = init_resource->Get("metric_determinant").data;
 
   pmb->par_for(
-      PARTHENON_AUTO_LABEL, bound_x3_interior.s, bound_x3_interior.e, bound_x2_interior.s, bound_x2_interior.e,
+      PARTHENON_AUTO_LABEL, 
+      bound_x3_interior.s, bound_x3_interior.e, 
+      bound_x2_interior.s, bound_x2_interior.e,
       bound_x1_interior.s, bound_x1_interior.e,
       KOKKOS_LAMBDA(const int k, const int j, const int i) {
         Real gcov[4][4];

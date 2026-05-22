@@ -1,6 +1,6 @@
 # Pangu
 
-Pangu 是一个基于 Parthenon 与 Kokkos 的 GRMHD 数值模拟代码。当前代码支持按问题目录选择初始化器、CPU/CUDA 后端构建、Kerr 或 Minkowski 度规下的算例，以及单模型双温电子加热。
+Pangu 是一个基于 Parthenon 与 Kokkos 的 GRMHD 数值模拟代码。当前代码支持按问题目录选择初始化器、CPU/CUDA 后端构建、Minkowski/BL/MKS/CKS 度规下的算例、HLL/HLLD/LAXF Riemann solver、新的 conservative-to-primitive (C2P) 恢复流程，以及单模型双温电子加热。
 
 本文档以实际使用流程为主：如何构建、运行、设置输入文件、分析输出，以及如何理解双温模式下的温度单位。
 
@@ -49,6 +49,56 @@ Pangu 是一个基于 Parthenon 与 Kokkos 的 GRMHD 数值模拟代码。当前
 - CUDA toolkit：用于 GPU 构建
 - OpenMP：CPU 多线程后端
 
+如果需要通过代理环境下载依赖，可以先配置 Clash 之类的本地代理，再执行下面的安装流程。
+
+推荐安装顺序是先装 OpenMPI，再装 Parallel HDF5，因为后者需要 `mpicc`、MPI 头文件和 MPI 库支持。
+
+```bash
+# 可选：Clash 代理示例
+wget https://github.com/doreamon-design/clash/releases/download/v2.0.24/clash_2.0.24_linux_amd64.tar.gz
+tar zxvf clash_2.0.24_linux_amd64.tar.gz
+chmod +x clash
+mv clash /usr/local/bin/clash
+mkdir /etc/clash
+cat > /etc/clash/config.yaml << EOF
+# Clash 配置示例
+# 直接从客户端软件复制
+EOF
+echo "export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7891" >> ~/.bashrc
+source ~/.bashrc
+
+# OpenMPI
+wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.10.tar.gz
+tar -zxvf openmpi-5.0.10.tar.gz
+cd openmpi-5.0.10
+./configure --prefix=/openmpi --with-cuda=/usr/lib/cuda --enable-mpi-cxx --enable-shared
+make all install
+export PATH=$PATH:/openmpi/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/openmpi/lib
+source ~/.bashrc
+
+# Parallel HDF5
+wget https://support.hdfgroup.org/releases/hdf5/v1_14/v1_14_3/downloads/hdf5-1.14.3.tar.gz
+tar -zxvf hdf5-1.14.3.tar.gz
+export CC=mpicc
+export HDF5_MPI="ON"
+./configure --enable-shared --enable-parallel --prefix=/hdf5
+export HDF5_DIR="/hdf5"
+make
+make install
+make check-install
+export PATH=$PATH:"/hdf5/bin"
+export HDF5_ROOT="/hdf5"
+source ~/.bashrc
+```
+
+必要说明：
+
+- `Clash` 只是可选示例，目的是在网络受限环境下下载源码包；如果你本机有其他代理工具，也可以直接替换。
+- `--prefix=/openmpi` 和 `--prefix=/hdf5` 需要有写权限；如果系统不允许写根目录，请改成自己的安装前缀。
+- `--with-cuda=/usr/lib/cuda` 仅在 CUDA 构建场景下有意义；如果没有 CUDA，可以去掉这项。
+- `make check-install` 需要在 HDF5 源码目录执行，确认并行 HDF5 安装可用。
+
 Python 分析依赖通常包括：
 
 ```bash
@@ -66,33 +116,88 @@ python3 -m pip install --user -r parthenon/requirements.txt
 构建入口：
 
 ```bash
-./scripts/shell/make.sh
+bash ./scripts/shell/make.sh
 ```
 
-常用 CPU/GRMHD 构建示例：
+不带后端参数时，`make.sh` 默认按 CUDA 后端构建
+
+常用 GPU/GRMHD 构建示例：
 
 ```bash
-ENABLE_CUDA=OFF PROBLEM=fm_torus BUILD_DIR=build ./scripts/shell/make.sh
+PROBLEM=fm_torus BUILD_DIR=build bash ./scripts/shell/make.sh
 ```
 
 Minkowski 度规测试问题构建示例：
 
 ```bash
-ENABLE_CUDA=OFF PROBLEM=orszag_tang_vortex BUILD_DIR=build ./scripts/shell/make.sh
+PROBLEM=orszag_tang_vortex BUILD_DIR=build bash ./scripts/shell/make.sh cpu
 ```
+
+如果需要固定 Kokkos 的 GPU 架构，请设置 `DEVICE_ARCH`。脚本会自动展开为 `-DKokkos_ARCH_<ARCH>=ON`；例如：
+
+```bash
+DEVICE_ARCH=AMPERE80 PROBLEM=fm_torus BUILD_DIR=build bash ./scripts/shell/make.sh
+DEVICE_ARCH=AMD_GFX90A PROBLEM=fm_torus BUILD_DIR=build bash ./scripts/shell/make.sh
+DEVICE_ARCH=INTEL_PVC PROBLEM=fm_torus BUILD_DIR=build bash ./scripts/shell/make.sh
+```
+
+`DEVICE_ARCH` 一次只建议填一个值；Kokkos 官方配置页也说明了单个 device backend 只能配一个 architecture。若不设置，CUDA 构建会尝试自动探测。
 
 常用环境变量：
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `ENABLE_OPENMP` | `ON` | 是否启用 OpenMP |
+| `ENABLE_OPENMP` | `OFF` | 是否启用 OpenMP |
 | `ENABLE_CUDA` | `ON` | 是否构建 CUDA 目标 |
 | `PROBLEM` | `shock_tube` | 选择 `pangu/problem/<PROBLEM>` |
 | `BUILD_DIR` | `build` | 构建目录 |
 | `BUILD_TYPE` | `Release` | CMake 构建类型 |
 | `BUILD_JOBS` | `4` | 并行编译任务数 |
-| `KOKKOS_ARCH` | 空 | Kokkos 架构选项 |
+| `HOST_ARCH` | `NATIVE` | CPU 架构选项，对应 `Kokkos_ARCH_NATIVE` 或其他 CPU 架构 |
+| `DEVICE_ARCH` | 空 | GPU 架构选项，对应 `Kokkos_ARCH_<ARCH>` |
 | `CMAKE_EXTRA_ARGS` | 空 | 透传给 CMake 的额外参数 |
+
+Kokkos GPU 架构速查：
+
+| 平台 | `DEVICE_ARCH` 值 | 实际 CMake 选项 | 备注 |
+| --- | --- | --- | --- |
+| NVIDIA | `BLACKWELL120` | `Kokkos_ARCH_BLACKWELL120` | Blackwell, CC 12.0 |
+| NVIDIA | `BLACKWELL103` | `Kokkos_ARCH_BLACKWELL103` | Blackwell, CC 10.3 |
+| NVIDIA | `BLACKWELL100` | `Kokkos_ARCH_BLACKWELL100` | Blackwell, CC 10.0 |
+| NVIDIA | `HOPPER90` | `Kokkos_ARCH_HOPPER90` | Hopper, CC 9.0 |
+| NVIDIA | `ADA89` | `Kokkos_ARCH_ADA89` | Ada Lovelace, CC 8.9 |
+| NVIDIA | `AMPERE87` | `Kokkos_ARCH_AMPERE87` | Ampere, CC 8.7 |
+| NVIDIA | `AMPERE86` | `Kokkos_ARCH_AMPERE86` | Ampere, CC 8.6 |
+| NVIDIA | `AMPERE80` | `Kokkos_ARCH_AMPERE80` | Ampere, CC 8.0 |
+| NVIDIA | `TURING75` | `Kokkos_ARCH_TURING75` | Turing, CC 7.5 |
+| NVIDIA | `VOLTA72` | `Kokkos_ARCH_VOLTA72` | Volta, CC 7.2 |
+| NVIDIA | `VOLTA70` | `Kokkos_ARCH_VOLTA70` | Volta, CC 7.0 |
+| NVIDIA | `PASCAL61` | `Kokkos_ARCH_PASCAL61` | Pascal, CC 6.1 |
+| NVIDIA | `PASCAL60` | `Kokkos_ARCH_PASCAL60` | Pascal, CC 6.0 |
+| NVIDIA | `MAXWELL53` | `Kokkos_ARCH_MAXWELL53` | Maxwell, CC 5.3 |
+| NVIDIA | `MAXWELL52` | `Kokkos_ARCH_MAXWELL52` | Maxwell, CC 5.2 |
+| NVIDIA | `MAXWELL50` | `Kokkos_ARCH_MAXWELL50` | Maxwell, CC 5.0 |
+| AMD | `AMD_GFX950` | `Kokkos_ARCH_AMD_GFX950` | MI355X / MI350X |
+| AMD | `AMD_GFX942_APU` | `Kokkos_ARCH_AMD_GFX942_APU` | MI300A |
+| AMD | `AMD_GFX942` | `Kokkos_ARCH_AMD_GFX942` | MI300X；MI300A 新版本建议用 `_APU` |
+| AMD | `AMD_GFX940` | `Kokkos_ARCH_AMD_GFX940` | MI300A pre-production |
+| AMD | `AMD_GFX90A` | `Kokkos_ARCH_AMD_GFX90A` | MI200 系列 |
+| AMD | `AMD_GFX908` | `Kokkos_ARCH_AMD_GFX908` | MI100 |
+| AMD | `AMD_GFX906` | `Kokkos_ARCH_AMD_GFX906` | MI50 / MI60 |
+| AMD | `AMD_GFX1201` | `Kokkos_ARCH_AMD_GFX1201` | Radeon AI PRO R9700 / RX 9070 XT |
+| AMD | `AMD_GFX1103` | `Kokkos_ARCH_AMD_GFX1103` | Ryzen 8000G Phoenix APU |
+| AMD | `AMD_GFX1100` | `Kokkos_ARCH_AMD_GFX1100` | 7900XT |
+| AMD | `AMD_GFX1030` | `Kokkos_ARCH_AMD_GFX1030` | V620 / W6800 |
+| Intel | `INTEL_PVC` | `Kokkos_ARCH_INTEL_PVC` | Ponte Vecchio / Data Center GPU Max 1550 |
+| Intel | `INTEL_XEHP` | `Kokkos_ARCH_INTEL_XEHP` | Xe-HP |
+| Intel | `INTEL_DG2` | `Kokkos_ARCH_INTEL_DG2` | Intel Flex / Arc |
+| Intel | `INTEL_DG1` | `Kokkos_ARCH_INTEL_DG1` | Iris Xe MAX |
+| Intel | `INTEL_GEN12LP` | `Kokkos_ARCH_INTEL_GEN12LP` | Gen12LP |
+| Intel | `INTEL_GEN11` | `Kokkos_ARCH_INTEL_GEN11` | Gen11 |
+| Intel | `INTEL_GEN9` | `Kokkos_ARCH_INTEL_GEN9` | Gen9 |
+| Intel | `INTEL_GEN` | `Kokkos_ARCH_INTEL_GEN` | JIT 模式 |
+
+旧版 Kepler 选项 `Kokkos_ARCH_KEPLER30/32/35/37` 已在 Kokkos 5.0 移除，不建议再用。若需要 CPU 架构，仍然使用 `HOST_ARCH` 对应的 `Kokkos_ARCH_NATIVE` 或其他 CPU 选项。
 
 构建产物：
 
@@ -108,13 +213,13 @@ ENABLE_CUDA=OFF PROBLEM=orszag_tang_vortex BUILD_DIR=build ./scripts/shell/make.
 运行入口：
 
 ```bash
-./scripts/shell/execute.sh
+bash ./scripts/shell/run.sh
 ```
 
 示例：
 
 ```bash
-BUILD_DIR=build ENABLE_CUDA=OFF PROBLEM=fm_torus ./scripts/shell/execute.sh -n 1
+BUILD_DIR=build ENABLE_CUDA=OFF PROBLEM=fm_torus bash ./scripts/shell/run.sh -n 1
 ```
 
 常用参数：
@@ -155,6 +260,7 @@ tlim = 2000
 adiabatic_index = 1.666666667
 density_floor = 1e-5
 energy_floor = 4.641588833612779e-9
+riemann_solver = hlld
 
 <electrons>
 on = true
@@ -175,7 +281,9 @@ rin = 6.0
 rmax = 12.0
 ```
 
-`<core>` 控制单流体 GRMHD 主方程参数；`<electrons>` 控制双温电子加热；`<metric>` 与具体问题段控制 GR 度规和初始化。
+`<core>` 控制单流体 GRMHD 主方程参数；`<electrons>` 控制双温电子加热；`<metric>` 与具体问题段控制 GR 度规和初始化。`<core>` 中的 `riemann_solver` 目前支持 `laxf`、`hll` 和 `hlld`，默认值是 `laxf`。
+
+新的 C2P 恢复流程已经接入任务图：通量更新后会先做 conservative-to-primitive 恢复，再进入修复器和电子加热流程。当前采用的方法见 [arXiv:2005.01821](https://arxiv.org/abs/2005.01821)。
 
 ## 双温电子加热
 
@@ -234,7 +342,7 @@ model = howes
 分析入口：
 
 ```bash
-./scripts/shell/analyze.sh
+bash ./scripts/shell/analyze.sh
 ```
 
 常用模式：
@@ -249,13 +357,13 @@ model = howes
 密度或其它字段的 x-z 图：
 
 ```bash
-./scripts/shell/analyze.sh -p fm_torus -f density --xzplot
+bash ./scripts/shell/analyze.sh -p fm_torus -f density --xzplot
 ```
 
 双温温度图：
 
 ```bash
-./scripts/shell/analyze.sh -p fm_torus --2t -w 4
+bash ./scripts/shell/analyze.sh -p fm_torus --2t -w 4
 ```
 
 对应 Python 脚本为：
@@ -336,7 +444,7 @@ pangu/problem/<name>/inputfile
 然后用：
 
 ```bash
-PROBLEM=<name> ./scripts/shell/make.sh
+PROBLEM=<name> bash ./scripts/shell/make.sh
 ```
 
 重新构建。
@@ -352,6 +460,9 @@ PROBLEM=<name> ./scripts/shell/make.sh
 | `pangu/src/initialization/package_registration.cc` | runtime package 与字段注册 |
 | `pangu/src/initialization/variable_mnemonics.h` | primitive/conservative 索引 |
 | `pangu/src/physics/two_temperature.h` | 双温模型、模型枚举与加热公式 |
+| `pangu/src/riemann_solver/riemann_solver.cc` | HLL/HLLD/LAXF 通量分发 |
+| `pangu/src/riemann_solver/hlld.cc` | HLLD Riemann solver |
+| `pangu/src/recovery/invertor.cc` | 新的 conservative-to-primitive (C2P) 恢复 |
 | `pangu/src/riemann_solver/electron_heating.cc` | 每步电子加热更新 |
 | `pangu/src/fixer/primitive_fixer.cc` | primitive floor 与电子熵限制 |
 | `pangu/problem/fm_torus/problem_generator.cpp` | FM torus 初始化 |
@@ -362,6 +473,7 @@ PROBLEM=<name> ./scripts/shell/make.sh
 - `entropy` 用于估计流体耗散，不是单独的热力学输出装饰量。
 - 温比限制使用 `ratio_min` 和 `ratio_max`，不要改名为 KHARMA 的 `tp_over_te_*`。
 - 目前 Pangu 每次只运行一个电子加热模型；如需 KHARMA 式多模型并行，必须扩展变量布局、通量、fixer、输出和初始化，不应只改 inputfile。
+- `riemann_solver` 当前支持 `laxf`、`hll`、`hlld` 三种通量格式；如果要切换默认值或增加新 solver，需要同步更新 `package_registration.cc`、`riemann_solver/riemann_solver.cc` 和相关输入文件。
 
 ## 常见问题
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-#include "riemann_solver/lax_friedrichs_flux.h"
+#include "riemann_solver/laxf.h"
 
 #include <limits>
 #include <memory>
@@ -15,7 +15,7 @@
 #include "physics/alfven_velocity.h"
 #include "physics/contravariant_flux.h"
 
-parthenon::TaskStatus CalculateFluxes(
+parthenon::TaskStatus CalculateLAXF(
     std::shared_ptr<parthenon::MeshBlockData<parthenon::Real>> &resource,
     std::shared_ptr<parthenon::MeshBlockData<parthenon::Real>> &init_resource) {
   using namespace parthenon;

@@ -17,7 +17,7 @@
 #include "recovery/invertor.h"
 #include "riemann_solver/conservative.h"
 #include "riemann_solver/electron_heating.h"
-#include "riemann_solver/lax_friedrichs_flux.h"
+#include "riemann_solver/riemann_solver.h"
 
 #include <memory>
 #include <parthenon/driver.hpp>
@@ -37,6 +37,10 @@ class Simulator : public MultiStageDriver {
 
 // Initializes one mesh block with problem-specific primitive variables.
 void ProblemGenerator(MeshBlock *pmb, parthenon::ParameterInput *pin);
+
+// Performs mesh-wide post initialization after all mesh blocks are generated.
+void MeshPostInitialization(parthenon::Mesh *pm, parthenon::ParameterInput *pin,
+              parthenon::MeshData<Real> *md);
 
 // Creates and registers runtime packages used by the simulation.
 parthenon::Packages_t ProcessPackages(

@@ -8,7 +8,7 @@
 #include "interface/metadata.hpp"
 #include "interface/update.hpp"
 #include "mesh/meshblock_pack.hpp"
-#include "metric/kerr_schwarzchild.h"
+#include "metric/MKS.h"
 #include "metric/tensor_algebra.h"
 #include "parthenon/driver.hpp"
 #include "prolong_restrict/prolong_restrict.hpp"
@@ -115,9 +115,9 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
   const Real kBondiAtmosphereFactor =
       pin->GetOrAddReal("bondi", "atmosphere_factor", 1.0e-7);
 
-  // Kerr metric parameters used by device-side metric functions.
-  const Real kerr_h = pin->GetOrAddReal("metric", "h", 0.0);
-  const Real kerr_a = pin->GetOrAddReal("metric", "a", 0.0);
+  // MKS metric parameters used by device-side metric functions.
+  const Real mks_h = pin->GetOrAddReal("metric", "h", 0.0);
+  const Real mks_a = pin->GetOrAddReal("metric", "a", 0.0);
 
   PackIndexMap primitiveIndexMap;
   const std::vector<std::string> primitive_tags = {
@@ -145,9 +145,9 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
 
         const Real x_code[4] = {0.0, x1, x2, x3};
         Real y[4];
-        Kerr::CalculatePhysicalCoordinates(x_code, y, kerr_h, kerr_a);
+        MKS::CalculatePhysicalCoordinates(x_code, y, mks_h, mks_a);
         Real gcov[4][4];
-        Kerr::CalculateCodeMetric(x_code, gcov, kerr_h, kerr_a);
+        MKS::CalculateCodeMetric(x_code, gcov, mks_h, mks_a);
 
         Real gcon[4][4];
         invert(gcov, gcon);
@@ -168,7 +168,7 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
         for (int loc = 0; loc < 4; ++loc) {
           Real gcov_loc[4][4];
           Real gcon_loc[4][4];
-          Kerr::CalculateCodeMetric(x_code_loc[loc], gcov_loc, kerr_h, kerr_a);
+          MKS::CalculateCodeMetric(x_code_loc[loc], gcov_loc, mks_h, mks_a);
           invert(gcov_loc, gcon_loc);
           metric_determinant(loc, k, j, i) = determinant(gcov_loc);
           for (int row = 0; row < 4; ++row) {
@@ -195,8 +195,8 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
             x_plus[dir] += MetricDiffDelta;
             x_minus[dir] -= MetricDiffDelta;
 
-            Kerr::CalculateCodeMetric(x_plus, gp, kerr_h, kerr_a);
-            Kerr::CalculateCodeMetric(x_minus, gm, kerr_h, kerr_a);
+            MKS::CalculateCodeMetric(x_plus, gp, mks_h, mks_a);
+            MKS::CalculateCodeMetric(x_minus, gm, mks_h, mks_a);
             for (int row = 0; row < 4; ++row) {
               for (int col = 0; col < 4; ++col) {
                 dgcov[dir][row][col] =

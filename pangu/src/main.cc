@@ -11,16 +11,13 @@ int main(int argc, char *argv[]) {
 
   pman.app_input->ProcessPackages = ProcessPackages;
   pman.app_input->ProblemGenerator = ProblemGenerator;
+  pman.app_input->MeshPostInitialization = MeshPostInitialization;
   pman.app_input->RegisterDefaultReflectingBoundaryConditions();
 
   auto manager_status = pman.ParthenonInitEnv(argc, argv);
   if (manager_status == ParthenonStatus::complete) {
     pman.ParthenonFinalize();
     return 0;
-  }
-  if (manager_status == ParthenonStatus::error) {
-    pman.ParthenonFinalize();
-    return 1;
   }
 
   pman.ParthenonInitPackagesAndMesh();

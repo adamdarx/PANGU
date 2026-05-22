@@ -9,8 +9,8 @@
 #include "interface/metadata.hpp"
 #include "interface/update.hpp"
 #include "mesh/meshblock_pack.hpp"
-#include "metric/boyer_lindquist.h"
-#include "metric/kerr_schwarzchild.h"
+#include "metric/BL.h"
+#include "metric/MKS.h"
 #include "metric/tensor_algebra.h"
 #include "parthenon/driver.hpp"
 #include "physics/state_calculation.h"
@@ -52,7 +52,7 @@ void TransformBLToCodeFourVelocity(const Real x_code[4], const Real h,
   Real xh[4], xl[4];
   Real yh[4], yl[4];
   Real y[4];
-  BoyerLindquist::CalculatePhysicalCoordinates(x_code, y, h, a);
+  BL::CalculatePhysicalCoordinates(x_code, y, h, a);
 
   const Real r = y[1];
   Real trans[4][4], tmp[4];
@@ -81,8 +81,8 @@ void TransformBLToCodeFourVelocity(const Real x_code[4], const Real h,
     xh[col] += 1e-5;
     xl[col] -= 1e-5;
 
-    BoyerLindquist::CalculatePhysicalCoordinates(xh, yh, h, a);
-    BoyerLindquist::CalculatePhysicalCoordinates(xl, yl, h, a);
+    BL::CalculatePhysicalCoordinates(xh, yh, h, a);
+    BL::CalculatePhysicalCoordinates(xl, yl, h, a);
 
     for (int row = 0; row < 4; row++) {
       dxdxp[row][col] = (yh[row] - yl[row]) / (xh[col] - xl[col]);
@@ -165,17 +165,17 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
 
         const Real x_code[4] = {0.0, x1, x2, x3};
         Real y[4];
-        Kerr::CalculatePhysicalCoordinates(x_code, y, kerr_h, kerr_a);
+        MKS::CalculatePhysicalCoordinates(x_code, y, kerr_h, kerr_a);
         const Real r = y[1];
         const Real th = y[2];
         const Real sth = Kokkos::sin(th);
         const Real cth = Kokkos::cos(th);
 
         Real gcov[4][4];
-        Kerr::CalculateCodeMetric(x_code, gcov, kerr_h, kerr_a);
+        MKS::CalculateCodeMetric(x_code, gcov, kerr_h, kerr_a);
 
         Real gcov_bl[4][4];
-        BoyerLindquist::CalculateCodeMetric(x_code, gcov_bl, kerr_h, kerr_a);
+        BL::CalculateCodeMetric(x_code, gcov_bl, kerr_h, kerr_a);
 
         Real gcon[4][4];
         invert(gcov, gcon);
@@ -197,7 +197,7 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
         for (int loc = 0; loc < 4; ++loc) {
           Real gcov_loc[4][4];
           Real gcon_loc[4][4];
-          Kerr::CalculateCodeMetric(x_code_loc[loc], gcov_loc, kerr_h, kerr_a);
+          MKS::CalculateCodeMetric(x_code_loc[loc], gcov_loc, kerr_h, kerr_a);
           invert(gcov_loc, gcon_loc);
           metric_determinant(loc, k, j, i) = determinant(gcov_loc);
           for (int row = 0; row < 4; ++row) {
@@ -224,8 +224,8 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
             x_plus[dir] += MetricDiffDelta;
             x_minus[dir] -= MetricDiffDelta;
 
-            Kerr::CalculateCodeMetric(x_plus, gp, kerr_h, kerr_a);
-            Kerr::CalculateCodeMetric(x_minus, gm, kerr_h, kerr_a);
+            MKS::CalculateCodeMetric(x_plus, gp, kerr_h, kerr_a);
+            MKS::CalculateCodeMetric(x_minus, gm, kerr_h, kerr_a);
             for (int row = 0; row < 4; ++row) {
               for (int col = 0; col < 4; ++col) {
                 dgcov[dir][row][col] =
@@ -347,114 +347,242 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
             Kokkos::max(local_rhomax, primitive(RHO, k, j, i));
       },
       Kokkos::Max<Real>(rhomax));
-
+  
   pmb->par_reduce(
       PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int k, const int j, const int i, Real &local_umax) {
         local_umax = Kokkos::max(local_umax, primitive(ENY, k, j, i));
       },
       Kokkos::Max<Real>(umax));
+}
 
-  printf("Maximum initial density: %e\n", rhomax);
-  printf("Maximum initial energy: %e\n", umax);
-  pmb->par_for(
-      PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
-      KOKKOS_LAMBDA(const int k, const int j, const int i) {
-        primitive(RHO, k, j, i) /= rhomax;
-        primitive(ENY, k, j, i) /= rhomax;
-      });
-  umax /= rhomax;
+void MeshPostInitialization(parthenon::Mesh *pmesh,
+                            parthenon::ParameterInput *pin,
+                            parthenon::MeshData<Real> *md) {
+  using namespace parthenon;
 
-  const int ni = ib.e - ib.s + 1;
-  const int nj = jb.e - jb.s + 1;
-  const int nk = kb.e - kb.s + 1;
-  Kokkos::View<Real ***> vectorPotential("vectorPotential", nk, nj, ni);
+  (void)md;
 
-  pmb->par_for(
-      PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
-      KOKKOS_LAMBDA(const int k, const int j, const int i) {
-        vectorPotential(k - kb.s, j - jb.s, i - ib.s) = 0.0;
-      });
+  const auto package_core = pmesh->packages.Get("core");
+  const Real kAdiabaticIndex = package_core->Param<Real>("adiabatic_index");
+  const Real beta_target = pin->GetOrAddReal("fm_torus", "beta", 100.0);
+  const Real aphi_rho_cut = pin->GetOrAddReal("fm_torus", "aphi_rho_cut", 0.2);
 
-  pmb->par_for(
-      PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s + 1, jb.e, ib.s + 1, ib.e,
-      KOKKOS_LAMBDA(const int k, const int j, const int i) {
-        const Real rho_average =
-            0.25 * (primitive(RHO, k, j, i) +
-                    primitive(RHO, k, j, i - 1) +
-                    primitive(RHO, k, j - 1, i) +
-                    primitive(RHO, k, j - 1, i - 1));
-        const Real expr = rho_average - aphi_rho_cut;
-        vectorPotential(k - kb.s, j - jb.s, i - ib.s) =
-            (expr > 0.0) ? expr : 0.0;
-      });
+  Real local_rhomax = 0.0;
+  Real local_umax = 0.0;
 
-  pmb->par_for(
-      PARTHENON_AUTO_LABEL, kb_interior.s, kb_interior.e, jb_interior.s,
-      jb_interior.e, ib_interior.s, ib_interior.e,
-      KOKKOS_LAMBDA(const int k, const int j, const int i) {
-        const int kk = k - kb.s;
-        const int jj = j - jb.s;
-        const int ii = i - ib.s;
+  for (const auto &pmb : pmesh->block_list) {
+    auto &resource = pmb->meshblock_data.Get();
+    PackIndexMap primitiveIndexMap;
+    const std::vector<std::string> primitive_tags = {
+        "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
+        "electron_entropy"};
+    auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
 
-        const Real sqrt_abs_gdet = Kokkos::sqrt(
-            Kokkos::fabs(metric_determinant(CENTER, k, j, i)));
-        const Real dx1 = coords.Dxc<X1DIR>(i);
-        const Real dx2 = coords.Dxc<X2DIR>(j);
+    auto cellbounds = pmb->cellbounds;
+    const auto ib = cellbounds.GetBoundsI(IndexDomain::entire);
+    const auto jb = cellbounds.GetBoundsJ(IndexDomain::entire);
+    const auto kb = cellbounds.GetBoundsK(IndexDomain::entire);
 
-        const Real a00 = vectorPotential(kk, jj - 1, ii - 1);
-        const Real a01 = vectorPotential(kk, jj, ii - 1);
-        const Real a10 = vectorPotential(kk, jj - 1, ii);
-        const Real a11 = vectorPotential(kk, jj, ii);
+    Real block_rhomax = 0.0;
+    Real block_umax = 0.0;
 
-        primitive(BX1, k, j, i) =
-            -(a00 - a01 + a10 - a11) / (2.0 * dx2 * sqrt_abs_gdet);
-        primitive(BX2, k, j, i) =
-            (a00 + a01 - a10 - a11) / (2.0 * dx1 * sqrt_abs_gdet);
-      });
+    pmb->par_reduce(
+        PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i, Real &local_max) {
+          local_max = Kokkos::max(local_max, primitive(RHO, k, j, i));
+        },
+        Kokkos::Max<Real>(block_rhomax));
 
-  Real bsq_max = 0.0;
-  pmb->par_reduce(
-      PARTHENON_AUTO_LABEL, kb_interior.s, kb_interior.e, jb_interior.s,
-      jb_interior.e, ib_interior.s, ib_interior.e,
-      KOKKOS_LAMBDA(const int k, const int j, const int i,
-                    Real &local_bsq_max) {
-        Real gcov[4][4];
-        Real gcon[4][4];
-        for (int row = 0; row < 4; ++row) {
-          for (int col = 0; col < 4; ++col) {
-            gcov[row][col] =
-                covariant_metric(CENTER, col, row, k, j, i);
-            gcon[row][col] =
-                contravariant_metric(CENTER, col, row, k, j, i);
+    pmb->par_reduce(
+        PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i, Real &local_max) {
+          local_max = Kokkos::max(local_max, primitive(ENY, k, j, i));
+        },
+        Kokkos::Max<Real>(block_umax));
+
+    local_rhomax = Kokkos::max(local_rhomax, block_rhomax);
+    local_umax = Kokkos::max(local_umax, block_umax);
+  }
+
+#ifdef MPI_PARALLEL
+  Real global_rhomax = local_rhomax;
+  Real global_umax = local_umax;
+  PARTHENON_MPI_CHECK(MPI_Allreduce(MPI_IN_PLACE, &global_rhomax, 1,
+                                    MPI_PARTHENON_REAL, MPI_MAX, MPI_COMM_WORLD));
+  PARTHENON_MPI_CHECK(MPI_Allreduce(MPI_IN_PLACE, &global_umax, 1,
+                                    MPI_PARTHENON_REAL, MPI_MAX, MPI_COMM_WORLD));
+#else
+  const Real global_rhomax = local_rhomax;
+  const Real global_umax = local_umax;
+#endif
+
+  if (Globals::my_rank == 0) {
+    printf("Maximum initial density: %e\n", global_rhomax);
+    printf("Maximum initial energy: %e\n", global_umax);
+  }
+
+  for (const auto &pmb : pmesh->block_list) {
+    auto &resource = pmb->meshblock_data.Get();
+    PackIndexMap primitiveIndexMap;
+    const std::vector<std::string> primitive_tags = {
+        "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
+        "electron_entropy"};
+    auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
+
+    auto covariant_metric = resource->Get("covariant_metric").data;
+    auto contravariant_metric = resource->Get("contravariant_metric").data;
+    auto metric_determinant = resource->Get("metric_determinant").data;
+
+    auto cellbounds = pmb->cellbounds;
+    const auto ib = cellbounds.GetBoundsI(IndexDomain::entire);
+    const auto jb = cellbounds.GetBoundsJ(IndexDomain::entire);
+    const auto kb = cellbounds.GetBoundsK(IndexDomain::entire);
+    const auto ib_interior = cellbounds.GetBoundsI(IndexDomain::interior);
+    const auto jb_interior = cellbounds.GetBoundsJ(IndexDomain::interior);
+    const auto kb_interior = cellbounds.GetBoundsK(IndexDomain::interior);
+    auto coords = pmb->coords;
+
+    pmb->par_for(
+        PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i) {
+          primitive(RHO, k, j, i) /= global_rhomax;
+          primitive(ENY, k, j, i) /= global_rhomax;
+        });
+
+    const int ni = ib.e - ib.s + 1;
+    const int nj = jb.e - jb.s + 1;
+    const int nk = kb.e - kb.s + 1;
+    Kokkos::View<Real ***> vectorPotential("vectorPotential", nk, nj, ni);
+
+    pmb->par_for(
+        PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i) {
+          vectorPotential(k - kb.s, j - jb.s, i - ib.s) = 0.0;
+        });
+
+    pmb->par_for(
+        PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s + 1, jb.e, ib.s + 1, ib.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i) {
+          const Real rho_average =
+              0.25 * (primitive(RHO, k, j, i) + primitive(RHO, k, j, i - 1) +
+                      primitive(RHO, k, j - 1, i) +
+                      primitive(RHO, k, j - 1, i - 1));
+          const Real expr = rho_average - aphi_rho_cut;
+          vectorPotential(k - kb.s, j - jb.s, i - ib.s) =
+              (expr > 0.0) ? expr : 0.0;
+        });
+
+    pmb->par_for(
+        PARTHENON_AUTO_LABEL, kb_interior.s, kb_interior.e, jb_interior.s,
+        jb_interior.e, ib_interior.s, ib_interior.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i) {
+          const int kk = k - kb.s;
+          const int jj = j - jb.s;
+          const int ii = i - ib.s;
+
+          const Real sqrt_abs_gdet = Kokkos::sqrt(
+              Kokkos::fabs(metric_determinant(CENTER, k, j, i)));
+          const Real dx1 = coords.Dxc<X1DIR>(i);
+          const Real dx2 = coords.Dxc<X2DIR>(j);
+
+          const Real a00 = vectorPotential(kk, jj - 1, ii - 1);
+          const Real a01 = vectorPotential(kk, jj, ii - 1);
+          const Real a10 = vectorPotential(kk, jj - 1, ii);
+          const Real a11 = vectorPotential(kk, jj, ii);
+
+          primitive(BX1, k, j, i) =
+              -(a00 - a01 + a10 - a11) / (2.0 * dx2 * sqrt_abs_gdet);
+          primitive(BX2, k, j, i) =
+              (a00 + a01 - a10 - a11) / (2.0 * dx1 * sqrt_abs_gdet);
+        });
+  }
+
+  Real local_bsq_max = 0.0;
+  for (const auto &pmb : pmesh->block_list) {
+    auto &resource = pmb->meshblock_data.Get();
+    PackIndexMap primitiveIndexMap;
+    const std::vector<std::string> primitive_tags = {
+        "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
+        "electron_entropy"};
+    auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
+
+    auto covariant_metric = resource->Get("covariant_metric").data;
+    auto contravariant_metric = resource->Get("contravariant_metric").data;
+
+    auto cellbounds = pmb->cellbounds;
+    const auto ib_interior = cellbounds.GetBoundsI(IndexDomain::interior);
+    const auto jb_interior = cellbounds.GetBoundsJ(IndexDomain::interior);
+    const auto kb_interior = cellbounds.GetBoundsK(IndexDomain::interior);
+
+    Real block_bsq_max = 0.0;
+    pmb->par_reduce(
+        PARTHENON_AUTO_LABEL, kb_interior.s, kb_interior.e, jb_interior.s,
+        jb_interior.e, ib_interior.s, ib_interior.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i,
+                      Real &local_max) {
+          Real gcov[4][4];
+          Real gcon[4][4];
+          for (int row = 0; row < 4; ++row) {
+            for (int col = 0; col < 4; ++col) {
+              gcov[row][col] = covariant_metric(CENTER, col, row, k, j, i);
+              gcon[row][col] = contravariant_metric(CENTER, col, row, k, j, i);
+            }
           }
-        }
 
-        Real primitive_c_array[NPRIM];
-        for (int index = 0; index < NPRIM; ++index) {
-          primitive_c_array[index] = primitive(index, k, j, i);
-        }
+          Real primitive_c_array[NPRIM];
+          for (int index = 0; index < NPRIM; ++index) {
+            primitive_c_array[index] = primitive(index, k, j, i);
+          }
 
-        State state;
-        CalculateState(primitive_c_array, gcov, gcon, state);
-        local_bsq_max = Kokkos::max(local_bsq_max, state.bsq);
-      },
-      Kokkos::Max<Real>(bsq_max));
+          State state;
+          CalculateState(primitive_c_array, gcov, gcon, state);
+          local_max = Kokkos::max(local_max, state.bsq);
+        },
+        Kokkos::Max<Real>(block_bsq_max));
+
+    local_bsq_max = Kokkos::max(local_bsq_max, block_bsq_max);
+  }
+
+#ifdef MPI_PARALLEL
+  Real global_bsq_max = local_bsq_max;
+  PARTHENON_MPI_CHECK(MPI_Allreduce(MPI_IN_PLACE, &global_bsq_max, 1,
+                                    MPI_PARTHENON_REAL, MPI_MAX, MPI_COMM_WORLD));
+#else
+  const Real global_bsq_max = local_bsq_max;
+#endif
 
   const Real beta_min =
-      2.0 * (kAdiabaticIndex - 1.0) * umax / (bsq_max + 1.0e-30);
+      2.0 * (kAdiabaticIndex - 1.0) * (global_umax / global_rhomax) /
+      (global_bsq_max + 1.0e-30);
   const Real magnetic_norm = Kokkos::sqrt(beta_min / beta_target);
 
-  pmb->par_for(
-      PARTHENON_AUTO_LABEL, kb_interior.s, kb_interior.e, jb_interior.s,
-      jb_interior.e, ib_interior.s, ib_interior.e,
-      KOKKOS_LAMBDA(const int k, const int j, const int i) {
-        primitive(BX1, k, j, i) *= magnetic_norm;
-        primitive(BX2, k, j, i) *= magnetic_norm;
-        primitive(BX3, k, j, i) *= magnetic_norm;
-      });
+  for (const auto &pmb : pmesh->block_list) {
+    auto &resource = pmb->meshblock_data.Get();
+    PackIndexMap primitiveIndexMap;
+    const std::vector<std::string> primitive_tags = {
+        "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
+        "electron_entropy"};
+    auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
 
-  printf("Maximum initial magnetic bsq: %e\n", bsq_max);
-  printf("Target beta: %e, beta_min: %e, magnetic normalization: %e\n",
-         beta_target, beta_min, magnetic_norm);
+    auto cellbounds = pmb->cellbounds;
+    const auto ib_interior = cellbounds.GetBoundsI(IndexDomain::interior);
+    const auto jb_interior = cellbounds.GetBoundsJ(IndexDomain::interior);
+    const auto kb_interior = cellbounds.GetBoundsK(IndexDomain::interior);
+
+    pmb->par_for(
+        PARTHENON_AUTO_LABEL, kb_interior.s, kb_interior.e, jb_interior.s,
+        jb_interior.e, ib_interior.s, ib_interior.e,
+        KOKKOS_LAMBDA(const int k, const int j, const int i) {
+          primitive(BX1, k, j, i) *= magnetic_norm;
+          primitive(BX2, k, j, i) *= magnetic_norm;
+          primitive(BX3, k, j, i) *= magnetic_norm;
+        });
+  }
+
+  if (Globals::my_rank == 0) {
+    printf("Maximum initial magnetic bsq: %e\n", global_bsq_max);
+    printf("Target beta: %e, beta_min: %e, magnetic normalization: %e\n",
+           beta_target, beta_min, magnetic_norm);
+  }
 }

@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-#ifndef PANGU_SRC_METRIC_BOYERLINDQUIST_H
-#define PANGU_SRC_METRIC_BOYERLINDQUIST_H
+#ifndef PANGU_SRC_METRIC_BL_H
+#define PANGU_SRC_METRIC_BL_H
 
 #include <Kokkos_Core.hpp>
 
@@ -10,7 +10,7 @@
 
 #include "basic_types.hpp"
 
-namespace BoyerLindquist {
+namespace BL {
 
 KOKKOS_INLINE_FUNCTION
 void CalculatePhysicalCoordinates(const parthenon::Real x[4],
@@ -108,4 +108,4 @@ void CalculateCodeMetric(const parthenon::Real x_code[4],
 
 }  
 
-#endif  // PANGU_SRC_METRIC_BOYERLINDQUIST_H
+#endif  // PANGU_SRC_METRIC_BL_H

@@ -101,12 +101,9 @@ echo "[run.sh] Run dir: $RUN_DIR"
 
 cd "$RUN_DIR"
 
-if [[ "$MPI_NP" -gt 1 ]]; then
-  if command -v mpirun >/dev/null 2>&1; then
-    exec mpirun -np "$MPI_NP" "$EXE_PATH" -i "$INPUT_FILE" "$@"
-  fi
-  echo "ERROR: MPI requested (np=$MPI_NP), but mpirun is not available"
+if ! command -v mpirun >/dev/null 2>&1; then
+  echo "ERROR: mpirun is not available"
   exit 4
 fi
 
-exec "$EXE_PATH" -i "$INPUT_FILE" "$@"
+exec mpirun -np "$MPI_NP" "$EXE_PATH" -i "$INPUT_FILE" "$@"

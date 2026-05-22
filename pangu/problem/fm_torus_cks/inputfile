@@ -1,17 +1,17 @@
 <parthenon/job>
-problem_id = bondi_flow
+problem_id = fm_torus
 
 <parthenon/mesh>
 refinement = none
 numlevel = 1
 
-nx1 = 256
+nx1 = 1024
 x1min = 0.2
-x1max = 8.0
+x1max = 6.0
 ix1_bc = outflow
 ox1_bc = outflow
 
-nx2 = 1
+nx2 = 512
 x2min = -1.0
 x2max = 1.0
 ix2_bc = reflecting
@@ -24,31 +24,31 @@ ix3_bc = periodic
 ox3_bc = periodic
 
 <parthenon/meshblock>
-nx1 = 256
-nx2 = 1
+nx1 = 512
+nx2 = 512
 nx3 = 1
 
 <parthenon/time>
 dt_factor = 1.3
 dt_init = 1e-5
 nlim = -1
-tlim = 20000.0
+tlim = 2000
 integrator = rk2
 ncycle_out_mesh = -10000
 
 <core>
 cfl_number = 0.4
 adiabatic_index = 1.666666667
-q_factor_floor = 0.5
+q_factor_floor = 1.0
 q_factor_ceiling = 1.0
-
-<metric>
-name = MKS
-h = 0.0
-a = 0.0
+density_floor = 1e-5
+energy_floor = 4.641588833612779e-9
+density_floor_pow = -1.5
+energy_floor_pow = -2.5
 
 <electrons>
 on = true
+# Select one heating model: constant, howes, kawazura, werner, rowan, sharma.
 model = constant
 gamma_e = 1.333333333
 gamma_p = 1.666666667
@@ -60,14 +60,21 @@ fel_constant = 0.1
 ratio_min = 0.001
 ratio_max = 1000.0
 
-<bondi>
-mdot = 1.0
-rs = 8.0
-rin = 2.1
-atmosphere_factor = 1.0e-7
+<metric>
+name = CKS
+h = 0.7
+a = 0.9375
+
+<fm_torus>
+rin = 6.0
+rmax = 12.0
+kappa = 1e-3
+perturbation = 4e-2
+beta = 100.0
+aphi_rho_cut = 0.2
 
 <parthenon/output0>
 file_type = hdf5
 write_xdmf = true
-dt = 10
+dt = 1
 variables = density, entropy, electron_entropy
