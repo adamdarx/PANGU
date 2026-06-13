@@ -93,7 +93,7 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
       std::vector<int>({3}));
   package_core->AddField(std::string("weighted_velocity"), m);
   m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost},
+      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost, parthenon::Metadata::OneCopy},
       std::vector<int>({3}));
   package_core->AddField(std::string("alfven"), m);
   m = parthenon::Metadata(
@@ -102,7 +102,7 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
       std::vector<int>({3}));
   package_core->AddField(std::string("magnetic_field"), m);
   m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost},
+      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost, parthenon::Metadata::OneCopy},
       std::vector<int>({3}));
   package_core->AddField(std::string("electric_field"), m);
   m = parthenon::Metadata(
@@ -111,7 +111,7 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
       std::vector<int>({NPRIM}));
   package_core->AddField(std::string("conservative"), m);
   m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost});
+      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost, parthenon::Metadata::OneCopy});
   package_core->AddField(std::string("flag"), m);
 
   package_core->EstimateTimestepBlock = EstimateTimestepBlock;
@@ -130,22 +130,22 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
 
   parthenon::Metadata m;
   m = parthenon::Metadata(
-      {parthenon::Metadata::Cell},
+      {parthenon::Metadata::Cell, parthenon::Metadata::OneCopy},
       std::vector<int>({4, 4, 4}));
   package_metric->AddField(std::string("covariant_metric"), m);
 
   m = parthenon::Metadata(
-      {parthenon::Metadata::Cell},
+      {parthenon::Metadata::Cell, parthenon::Metadata::OneCopy},
       std::vector<int>({4, 4, 4}));
   package_metric->AddField(std::string("contravariant_metric"), m);
 
   m = parthenon::Metadata(
-      {parthenon::Metadata::Cell},
+      {parthenon::Metadata::Cell, parthenon::Metadata::OneCopy},
       std::vector<int>({4}));
   package_metric->AddField(std::string("metric_determinant"), m);
 
   m = parthenon::Metadata(
-      {parthenon::Metadata::Cell},
+      {parthenon::Metadata::Cell, parthenon::Metadata::OneCopy},
       std::vector<int>({4, 4, 4}));
   package_metric->AddField(std::string("connection"), m);
 
