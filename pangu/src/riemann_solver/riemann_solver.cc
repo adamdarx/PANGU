@@ -8,7 +8,6 @@
 #include <string>
 
 #include "riemann_solver/hll.h"
-#include "riemann_solver/hlld.h"
 #include "riemann_solver/laxf.h"
 
 parthenon::TaskStatus CalculateFluxes(parthenon::MeshData<parthenon::Real> *md) {
@@ -21,9 +20,6 @@ parthenon::TaskStatus CalculateFluxes(parthenon::MeshData<parthenon::Real> *md) 
   }
   if (solver_name == "hll") {
     return CalculateHLL(md);
-  }
-  if (solver_name == "hlld") {
-    return CalculateHLLD(md);
   }
 
   throw std::invalid_argument("Unknown Riemann solver: " + solver_name);

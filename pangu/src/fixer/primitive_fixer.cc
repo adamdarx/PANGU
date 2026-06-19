@@ -59,8 +59,8 @@ parthenon::TaskStatus FixPrimitive(parthenon::MeshData<parthenon::Real> *md) {
         const auto z = coords.Xc<X3DIR>(k);
         const auto r = Kokkos::sqrt(x * x + y * y + z * z);
 
-        Real rho_floor = density_floor * Kokkos::pow(r, density_floor_pow);
-        const Real eng_floor = energy_floor * Kokkos::pow(r, energy_floor_pow);
+        Real rho_floor = density_floor;
+        const Real eng_floor = energy_floor;
 
         Real gcov[4][4], gcon[4][4];
         for (int row = 0; row < 4; ++row) {
@@ -93,10 +93,6 @@ parthenon::TaskStatus FixPrimitive(parthenon::MeshData<parthenon::Real> *md) {
           primitive(b, RHO, k, j, i) = rho_floor;
         if (primitive(b, ENY, k, j, i) < eng_floor)
           primitive(b, ENY, k, j, i) = eng_floor;
-        if (r < 1.6)
-          for (int index = 0; index < NPRIM; ++index) {
-            primitive(b, index, k, j, i) = 1e-10;
-          }
 
         const Real u1 = primitive(b, UX1, k, j, i);
         const Real u2 = primitive(b, UX2, k, j, i);

@@ -5,7 +5,7 @@ problem_id = shock_tube
 refinement = none
 numlevel = 3
 
-nx1 = 256
+nx1 = 1024
 x1min = -0.5
 x1max = 0.5
 ix1_bc = outflow
@@ -24,7 +24,7 @@ ix3_bc = periodic
 ox3_bc = periodic
 
 <parthenon/meshblock>
-nx1 = 256
+nx1 = 1024
 nx2 = 1
 nx3 = 1
 
@@ -37,15 +37,12 @@ integrator = rk2
 ncycle_out_mesh = -10000
 
 <core>
-cfl_number = 0.8
-adiabatic_index = 1.666666667
-q_factor_floor = 1
-q_factor_ceiling = 1.0
+cfl_number = 0.4
+adiabatic_index = 2
+riemann_solver = hlld
 
 <metric>
 name = Minkowski
-h = 0.0
-a = 0.0
 
 <electrons>
 on = true

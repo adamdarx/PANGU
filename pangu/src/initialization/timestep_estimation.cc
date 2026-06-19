@@ -47,10 +47,10 @@ parthenon::Real EstimateTimestepMesh(
     Real minimumOfTimestepX2 = std::numeric_limits<Real>::max();
     Real minimumOfTimestepX3 = std::numeric_limits<Real>::max();
 
-    PackIndexMap alfvenVelocityIndexMap;
-    const std::vector<std::string> alfven_tags = {"alfven"};
-    const auto AlfvenVelocity =
-        mbd->PackVariables(alfven_tags, alfvenVelocityIndexMap);
+    PackIndexMap fastMsIndexMap;
+    const std::vector<std::string> fast_ms_tags = {"alfven"};
+    const auto FastMagnetosonicSpeed =
+        mbd->PackVariables(fast_ms_tags, fastMsIndexMap);
 
     if (offset_x1)
       pmb->par_reduce(
@@ -59,7 +59,7 @@ parthenon::Real EstimateTimestepMesh(
           bound_x2_interior.s, bound_x2_interior.e,
           bound_x1_interior.s, bound_x1_interior.e,
           KOKKOS_LAMBDA(const int k, const int j, const int i, Real &timestepX1) {
-            const Real c = AlfvenVelocity(Vector3D::X1, k, j, i);
+            const Real c = FastMagnetosonicSpeed(Vector3D::X1, k, j, i);
             const Real dt = kCflNumber * Coords.Dx<X1DIR>() / c;
             if (timestepX1 > dt) timestepX1 = dt;
           },
@@ -72,7 +72,7 @@ parthenon::Real EstimateTimestepMesh(
           bound_x2_interior.s, bound_x2_interior.e,
           bound_x1_interior.s, bound_x1_interior.e,
           KOKKOS_LAMBDA(const int k, const int j, const int i, Real &timestepX2) {
-            const Real c = AlfvenVelocity(Vector3D::X2, k, j, i);
+            const Real c = FastMagnetosonicSpeed(Vector3D::X2, k, j, i);
             const Real dt = kCflNumber * Coords.Dx<X2DIR>() / c;
             if (timestepX2 > dt) timestepX2 = dt;
           },
@@ -85,7 +85,7 @@ parthenon::Real EstimateTimestepMesh(
           bound_x2_interior.s, bound_x2_interior.e,
           bound_x1_interior.s, bound_x1_interior.e,
           KOKKOS_LAMBDA(const int k, const int j, const int i, Real &timestepX3) {
-            const Real c = AlfvenVelocity(Vector3D::X3, k, j, i);
+            const Real c = FastMagnetosonicSpeed(Vector3D::X3, k, j, i);
             const Real dt = kCflNumber * Coords.Dx<X3DIR>() / c;
             if (timestepX3 > dt) timestepX3 = dt;
           },

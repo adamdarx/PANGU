@@ -11,7 +11,7 @@
 #include <basic_types.hpp>
 #include "initialization/variable_mnemonics.h"
 #include "interpolation/interpolater_mc.h"
-#include "physics/alfven_velocity.h"
+#include "physics/fast_magnetosonic_speed.h"
 #include "physics/contravariant_flux.h"
 
 parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
@@ -38,10 +38,10 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
   const std::vector<std::string> conservative_tags = {"conservative"};
   auto conservative =
       md->PackVariablesAndFluxes(conservative_tags, conservativeIndexMap);
-  PackIndexMap alfvenVelocityIndexMap;
-  const std::vector<std::string> alfven_tags = {"alfven"};
-  auto AlfvenVelocity =
-      md->PackVariables(alfven_tags, alfvenVelocityIndexMap);
+  PackIndexMap fastMsIndexMap;
+  const std::vector<std::string> fast_ms_tags = {"alfven"};
+  auto FastMagnetosonicSpeed =
+      md->PackVariables(fast_ms_tags, fastMsIndexMap);
 
   auto covariant_metric =
       md->PackVariables(std::vector<std::string>{"covariant_metric"});
@@ -94,23 +94,20 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
           }
         }
 
-        Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
-        Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-        CalculateAlfvenVelocity(
+        Real fastMaxL, fastMaxR;
+        Real fastMinL, fastMinR;
+        CalculateFastMagnetosonicSpeed(
             kAdiabaticIndex, primitiveLeft, gcovFace, gconFace, X1DIR,
-            maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-        CalculateAlfvenVelocity(
+            fastMaxL, fastMinL);
+        CalculateFastMagnetosonicSpeed(
             kAdiabaticIndex, primitiveRight, gcovFace, gconFace, X1DIR,
-            maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
-        const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(
-            Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft),
-                        maximumAlfvenVelocityRight));
-        const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(
-            Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft),
-                        -minimumAlfvenVelocityRight));
-        const auto AlfvenVelocityCenter = Kokkos::max(
-            MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
-        AlfvenVelocity(b, Vector3D::X1, k, j, i) = AlfvenVelocityCenter;
+            fastMaxR, fastMinR);
+        const auto maxFastCenter = Kokkos::fabs(
+            Kokkos::max(Kokkos::max(0., fastMaxL), fastMaxR));
+        const auto minFastCenter = Kokkos::fabs(
+            Kokkos::max(Kokkos::max(0., -fastMinL), -fastMinR));
+        const auto fastMsCenter = Kokkos::max(maxFastCenter, minFastCenter);
+        FastMagnetosonicSpeed(b, Vector3D::X1, k, j, i) = fastMsCenter;
 
         const auto MetricDeterminantFace =
             metric_determinant(b, FACEX1, k, j, i);
@@ -129,11 +126,11 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
 
         for (int index = 0; index < NPRIM; ++index) {
           conservative(b).flux(X1DIR, index, k, j, i) =
-              (MaximumAlfvenVelocityCenter * fluxLeft[index] +
-               MinimumAlfvenVelocityCenter * fluxRight[index] -
-               MaximumAlfvenVelocityCenter * MinimumAlfvenVelocityCenter *
+              (maxFastCenter * fluxLeft[index] +
+               minFastCenter * fluxRight[index] -
+               maxFastCenter * minFastCenter *
                    (conservativeRight[index] - conservativeLeft[index])) /
-              (MaximumAlfvenVelocityCenter + MinimumAlfvenVelocityCenter + 1e-20);
+              (maxFastCenter + minFastCenter + 1e-20);
         }
       });
 
@@ -171,23 +168,21 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
             }
           }
 
-          Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
-          Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-          CalculateAlfvenVelocity(
+          Real fastMaxL, fastMaxR;
+          Real fastMinL, fastMinR;
+          CalculateFastMagnetosonicSpeed(
               kAdiabaticIndex, primitiveLeft, gcovFace, gconFace, X2DIR,
-              maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-          CalculateAlfvenVelocity(
+              fastMaxL, fastMinL);
+          CalculateFastMagnetosonicSpeed(
               kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
-              X2DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
-          const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(
-              Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft),
-                          maximumAlfvenVelocityRight));
-          const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(
-              Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft),
-                          -minimumAlfvenVelocityRight));
-          const auto AlfvenVelocityCenter = Kokkos::max(
-              MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
-          AlfvenVelocity(b, Vector3D::X2, k, j, i) = AlfvenVelocityCenter;
+              X2DIR, fastMaxR, fastMinR);
+          const auto maxFastCenter = Kokkos::fabs(
+              Kokkos::max(Kokkos::max(0., fastMaxL), fastMaxR));
+          const auto minFastCenter = Kokkos::fabs(
+              Kokkos::max(Kokkos::max(0., -fastMinL), -fastMinR));
+          const auto fastMsCenter = Kokkos::max(
+              maxFastCenter, minFastCenter);
+          FastMagnetosonicSpeed(b, Vector3D::X2, k, j, i) = fastMsCenter;
 
           const auto MetricDeterminantFace =
               metric_determinant(b, FACEX2, k, j, i);
@@ -206,11 +201,11 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
 
           for (int index = 0; index < NPRIM; ++index) {
             conservative(b).flux(X2DIR, index, k, j, i) =
-                (MaximumAlfvenVelocityCenter * fluxLeft[index] +
-                 MinimumAlfvenVelocityCenter * fluxRight[index] -
-                 MaximumAlfvenVelocityCenter * MinimumAlfvenVelocityCenter *
+                (maxFastCenter * fluxLeft[index] +
+                 minFastCenter * fluxRight[index] -
+                 maxFastCenter * minFastCenter *
                      (conservativeRight[index] - conservativeLeft[index])) /
-                (MaximumAlfvenVelocityCenter + MinimumAlfvenVelocityCenter + 1e-20);
+                (maxFastCenter + minFastCenter + 1e-20);
           }
         });
 
@@ -249,23 +244,21 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
             }
           }
 
-          Real maximumAlfvenVelocityLeft, maximumAlfvenVelocityRight;
-          Real minimumAlfvenVelocityLeft, minimumAlfvenVelocityRight;
-          CalculateAlfvenVelocity(
+          Real fastMaxL, fastMaxR;
+          Real fastMinL, fastMinR;
+          CalculateFastMagnetosonicSpeed(
               kAdiabaticIndex, primitiveLeft, gcovFace, gconFace, X3DIR,
-              maximumAlfvenVelocityLeft, minimumAlfvenVelocityLeft);
-          CalculateAlfvenVelocity(
+              fastMaxL, fastMinL);
+          CalculateFastMagnetosonicSpeed(
               kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
-              X3DIR, maximumAlfvenVelocityRight, minimumAlfvenVelocityRight);
-          const auto MaximumAlfvenVelocityCenter = Kokkos::fabs(
-              Kokkos::max(Kokkos::max(0., maximumAlfvenVelocityLeft),
-                          maximumAlfvenVelocityRight));
-          const auto MinimumAlfvenVelocityCenter = Kokkos::fabs(
-              Kokkos::max(Kokkos::max(0., -minimumAlfvenVelocityLeft),
-                          -minimumAlfvenVelocityRight));
-          const auto AlfvenVelocityCenter = Kokkos::max(
-              MaximumAlfvenVelocityCenter, MinimumAlfvenVelocityCenter);
-          AlfvenVelocity(b, Vector3D::X3, k, j, i) = AlfvenVelocityCenter;
+              X3DIR, fastMaxR, fastMinR);
+          const auto maxFastCenter = Kokkos::fabs(
+              Kokkos::max(Kokkos::max(0., fastMaxL), fastMaxR));
+          const auto minFastCenter = Kokkos::fabs(
+              Kokkos::max(Kokkos::max(0., -fastMinL), -fastMinR));
+          const auto fastMsCenter = Kokkos::max(
+              maxFastCenter, minFastCenter);
+          FastMagnetosonicSpeed(b, Vector3D::X3, k, j, i) = fastMsCenter;
 
           const auto MetricDeterminantFace =
               metric_determinant(b, FACEX3, k, j, i);
@@ -284,11 +277,11 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
 
           for (int index = 0; index < NPRIM; ++index) {
             conservative(b).flux(X3DIR, index, k, j, i) =
-                (MaximumAlfvenVelocityCenter * fluxLeft[index] +
-                 MinimumAlfvenVelocityCenter * fluxRight[index] -
-                 MaximumAlfvenVelocityCenter * MinimumAlfvenVelocityCenter *
+                (maxFastCenter * fluxLeft[index] +
+                 minFastCenter * fluxRight[index] -
+                 maxFastCenter * minFastCenter *
                      (conservativeRight[index] - conservativeLeft[index])) /
-                (MaximumAlfvenVelocityCenter + MinimumAlfvenVelocityCenter + 1e-20);
+                (maxFastCenter + minFastCenter + 1e-20);
           }
         });
 

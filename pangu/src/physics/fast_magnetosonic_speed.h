@@ -1,15 +1,15 @@
 // Copyright (c) 2026 Yuehang Li.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-#ifndef PANGU_SRC_PHYSICS_ALFVENVELOCITY_H
-#define PANGU_SRC_PHYSICS_ALFVENVELOCITY_H
+#ifndef PANGU_SRC_PHYSICS_FASTMAGNETOSONICSPEED_H
+#define PANGU_SRC_PHYSICS_FASTMAGNETOSONICSPEED_H
 #include <basic_types.hpp>
 #include "initialization/variable_mnemonics.h"
 #include "metric/tensor_algebra.h"
 #include "physics/state_calculation.h"
 
 KOKKOS_INLINE_FUNCTION
-void CalculateAlfvenVelocity(
+void CalculateFastMagnetosonicSpeed(
     const parthenon::Real gamma,
     parthenon::Real prim[NPRIM],
     const parthenon::Real gcov[4][4], const parthenon::Real gcon[4][4],
@@ -80,4 +80,4 @@ void CalculateAlfvenVelocity(
   }
 }
 
-#endif  // PANGU_SRC_PHYSICS_ALFVENVELOCITY_H
+#endif  // PANGU_SRC_PHYSICS_FASTMAGNETOSONICSPEED_H
