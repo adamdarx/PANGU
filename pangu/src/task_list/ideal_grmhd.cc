@@ -18,8 +18,6 @@ Simulator::Simulator(ParameterInput *pin, ApplicationInput *app_in, Mesh *pm)
 
   pin->CheckDesired("core", "cfl_number");
   pin->CheckDesired("core", "adiabatic_index");
-  pin->CheckDesired("core", "q_factor_floor");
-  pin->CheckDesired("core", "q_factor_ceiling");
 }
 
 TaskCollection Simulator::MakeTaskCollection(BlockList_t &blocks,
@@ -65,10 +63,11 @@ TaskCollection Simulator::MakeTaskCollection(BlockList_t &blocks,
     auto calc_cons =
         tl.AddTask(fix_prim, CalculateConservative, mc0.get());
     auto calc_flux = tl.AddTask(calc_cons, CalculateFluxes, mc0.get());
-    auto ct_task =
-        tl.AddTask(calc_flux, ConstraintedTransport, mc0.get());
+    const auto enable_B_ct = pmesh->packages.Get("core")->Param<bool>("enable_B");
+    auto ct_task = calc_flux;
+    if (enable_B_ct) ct_task = tl.AddTask(calc_flux, ConstraintedTransport, mc0.get());
 
-    // ---- Flux divergence + RK update (mc0 → mdudt → mc1) ----
+    // ---- Flux divergence + RK update (mc0  mdudt  mc1) ----
     auto set_flx = parthenon::AddFluxCorrectionTasks(
         ct_task, tl, mc0, pmesh->multilevel);
     auto flux_div = tl.AddTask(set_flx, FluxDivergence<MeshData<Real>>,
@@ -82,9 +81,12 @@ TaskCollection Simulator::MakeTaskCollection(BlockList_t &blocks,
     auto source_task =
         tl.AddTask(update, AddGeometricSource, mc1.get(), beta * dt);
     auto recover_task = tl.AddTask(source_task, Recovery, mc1.get());
-    auto electron_heat =
-        tl.AddTask(recover_task, ApplyElectronHeating, mc1.get());
-    auto fix_rec = tl.AddTask(electron_heat, FixRecovery, mc1.get());
+    const auto enable_heating =
+        pmesh->packages.Get("core")->Param<bool>("enable_heating");
+    auto post_recover = recover_task;
+    if (enable_heating)
+      post_recover = tl.AddTask(recover_task, ApplyElectronHeating, mc1.get());
+    auto fix_rec = tl.AddTask(post_recover, FixRecovery, mc1.get());
   }
 
   // Region 2: Boundary conditions, fill derived, timestep estimation.

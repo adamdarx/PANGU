@@ -16,6 +16,7 @@
 #include "physics/state_calculation.h"
 #include "prolong_restrict/prolong_restrict.hpp"
 #include "task_list/task_list.h"
+#include <parthenon/package.hpp>
 
 KOKKOS_FUNCTION
 Real lfish_calc(Real r, Real a) {
@@ -106,9 +107,13 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
   auto &resource = pmb->meshblock_data.Get();
   const Real kAdiabaticIndex = package_core->Param<Real>("adiabatic_index");
   const Real kFelInit = package_core->Param<Real>("fel_0");
+  const auto enable_B = package_core->Param<bool>("enable_B");
+  const auto enable_heating = package_core->Param<bool>("enable_heating");
+  const auto &fnames =
+      package_core->Param<std::vector<std::string>>("primitive_field_names");
 
-  const Real kerr_h = pin->GetOrAddReal("metric", "h", 0.7);
-  const Real kerr_a = pin->GetOrAddReal("metric", "a", 0.9375);
+  const Real kerr_h = pin->GetOrAddReal("metric", "h", 0.0);
+  const Real kerr_a = pin->GetOrAddReal("metric", "a", 0.0);
 
   const Real rin = pin->GetOrAddReal("fm_torus", "rin", 6.0);
   const Real rmax = pin->GetOrAddReal("fm_torus", "rmax", 12.0);
@@ -130,12 +135,15 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
       DDin * kerr_a * kerr_a * sthin * sthin;
   const Real SSin = rin * rin + kerr_a * kerr_a * cthin * cthin;
 
-  PackIndexMap primitiveIndexMap;
-  const std::vector<std::string> primitive_tags = {
-      "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
-      "electron_entropy"
-  };
-  auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
+  PackIndexMap idxMap;
+  auto primitive = resource->PackVariables(fnames, idxMap);
+
+  const int iRHO = idxMap["density"].first;
+  const int iENY = idxMap["energy"].first;
+  const int iUX  = idxMap["weighted_velocity"].first;
+  const int iENT = idxMap["entropy"].first;
+  const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
+  const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
 
   auto covariant_metric = resource->Get("covariant_metric").data;
   auto contravariant_metric = resource->Get("contravariant_metric").data;
@@ -325,16 +333,20 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
           }
         }
 
-        primitive(RHO, k, j, i) = rho;
-        primitive(ENY, k, j, i) = eint;
-        primitive(UX1, k, j, i) = wvx1;
-        primitive(UX2, k, j, i) = wvx2;
-        primitive(UX3, k, j, i) = wvx3;
-        primitive(BX1, k, j, i) = 0.0;
-        primitive(BX2, k, j, i) = 0.0;
-        primitive(BX3, k, j, i) = 0.0;
-        primitive(ENT, k, j, i) = ent;
-        primitive(KEL, k, j, i) = kFelInit * ent;
+        primitive(iRHO, k, j, i) = rho;
+        primitive(iENY, k, j, i) = eint;
+        primitive(iUX, k, j, i) = wvx1;
+        primitive(iUX + 1, k, j, i) = wvx2;
+        primitive(iUX + 2, k, j, i) = wvx3;
+        if (enable_B) {
+          primitive(iBX, k, j, i) = 0.0;
+          primitive(iBX + 1, k, j, i) = 0.0;
+          primitive(iBX + 2, k, j, i) = 0.0;
+        }
+        primitive(iENT, k, j, i) = ent;
+        if (enable_heating) {
+          primitive(iKEL, k, j, i) = kFelInit * ent;
+        }
       });
 
   Real rhomax = 0.0;
@@ -344,14 +356,14 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
       PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int k, const int j, const int i, Real &local_rhomax) {
         local_rhomax =
-            Kokkos::max(local_rhomax, primitive(RHO, k, j, i));
+            Kokkos::max(local_rhomax, primitive(iRHO, k, j, i));
       },
       Kokkos::Max<Real>(rhomax));
-  
+
   pmb->par_reduce(
       PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int k, const int j, const int i, Real &local_umax) {
-        local_umax = Kokkos::max(local_umax, primitive(ENY, k, j, i));
+        local_umax = Kokkos::max(local_umax, primitive(iENY, k, j, i));
       },
       Kokkos::Max<Real>(umax));
 }
@@ -365,6 +377,10 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
 
   const auto package_core = pmesh->packages.Get("core");
   const Real kAdiabaticIndex = package_core->Param<Real>("adiabatic_index");
+  const auto enable_B = package_core->Param<bool>("enable_B");
+  const auto enable_heating = package_core->Param<bool>("enable_heating");
+  const auto &fnames =
+      package_core->Param<std::vector<std::string>>("primitive_field_names");
   const Real beta_target = pin->GetOrAddReal("fm_torus", "beta", 100.0);
   const Real aphi_rho_cut = pin->GetOrAddReal("fm_torus", "aphi_rho_cut", 0.2);
 
@@ -373,11 +389,10 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
 
   for (const auto &pmb : pmesh->block_list) {
     auto &resource = pmb->meshblock_data.Get();
-    PackIndexMap primitiveIndexMap;
-    const std::vector<std::string> primitive_tags = {
-        "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
-        "electron_entropy"};
-    auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
+    PackIndexMap idxMap;
+    auto primitive = resource->PackVariables(fnames, idxMap);
+    const int iRHO = idxMap["density"].first;
+    const int iENY = idxMap["energy"].first;
 
     auto cellbounds = pmb->cellbounds;
     const auto ib = cellbounds.GetBoundsI(IndexDomain::entire);
@@ -390,14 +405,14 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
     pmb->par_reduce(
         PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
         KOKKOS_LAMBDA(const int k, const int j, const int i, Real &local_max) {
-          local_max = Kokkos::max(local_max, primitive(RHO, k, j, i));
+          local_max = Kokkos::max(local_max, primitive(iRHO, k, j, i));
         },
         Kokkos::Max<Real>(block_rhomax));
 
     pmb->par_reduce(
         PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
         KOKKOS_LAMBDA(const int k, const int j, const int i, Real &local_max) {
-          local_max = Kokkos::max(local_max, primitive(ENY, k, j, i));
+          local_max = Kokkos::max(local_max, primitive(iENY, k, j, i));
         },
         Kokkos::Max<Real>(block_umax));
 
@@ -424,11 +439,11 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
 
   for (const auto &pmb : pmesh->block_list) {
     auto &resource = pmb->meshblock_data.Get();
-    PackIndexMap primitiveIndexMap;
-    const std::vector<std::string> primitive_tags = {
-        "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
-        "electron_entropy"};
-    auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
+    PackIndexMap idxMap;
+    auto primitive = resource->PackVariables(fnames, idxMap);
+    const int iRHO = idxMap["density"].first;
+    const int iENY = idxMap["energy"].first;
+    const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
 
     auto covariant_metric = resource->Get("covariant_metric").data;
     auto contravariant_metric = resource->Get("contravariant_metric").data;
@@ -446,9 +461,11 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
     pmb->par_for(
         PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
         KOKKOS_LAMBDA(const int k, const int j, const int i) {
-          primitive(RHO, k, j, i) /= global_rhomax;
-          primitive(ENY, k, j, i) /= global_rhomax;
+          primitive(iRHO, k, j, i) /= global_rhomax;
+          primitive(iENY, k, j, i) /= global_rhomax;
         });
+
+    if (!enable_B) continue;
 
     const int ni = ib.e - ib.s + 1;
     const int nj = jb.e - jb.s + 1;
@@ -465,9 +482,9 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
         PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s + 1, jb.e, ib.s + 1, ib.e,
         KOKKOS_LAMBDA(const int k, const int j, const int i) {
           const Real rho_average =
-              0.25 * (primitive(RHO, k, j, i) + primitive(RHO, k, j, i - 1) +
-                      primitive(RHO, k, j - 1, i) +
-                      primitive(RHO, k, j - 1, i - 1));
+              0.25 * (primitive(iRHO, k, j, i) + primitive(iRHO, k, j, i - 1) +
+                      primitive(iRHO, k, j - 1, i) +
+                      primitive(iRHO, k, j - 1, i - 1));
           const Real expr = rho_average - aphi_rho_cut;
           vectorPotential(k - kb.s, j - jb.s, i - ib.s) =
               (expr > 0.0) ? expr : 0.0;
@@ -491,21 +508,27 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
           const Real a10 = vectorPotential(kk, jj - 1, ii);
           const Real a11 = vectorPotential(kk, jj, ii);
 
-          primitive(BX1, k, j, i) =
+          primitive(iBX, k, j, i) =
               -(a00 - a01 + a10 - a11) / (2.0 * dx2 * sqrt_abs_gdet);
-          primitive(BX2, k, j, i) =
+          primitive(iBX + 1, k, j, i) =
               (a00 + a01 - a10 - a11) / (2.0 * dx1 * sqrt_abs_gdet);
         });
   }
 
+  // 后续均为磁场归一化流程，未启用磁场时直接结束。
+  if (!enable_B) return;
+
   Real local_bsq_max = 0.0;
   for (const auto &pmb : pmesh->block_list) {
     auto &resource = pmb->meshblock_data.Get();
-    PackIndexMap primitiveIndexMap;
-    const std::vector<std::string> primitive_tags = {
-        "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
-        "electron_entropy"};
-    auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
+    PackIndexMap idxMap;
+    auto primitive = resource->PackVariables(fnames, idxMap);
+    const int iRHO = idxMap["density"].first;
+    const int iENY = idxMap["energy"].first;
+    const int iUX  = idxMap["weighted_velocity"].first;
+    const int iENT = idxMap["entropy"].first;
+    const int iBX  = idxMap["magnetic_field"].first;
+    const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
 
     auto covariant_metric = resource->Get("covariant_metric").data;
     auto contravariant_metric = resource->Get("contravariant_metric").data;
@@ -530,9 +553,18 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
             }
           }
 
-          Real primitive_c_array[NPRIM];
-          for (int index = 0; index < NPRIM; ++index) {
-            primitive_c_array[index] = primitive(index, k, j, i);
+          Real primitive_c_array[NPRIM] = {0};
+          primitive_c_array[RHO] = primitive(iRHO, k, j, i);
+          primitive_c_array[ENY] = primitive(iENY, k, j, i);
+          primitive_c_array[UX1] = primitive(iUX, k, j, i);
+          primitive_c_array[UX2] = primitive(iUX + 1, k, j, i);
+          primitive_c_array[UX3] = primitive(iUX + 2, k, j, i);
+          primitive_c_array[BX1] = primitive(iBX, k, j, i);
+          primitive_c_array[BX2] = primitive(iBX + 1, k, j, i);
+          primitive_c_array[BX3] = primitive(iBX + 2, k, j, i);
+          primitive_c_array[ENT] = primitive(iENT, k, j, i);
+          if (enable_heating) {
+            primitive_c_array[KEL] = primitive(iKEL, k, j, i);
           }
 
           State state;
@@ -559,11 +591,9 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
 
   for (const auto &pmb : pmesh->block_list) {
     auto &resource = pmb->meshblock_data.Get();
-    PackIndexMap primitiveIndexMap;
-    const std::vector<std::string> primitive_tags = {
-        "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
-        "electron_entropy"};
-    auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
+    PackIndexMap idxMap;
+    auto primitive = resource->PackVariables(fnames, idxMap);
+    const int iBX = idxMap["magnetic_field"].first;
 
     auto cellbounds = pmb->cellbounds;
     const auto ib_interior = cellbounds.GetBoundsI(IndexDomain::interior);
@@ -574,9 +604,9 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
         PARTHENON_AUTO_LABEL, kb_interior.s, kb_interior.e, jb_interior.s,
         jb_interior.e, ib_interior.s, ib_interior.e,
         KOKKOS_LAMBDA(const int k, const int j, const int i) {
-          primitive(BX1, k, j, i) *= magnetic_norm;
-          primitive(BX2, k, j, i) *= magnetic_norm;
-          primitive(BX3, k, j, i) *= magnetic_norm;
+          primitive(iBX, k, j, i) *= magnetic_norm;
+          primitive(iBX + 1, k, j, i) *= magnetic_norm;
+          primitive(iBX + 2, k, j, i) *= magnetic_norm;
         });
   }
 

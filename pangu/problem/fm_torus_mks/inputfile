@@ -39,29 +39,15 @@ ncycle_out_mesh = -10000
 <core>
 cfl_number = 0.4
 adiabatic_index = 1.666666667
-q_factor_floor = 1.0
-q_factor_ceiling = 1.0
 density_floor = 1e-5
 energy_floor = 4.641588833612779e-9
 density_floor_pow = -1.5
 energy_floor_pow = -2.5
-
-<electrons>
-on = true
-# Select one heating model: constant, howes, kawazura, werner, rowan, sharma.
-model = constant
-gamma_e = 1.333333333
-gamma_p = 1.666666667
-limit_kel = true
-suppress_highb_heat = false
-enforce_positive_dissipation = false
-fel_0 = 0.1
-fel_constant = 0.1
-ratio_min = 0.001
-ratio_max = 1000.0
+enable_heating = true
+enable_B = true
 
 <metric>
-name = MKS
+type = mks
 h = 0.7
 a = 0.9375
 

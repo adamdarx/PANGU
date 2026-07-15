@@ -17,6 +17,9 @@ parthenon::TaskStatus ApplyElectronHeating(
 
   auto pmb0 = md->GetBlockData(0)->GetBlockPointer();
   const auto package_core = pmb0->packages.Get("core");
+  const auto enable_B = package_core->Param<bool>("enable_B");
+  const auto enable_heating = package_core->Param<bool>("enable_heating");
+  const auto& fnames = package_core->Param<std::vector<std::string>>("primitive_field_names");
   const auto kModelName = package_core->Param<std::string>("model_name");
   const Parameters heating_model_params = {
       parseModel(kModelName),
@@ -34,11 +37,15 @@ parthenon::TaskStatus ApplyElectronHeating(
   const auto bound_x3_interior = md->GetBoundsK(IndexDomain::interior);
   auto block = IndexRange{0, md->NumBlocks() - 1};
 
-  PackIndexMap primitiveIndexMap;
-  const std::vector<std::string> primitive_tags = {
-      "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
-      "electron_entropy"};
-  auto primitive = md->PackVariables(primitive_tags, primitiveIndexMap);
+  PackIndexMap idxMap;
+  auto primitive = md->PackVariables(fnames, idxMap);
+
+  const int iRHO = idxMap["density"].first;
+  const int iENY = idxMap["energy"].first;
+  const int iUX  = idxMap["weighted_velocity"].first;
+  const int iENT = idxMap["entropy"].first;
+  const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
+  const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
 
   auto covariant_metric =
       md->PackVariables(std::vector<std::string>{"covariant_metric"});
@@ -66,22 +73,36 @@ parthenon::TaskStatus ApplyElectronHeating(
           }
         }
 
-        Real primitive_array[NPRIM];
-        for (int index = 0; index < NPRIM; ++index) {
-          primitive_array[index] = primitive(b, index, k, j, i);
+        Real pcarr[NPRIM] = {0};
+        pcarr[RHO] = primitive(b, iRHO, k, j, i);
+        pcarr[ENY] = primitive(b, iENY, k, j, i);
+        pcarr[UX1] = primitive(b, iUX,   k, j, i);
+        pcarr[UX2] = primitive(b, iUX+1, k, j, i);
+        pcarr[UX3] = primitive(b, iUX+2, k, j, i);
+        if (enable_B) {
+          pcarr[BX1] = primitive(b, iBX,   k, j, i);
+          pcarr[BX2] = primitive(b, iBX+1, k, j, i);
+          pcarr[BX3] = primitive(b, iBX+2, k, j, i);
         }
-        State state;
-        CalculateState(primitive_array, gcov, gcon, state);
+        pcarr[ENT] = primitive(b, iENT, k, j, i);
+        if (enable_heating) {
+          pcarr[KEL] = primitive(b, iKEL, k, j, i);
+        }
 
-        const Real cons_rho = conservative(b, RHO, k, j, i);
+        State state;
+        CalculateState(pcarr, gcov, gcon, state);
+
+        const Real cons_rho = conservative(b, iRHO, k, j, i);
         const CellState cell = {
-            primitive(b, RHO, k, j, i),
-            primitive(b, ENY, k, j, i),
+            primitive(b, iRHO, k, j, i),
+            primitive(b, iENY, k, j, i),
             state.bsq,
-            conservative(b, ENT, k, j, i) / cons_rho,
-            primitive(b, ENT, k, j, i),
-            conservative(b, KEL, k, j, i) / cons_rho};
-        primitive(b, KEL, k, j, i) = apply(heating_model_params, cell);
+            conservative(b, iENT, k, j, i) / cons_rho,
+            primitive(b, iENT, k, j, i),
+            conservative(b, iKEL, k, j, i) / cons_rho};
+        if (enable_heating) {
+          primitive(b, iKEL, k, j, i) = apply(heating_model_params, cell);
+        }
       });
 
   return TaskStatus::complete;

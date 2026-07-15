@@ -196,7 +196,7 @@ def _make_frame(task):
             origin="lower",
             cmap=args_dict["cmap"],
             norm=norm,
-            interpolation="bicubic",
+            interpolation="none",
             aspect="auto",
         )
 
@@ -277,7 +277,7 @@ def parse_args():
         help="Upper colour bound (log10 by default, raw if --linear)",
     )
     parser.add_argument(
-        "--cmap", default="jet", help="Matplotlib colormap"
+        "--cmap", default="viridis", help="Matplotlib colormap"
     )
     parser.add_argument(
         "--linear", action="store_true",

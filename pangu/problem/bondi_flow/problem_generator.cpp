@@ -4,6 +4,8 @@
 
 #include "amr_criteria/refinement_package.hpp"
 #include "bvals/comms/bvals_in_one.hpp"
+#include <Kokkos_Core.hpp>
+#include <cmath>
 #include "initialization/variable_mnemonics.h"
 #include "interface/metadata.hpp"
 #include "interface/update.hpp"
@@ -13,6 +15,11 @@
 #include "parthenon/driver.hpp"
 #include "prolong_restrict/prolong_restrict.hpp"
 #include "task_list/task_list.h"
+#include <parthenon/package.hpp>
+
+//----------------------------------------------------------------------------------------
+// Bondi accretion analytic solution — Hawley, Smarr, & Wilson 1984 (HSW).
+// Inlined from the former bondi_solver.h.
 
 KOKKOS_INLINE_FUNCTION
 parthenon::Real BondiTemperatureResidual(const parthenon::Real T,
@@ -36,49 +43,38 @@ parthenon::Real SolveBondiTemperature(const parthenon::Real r,
   const parthenon::Real Tinf = (Kokkos::sqrt(C2) - 1.0) / (n + 1.0);
   const parthenon::Real Tnear =
       Kokkos::pow(C1 * Kokkos::sqrt(2.0 / (r * r * r)), 1.0 / n);
-
   const parthenon::Real Tmin = (r < rs) ? Tinf : Kokkos::max(Tnear, Tinf);
   const parthenon::Real Tmax = (r < rs) ? Tnear : 1.0;
-
   parthenon::Real T0 = Tmin;
   parthenon::Real T1 = Tmax;
   parthenon::Real f0 = BondiTemperatureResidual(T0, r, C1, C2, n);
   parthenon::Real f1 = BondiTemperatureResidual(T1, r, C1, C2, n);
-
   if (f0 * f1 > 0.0) {
     return Kokkos::max(Tinf, static_cast<parthenon::Real>(1.0e-12));
   }
-
   const parthenon::Real rtol = 1.0e-12;
   const parthenon::Real ftol = 1.0e-14;
   const parthenon::Real epsT = rtol * (Tmin + Tmax);
-
   for (int iter = 0; iter < 128; ++iter) {
     const parthenon::Real Th = 0.5 * (T0 + T1);
     const parthenon::Real fh = BondiTemperatureResidual(Th, r, C1, C2, n);
-
     if (Kokkos::abs(fh) <= ftol || Kokkos::abs(Th - T0) <= epsT ||
         Kokkos::abs(Th - T1) <= epsT) {
       return Kokkos::max(Th, static_cast<parthenon::Real>(1.0e-12));
     }
-
-    if (fh * f0 > 0.0) {
-      T0 = Th;
-      f0 = fh;
-    } else {
-      T1 = Th;
-      f1 = fh;
-    }
+    if (fh * f0 > 0.0) { T0 = Th; f0 = fh; }
+    else { T1 = Th; f1 = fh; }
   }
-
   return Kokkos::max(0.5 * (T0 + T1), static_cast<parthenon::Real>(1.0e-12));
 }
 
 KOKKOS_INLINE_FUNCTION
-void SolveBondiSolution(const parthenon::Real r, const parthenon::Real rs,
-                        const parthenon::Real mdot,
+void SolveBondiSolution(const parthenon::Real r,
+                        const parthenon::Real rs,
+                        const parthenon::Real /* mdot */,
                         const parthenon::Real adiabaticIndex,
-                        parthenon::Real &rho, parthenon::Real &u,
+                        parthenon::Real &rho,
+                        parthenon::Real &u,
                         parthenon::Real &ur) {
   const parthenon::Real n = 1.0 / (adiabaticIndex - 1.0);
   const parthenon::Real uc = Kokkos::sqrt(1.0 / (2.0 * rs));
@@ -87,13 +83,9 @@ void SolveBondiSolution(const parthenon::Real r, const parthenon::Real rs,
   const parthenon::Real C1 = uc * rs * rs * Kokkos::pow(Tc, n);
   const parthenon::Real A = 1.0 + (1.0 + n) * Tc;
   const parthenon::Real C2 = A * A * (1.0 - 2.0 / rs + uc * uc);
-  const parthenon::Real K = Kokkos::pow(4.0 * M_PI * C1 / mdot, 1.0 / n);
-  const parthenon::Real Kn = Kokkos::pow(K, n);
-
   const parthenon::Real T = SolveBondiTemperature(r, C1, C2, n, rs);
   const parthenon::Real Tn = Kokkos::pow(T, n);
-
-  rho = Tn / Kn;
+  rho = Tn;
   u = rho * T * n;
   ur = -C1 / (Tn * r * r);
 }
@@ -106,10 +98,13 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
   auto &resource = pmb->meshblock_data.Get();
   const auto kAdiabaticIndex = package_core->Param<Real>("adiabatic_index");
   const auto kFelInit = package_core->Param<Real>("fel_0");
+  const auto enable_B = package_core->Param<bool>("enable_B");
+  const auto enable_heating = package_core->Param<bool>("enable_heating");
+  const auto& fnames = package_core->Param<std::vector<std::string>>("primitive_field_names");
 
   // Bondi parameters follow the Sisyphus defaults when not explicitly provided.
-  const Real kBondiMdot = pin->GetOrAddReal("bondi", "mdot", 1.0);
-  const Real kBondiSonicRadius = pin->GetOrAddReal("bondi", "rs", 8.0);
+  const Real kBondiMdot = pin->GetReal("bondi", "mdot");
+  const Real kBondiSonicRadius = pin->GetReal("bondi", "rs");
   const Real kBondiInnerAtmosphereRadius =
       pin->GetOrAddReal("bondi", "rin", 10.0);
   const Real kBondiAtmosphereFactor =
@@ -119,11 +114,15 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
   const Real mks_h = pin->GetOrAddReal("metric", "h", 0.0);
   const Real mks_a = pin->GetOrAddReal("metric", "a", 0.0);
 
-  PackIndexMap primitiveIndexMap;
-  const std::vector<std::string> primitive_tags = {
-      "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
-      "electron_entropy"};
-  auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
+  PackIndexMap idxMap;
+  auto primitive = resource->PackVariables(fnames, idxMap);
+
+  const int iRHO = idxMap["density"].first;
+  const int iENY = idxMap["energy"].first;
+  const int iUX  = idxMap["weighted_velocity"].first;
+  const int iENT = idxMap["entropy"].first;
+  const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
+  const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
 
   auto covariant_metric = resource->Get("covariant_metric").data;
   auto contravariant_metric = resource->Get("contravariant_metric").data;
@@ -262,20 +261,24 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
           wvx3 = Gamma * beta3 / alpha;
         }
 
-        primitive(RHO, k, j, i) =
+        primitive(iRHO, k, j, i) =
             Kokkos::max(rho, kBondiAtmosphereFactor);
-        primitive(ENY, k, j, i) =
+        primitive(iENY, k, j, i) =
             Kokkos::max(eint, kBondiAtmosphereFactor * 1.0e-6);
-        primitive(UX1, k, j, i) = wvx1;
-        primitive(UX2, k, j, i) = wvx2;
-        primitive(UX3, k, j, i) = wvx3;
-        primitive(BX1, k, j, i) = 0.0;
-        primitive(BX2, k, j, i) = 0.0;
-        primitive(BX3, k, j, i) = 0.0;
-        primitive(ENT, k, j, i) =
-            (kAdiabaticIndex - 1.0) * primitive(ENY, k, j, i) *
-            Kokkos::pow(primitive(RHO, k, j, i), -kAdiabaticIndex);
-        primitive(KEL, k, j, i) = kFelInit * primitive(ENT, k, j, i);
+        primitive(iUX,   k, j, i) = wvx1;
+        primitive(iUX+1, k, j, i) = wvx2;
+        primitive(iUX+2, k, j, i) = wvx3;
+        if (enable_B) {
+          primitive(iBX,   k, j, i) = 0.0;
+          primitive(iBX+1, k, j, i) = 0.0;
+          primitive(iBX+2, k, j, i) = 0.0;
+        }
+        primitive(iENT, k, j, i) =
+            (kAdiabaticIndex - 1.0) * primitive(iENY, k, j, i) *
+            Kokkos::pow(primitive(iRHO, k, j, i), -kAdiabaticIndex);
+        if (enable_heating) {
+          primitive(iKEL, k, j, i) = kFelInit * primitive(iENT, k, j, i);
+        }
       });
 }
 

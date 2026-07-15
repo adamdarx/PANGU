@@ -255,7 +255,7 @@ int general_newton_raphson(Real &Bsq, Real &QdotBsq, Real &Qtsq, Real &Qdotn,
 }
 
 KOKKOS_FUNCTION
-int invert(Real U[8], Real prim[8], Real gamma, Real gcov[4][4],
+int invert(Real U[9], Real prim[9], Real gamma, Real gcov[4][4],
            Real gcon[4][4], Real gdet) {
   Real x_2d[2];
   Real QdotB, Bcon[4], Bcov[4], Qcov[4], Qcon[4], ncov[4], ncon[4], Qsq,
@@ -391,6 +391,7 @@ int invert(Real U[8], Real prim[8], Real gamma, Real gcov[4][4],
   }
   prim[RHO] = rho0;
   prim[ENY] = uu;
+  prim[ENT] = (gamma - 1.) * uu * Kokkos::pow(rho0, -gamma);
   for (i = 1; i < 4; i++)
     Qtcon[i] = Qcon[i] + ncon[i] * Qdotn;
   for (i = 1; i < 4; i++)

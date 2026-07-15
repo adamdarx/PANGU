@@ -14,6 +14,19 @@ int main(int argc, char *argv[]) {
   pman.app_input->MeshPostInitialization = MeshPostInitialization;
   pman.app_input->RegisterDefaultReflectingBoundaryConditions();
 
+  // Register "user" boundary condition — standard function is a no-op;
+  // the actual boundary values are filled by package-level UserBoundaryFunctions.
+  using parthenon::BoundaryFace;
+  const std::string USER_BC = "user";
+  auto user_noop = [](std::shared_ptr<parthenon::MeshBlockData<parthenon::Real>> &,
+                      bool) {};
+  pman.app_input->RegisterBoundaryCondition(BoundaryFace::inner_x1, USER_BC, user_noop);
+  pman.app_input->RegisterBoundaryCondition(BoundaryFace::outer_x1, USER_BC, user_noop);
+  pman.app_input->RegisterBoundaryCondition(BoundaryFace::inner_x2, USER_BC, user_noop);
+  pman.app_input->RegisterBoundaryCondition(BoundaryFace::outer_x2, USER_BC, user_noop);
+  pman.app_input->RegisterBoundaryCondition(BoundaryFace::inner_x3, USER_BC, user_noop);
+  pman.app_input->RegisterBoundaryCondition(BoundaryFace::outer_x3, USER_BC, user_noop);
+
   auto manager_status = pman.ParthenonInitEnv(argc, argv);
   if (manager_status == ParthenonStatus::complete) {
     pman.ParthenonFinalize();

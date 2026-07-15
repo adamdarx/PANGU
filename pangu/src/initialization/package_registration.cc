@@ -23,44 +23,45 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
       pin->GetOrAddReal("core", "adiabatic_index", 5. / 3.);
   const auto kRiemannSolver =
       pin->GetOrAddString("core", "riemann_solver", "laxf");
-  const auto kQFactorFloor =
-      pin->GetOrAddReal("core", "q_factor_floor", 0.3);
-  const auto kQFactorCeiling =
-      pin->GetOrAddReal("core", "q_factor_ceiling", 0.03);
+  const auto kLimiter =
+      pin->GetOrAddString("core", "limiter", "ppm4");
   const auto kDensityFloor =
       pin->GetOrAddReal("core", "density_floor", 1.0e-6);
-  const auto kEnergyFloor = 
+  const auto kEnergyFloor =
       pin->GetOrAddReal("core", "energy_floor", 1.0e-8);
   const auto kDensityFloorPow =
       pin->GetOrAddReal("core", "density_floor_pow", -1.5);
   const auto kEnergyFloorPow =
       pin->GetOrAddReal("core", "energy_floor_pow", -2.5);
+  const auto kEnableB = pin->GetOrAddBoolean("core", "enable_B", false);
+  const auto kEnableHeating = pin->GetOrAddBoolean("core", "enable_heating", false);
   const auto kSigmaMax = pin->GetOrAddReal("core", "sigma_max", 50);
   const auto kLorentzMax = pin->GetOrAddReal("core", "lorentz_max", 50);
   const auto kModelName =
       modelName(parseModel(
-          pin->GetOrAddString("electrons", "model", "constant")));
-  const auto kFelConstant = pin->GetOrAddReal("electrons", "fel_constant", 0.1);
-  const auto kGammaE = pin->GetOrAddReal("electrons", "gamma_e", 4. / 3.);
-  const auto kGammaP = pin->GetOrAddReal("electrons", "gamma_p", 5. / 3.);
-  const auto kLimitKel = pin->GetOrAddBoolean("electrons", "limit_kel", true);
+          pin->GetOrAddString("electron", "model", "constant")));
+  const auto kFelConstant = pin->GetOrAddReal("electron", "fel_constant", 0.1);
+  const auto kGammaE = pin->GetOrAddReal("electron", "gamma_e", 4. / 3.);
+  const auto kGammaP = pin->GetOrAddReal("electron", "gamma_p", 5. / 3.);
+  const auto kLimitKel = pin->GetOrAddBoolean("electron", "limit_kel", true);
   const auto kSuppressHighbHeat =
-      pin->GetOrAddBoolean("electrons", "suppress_highb_heat", false);
+      pin->GetOrAddBoolean("electron", "suppress_highb_heat", false);
   const auto kEnforcePositiveDissipation =
-      pin->GetOrAddBoolean("electrons", "enforce_positive_dissipation", false);
-  const auto kRatioMin = pin->GetOrAddReal("electrons", "ratio_min", 0.001);
-  const auto kRatioMax = pin->GetOrAddReal("electrons", "ratio_max", 1000.0);
-  const auto kFelInit = pin->GetOrAddReal("electrons", "fel_0", 0.1);
+      pin->GetOrAddBoolean("electron", "enforce_positive_dissipation", false);
+  const auto kRatioMin = pin->GetOrAddReal("electron", "ratio_min", 0.001);
+  const auto kRatioMax = pin->GetOrAddReal("electron", "ratio_max", 1000.0);
+  const auto kFelInit = pin->GetOrAddReal("electron", "fel_0", 0.1);
 
   package_core->AddParam<>("cfl_number", kCflNumber);
   package_core->AddParam<>("adiabatic_index", kAdiabaticIndex);
   package_core->AddParam<>("riemann_solver", kRiemannSolver);
-  package_core->AddParam<>("q_factor_floor", kQFactorFloor);
-  package_core->AddParam<>("q_factor_ceiling", kQFactorCeiling);
+  package_core->AddParam<>("limiter", kLimiter);
   package_core->AddParam<>("density_floor", kDensityFloor);
   package_core->AddParam<>("energy_floor", kEnergyFloor);
   package_core->AddParam<>("density_floor_pow", kDensityFloorPow);
   package_core->AddParam<>("energy_floor_pow", kEnergyFloorPow);
+  package_core->AddParam<>("enable_B", kEnableB);
+  package_core->AddParam<>("enable_heating", kEnableHeating);
   package_core->AddParam<>("sigma_max", kSigmaMax);
   package_core->AddParam<>("lorentz_max", kLorentzMax);
   package_core->AddParam<>("model_name", kModelName);
@@ -74,6 +75,21 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
   package_core->AddParam<>("ratio_max", kRatioMax);
   package_core->AddParam<>("fel_0", kFelInit);
 
+  // Build primitive field name vector based on enabled modules.
+  std::vector<std::string> fnames = {
+      "density", "energy", "weighted_velocity"
+  };
+  if (kEnableB) fnames.push_back("magnetic_field");
+  fnames.push_back("entropy");
+  if (kEnableHeating) fnames.push_back("electron_entropy");
+  package_core->AddParam<>("primitive_field_names", fnames);
+
+  // Total number of components: density(1) + energy(1) + weighted_velocity(3)
+  // + [magnetic_field(3)] + entropy(1) + [electron_entropy(1)]
+  int n_components = 6;
+  if (kEnableB) n_components += 3;
+  if (kEnableHeating) n_components += 1;
+
   parthenon::Metadata m;
   m = parthenon::Metadata(
       {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost});
@@ -84,9 +100,11 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
   m = parthenon::Metadata(
       {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost});
   package_core->AddField(std::string("entropy"), m);
-  m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost});
-  package_core->AddField(std::string("electron_entropy"), m);
+  if (kEnableHeating) {
+    m = parthenon::Metadata(
+        {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost});
+    package_core->AddField(std::string("electron_entropy"), m);
+  }
   m = parthenon::Metadata(
       {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost,
        parthenon::Metadata::Vector},
@@ -97,28 +115,32 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
        parthenon::Metadata::OneCopy},
       std::vector<int>({3}));
   package_core->AddField(std::string("alfven"), m);
-  m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost,
-       parthenon::Metadata::Vector},
-      std::vector<int>({3}));
-  package_core->AddField(std::string("magnetic_field"), m);
-  m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost, parthenon::Metadata::OneCopy},
-      std::vector<int>({3}));
-  package_core->AddField(std::string("electric_field"), m);
+  if (kEnableB) {
+    m = parthenon::Metadata(
+        {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost,
+         parthenon::Metadata::Vector},
+        std::vector<int>({3}));
+    package_core->AddField(std::string("magnetic_field"), m);
+    m = parthenon::Metadata(
+        {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost,
+         parthenon::Metadata::OneCopy},
+        std::vector<int>({3}));
+    package_core->AddField(std::string("electric_field"), m);
+  }
   m = parthenon::Metadata(
       {parthenon::Metadata::Cell, parthenon::Metadata::WithFluxes,
        parthenon::Metadata::Independent, parthenon::Metadata::FillGhost},
-      std::vector<int>({NPRIM}));
+      std::vector<int>({n_components}));
   package_core->AddField(std::string("conservative"), m);
   m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost, parthenon::Metadata::OneCopy});
+      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost,
+       parthenon::Metadata::OneCopy});
   package_core->AddField(std::string("flag"), m);
 
   package_core->EstimateTimestepMesh = EstimateTimestepMesh;
   return package_core;
 }
-}  
+}
 
 namespace metric {
 std::shared_ptr<parthenon::StateDescriptor> Initialize(
@@ -126,8 +148,22 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
   const auto package_metric =
       std::make_shared<parthenon::StateDescriptor>("metric");
 
-  const auto kMetricName = pin->GetOrAddString("metric", "name", "Minkowski");
-  package_metric->AddParam<>("metric_name", kMetricName);
+  const auto kMetricType = pin->GetOrAddString("metric", "type", "minkowski");
+  package_metric->AddParam<>("metric_type", kMetricType);
+
+  // Kerr / excision parameters, read unconditionally by fixers and recovery.
+  const auto kKerrA = pin->GetOrAddReal("metric", "a", 0.0);
+  const auto kMksH = pin->GetOrAddReal("metric", "h", 0.0);
+  const auto kExcise = pin->GetOrAddBoolean("metric", "excise", false);
+  const auto kRExcise = pin->GetOrAddReal("metric", "r_excise", 1.0);
+  const auto kDExcise = pin->GetOrAddReal("metric", "dexcise", 1.0e-8);
+  const auto kPExcise = pin->GetOrAddReal("metric", "pexcise", 0.333e-12);
+  package_metric->AddParam<>("a", kKerrA);
+  package_metric->AddParam<>("h", kMksH);
+  package_metric->AddParam<>("excise", kExcise);
+  package_metric->AddParam<>("r_excise", kRExcise);
+  package_metric->AddParam<>("dexcise", kDExcise);
+  package_metric->AddParam<>("pexcise", kPExcise);
 
   parthenon::Metadata m;
   m = parthenon::Metadata(
@@ -152,4 +188,4 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
 
   return package_metric;
 }
-}  
+}

@@ -1,14 +1,32 @@
 #!/usr/bin/env python3
+"""Generate CKS x-z ion/electron temperature frames from Parthenon PHDF files.
+
+Reads density, entropy, and electron_entropy, computes ion and electron
+temperatures, and renders dual-panel pcolormesh slices with optional GR overlays.
+
+Style: mimics athenak/vis/python/plot_slice.py CLI and rendering conventions.
+"""
+
 import argparse
 import os
 from multiprocessing import Pool
 
 import h5py
 import matplotlib
-
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+
+# -- shared CKS plotting utilities --------------------------------------------
+from _cks_common import (
+    add_common_args,
+    cell_centers_to_faces,
+    cks_to_physical,
+    draw_ergosphere_xz,
+    draw_horizon,
+    get_plot_bounds,
+    label_for,
+    setup_plot_env,
+)
 
 # Pangu/KHARMA electron-heating temperatures are dimensionless:
 #   Theta = k_B T / (m_p c^2)
@@ -16,45 +34,31 @@ import numpy as np
 PROTON_MASS_CGS = 1.67262171e-24
 LIGHT_SPEED_CGS = 2.99792458e10
 BOLTZMANN_CGS = 1.380649e-16
-TEMPERATURE_UNIT_K = PROTON_MASS_CGS * LIGHT_SPEED_CGS**2 / BOLTZMANN_CGS
+TEMPERATURE_UNIT_K = PROTON_MASS_CGS * LIGHT_SPEED_CGS ** 2 / BOLTZMANN_CGS
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Generate x-z ion and electron temperature frames from Parthenon PHDF files."
-    )
-    parser.add_argument("files", nargs="+", help="Input PHDF files")
-    parser.add_argument("--output-directory", required=True, help="Directory to write PNG frames")
-    parser.add_argument("--prefix", default="xztemp", help="Output filename prefix")
-    parser.add_argument("--workers", type=int, default=1, help="Worker processes")
-    parser.add_argument("--kerr-a", type=float, default=0.9375, help="Kerr spin a for horizon marker")
-    parser.add_argument("--kerr-h", type=float, default=0.0, help="Modified polar mapping parameter h")
-    parser.add_argument("--r0", type=float, default=0.0, help="Radial offset in r=exp(x1)+r0")
-    parser.add_argument("--x-max", type=float, default=60.0, help="Maximum display radius in r_g; <=0 means auto")
-    parser.add_argument("--level-min", type=float, default=10.0, help="Lower contour level in log10(T/K)")
-    parser.add_argument("--level-max", type=float, default=12.0, help="Upper contour level in log10(T/K)")
-    parser.add_argument("--level-count", type=int, default=500, help="Number of contour levels")
-    parser.add_argument("--cmap", default="plasma", help="Matplotlib colormap")
-    parser.add_argument(
-        "--temperature-unit-k",
-        type=float,
-        default=TEMPERATURE_UNIT_K,
-        help="Conversion factor from code temperature Theta to Kelvin",
-    )
-    return parser.parse_args()
-
+# ---------------------------------------------------------------------------
+# PHDF I/O
+# ---------------------------------------------------------------------------
 
 def _scalar_attr(attrs, key, default):
     value = attrs.get(key, default)
     if isinstance(value, bytes):
         return value.decode("utf-8")
-    array_value = np.asarray(value)
-    if array_value.shape == ():
-        return array_value.item()
+    arr = np.asarray(value)
+    if arr.shape == ():
+        return arr.item()
     return value
 
 
-def _load_global_maps(phdf_file):
+def _load_temperature_data(phdf_file):
+    """Load density/entropy/electron_entropy and compute temperatures.
+
+    Returns:
+        x1, x2: 1D sorted cell-center arrays
+        ion_temp_k, electron_temp_k: 2D arrays (ny, nx) in Kelvin
+        sim_time, gamma, gamma_p, gamma_e
+    """
     with h5py.File(phdf_file, "r") as h:
         for field_name in ("density", "entropy", "electron_entropy"):
             if field_name not in h:
@@ -62,7 +66,7 @@ def _load_global_maps(phdf_file):
 
         rho_blocks = h["density"][:].mean(axis=1)
         entropy_blocks = h["entropy"][:].mean(axis=1)
-        electron_entropy_blocks = h["electron_entropy"][:].mean(axis=1)
+        ee_blocks = h["electron_entropy"][:].mean(axis=1)
 
         x1_blocks = h["VolumeLocations"]["x"][:]
         x2_blocks = h["VolumeLocations"]["y"][:]
@@ -92,11 +96,11 @@ def _load_global_maps(phdf_file):
         for block_index in range(nb):
             i0 = bx[block_index] * nxb
             j0 = by[block_index] * nyb
-            rho[j0 : j0 + nyb, i0 : i0 + nxb] = rho_blocks[block_index]
-            entropy[j0 : j0 + nyb, i0 : i0 + nxb] = entropy_blocks[block_index]
-            electron_entropy[j0 : j0 + nyb, i0 : i0 + nxb] = electron_entropy_blocks[block_index]
-            x1[i0 : i0 + nxb] = x1_blocks[block_index]
-            x2[j0 : j0 + nyb] = x2_blocks[block_index]
+            rho[j0:j0 + nyb, i0:i0 + nxb] = rho_blocks[block_index]
+            entropy[j0:j0 + nyb, i0:i0 + nxb] = entropy_blocks[block_index]
+            electron_entropy[j0:j0 + nyb, i0:i0 + nxb] = ee_blocks[block_index]
+            x1[i0:i0 + nxb] = x1_blocks[block_index]
+            x2[j0:j0 + nyb] = x2_blocks[block_index]
 
         ix = np.argsort(x1)
         iy = np.argsort(x2)
@@ -110,84 +114,149 @@ def _load_global_maps(phdf_file):
         gamma = float(_scalar_attr(params, "core/adiabatic_index", 5.0 / 3.0))
         gamma_e = float(_scalar_attr(params, "core/gamma_e", gamma))
         gamma_p = float(_scalar_attr(params, "core/gamma_p", gamma))
-        sim_time = float(_scalar_attr(h["Info"].attrs if "Info" in h else {}, "Time", 0.0))
+        sim_time = float(_scalar_attr(
+            h["Info"].attrs if "Info" in h else {}, "Time", 0.0,
+        ))
 
+    # -- temperature calculation ----------------------------------------------
     rho_safe = np.maximum(rho, 1.0e-30)
     internal_energy = entropy * np.power(rho_safe, gamma) / (gamma - 1.0)
-    ion_temp_code = np.maximum((gamma_p - 1.0) * internal_energy / rho_safe, 0.0)
-    electron_temp_code = np.maximum(electron_entropy * np.power(rho_safe, gamma_e - 1.0), 0.0)
+    ion_temp_code = np.maximum(
+        (gamma_p - 1.0) * internal_energy / rho_safe, 0.0,
+    )
+    electron_temp_code = np.maximum(
+        electron_entropy * np.power(rho_safe, gamma_e - 1.0), 0.0,
+    )
 
-    return x1, x2, ion_temp_code, electron_temp_code, sim_time, gamma, gamma_p, gamma_e
+    return (
+        x1, x2,
+        ion_temp_code, electron_temp_code,
+        sim_time, gamma, gamma_p, gamma_e,
+    )
 
 
-def _map_to_xz(x1, x2, q, args_dict):
-    x1g, x2g = np.meshgrid(x1, x2, indexing="xy")
-    r = np.exp(x1g) + args_dict["r0"]
-    theta = 0.5 * np.pi * (x2g + 1.0) + 0.5 * args_dict["kerr_h"] * np.sin(np.pi * (x2g + 1.0))
-    x_plot = r * np.sin(theta)
-    z_plot = r * np.cos(theta)
-    return x_plot, z_plot, q
-
+# ---------------------------------------------------------------------------
+# per-frame worker
+# ---------------------------------------------------------------------------
 
 def _make_frame(task):
     file_index, file_path, args_dict = task
-    x1, x2, ion_temp_code, electron_temp_code, sim_time, gamma, gamma_p, gamma_e = _load_global_maps(file_path)
 
-    x_plot, z_plot, ion_temp_code = _map_to_xz(x1, x2, ion_temp_code, args_dict)
-    _, _, electron_temp_code = _map_to_xz(x1, x2, electron_temp_code, args_dict)
-    temp_unit_k_use = args_dict["temperature_unit_k"]
+    x1, x2, ion_code, electron_code, sim_time, gamma, gamma_p, gamma_e = \
+        _load_temperature_data(file_path)
 
-    ion_temp_k = np.maximum(ion_temp_code * temp_unit_k_use, 1.0e-300)
-    electron_temp_k = np.maximum(electron_temp_code * temp_unit_k_use, 1.0e-300)
+    temp_unit_k = args_dict.get("temperature_unit_k", TEMPERATURE_UNIT_K)
 
-    ion_value = np.log10(ion_temp_k)
-    electron_value = np.log10(electron_temp_k)
+    ion_temp_k = np.maximum(ion_code * temp_unit_k, 1.0e-300)
+    electron_temp_k = np.maximum(electron_code * temp_unit_k, 1.0e-300)
 
-    # Auto-select contour log10 levels when user didn't provide them
-    lm = args_dict.get("level_min")
-    lM = args_dict.get("level_max")
-    combined_min = float(min(np.nanmin(ion_value), np.nanmin(electron_value)))
-    combined_max = float(max(np.nanmax(ion_value), np.nanmax(electron_value)))
-    if lm is None:
-        # pad by 0.2 dex or 5% of dynamic range
-        pad = max(0.2, 0.05 * (combined_max - combined_min))
-        lm = combined_min - pad
-    if lM is None:
-        pad = max(0.2, 0.05 * (combined_max - combined_min))
-        lM = combined_max + pad
-    # If user provided levels that are outside data range, still use them; else use auto
-    levels = np.linspace(lm, lM, args_dict["level_count"])
+    # -- face coordinates for pcolormesh ------------------------------------
+    x1_f = cell_centers_to_faces(x1)
+    x2_f = cell_centers_to_faces(x2)
+    X1f, X2f = np.meshgrid(x1_f, x2_f, indexing="xy")
 
-    x_max = args_dict["x_max"] if args_dict["x_max"] > 0.0 else float(np.nanmax(x_plot))
-    r_h = 1.0 + np.sqrt(max(0.0, 1.0 - args_dict["kerr_a"] * args_dict["kerr_a"]))
+    x_faces, z_faces = cks_to_physical(
+        X1f, X2f,
+        r0=args_dict.get("r0", 0.0),
+        kerr_h=args_dict.get("kerr_h", 0.0),
+    )
 
-    fig, axes = plt.subplots(1, 2, figsize=(10, 8), dpi=150, sharex=True, sharey=True)
+    # -- value transform ------------------------------------------------------
+    use_log = args_dict.get("norm", "log") == "log"
+    ion_value = np.log10(ion_temp_k) if use_log else ion_temp_k
+    electron_value = np.log10(electron_temp_k) if use_log else electron_temp_k
+
+    # -- colour range (shared across both panels) -----------------------------
+    combined = np.concatenate([
+        ion_value[np.isfinite(ion_value)].ravel(),
+        electron_value[np.isfinite(electron_value)].ravel(),
+    ])
+    vmin = args_dict.get("vmin")
+    vmax = args_dict.get("vmax")
+    if vmin is None:
+        vmin = float(np.nanmin(combined)) if combined.size > 0 else 0.0
+    if vmax is None:
+        vmax = float(np.nanmax(combined)) if combined.size > 0 else 1.0
+    norm = matplotlib.colors.Normalize(vmin, vmax)
+
+    # -- auto bounds ----------------------------------------------------------
+    auto_max = float(max(np.nanmax(np.abs(x_faces)), np.nanmax(np.abs(z_faces)))) * 1.02
+    x1_min, x1_max, x2_min, x2_max = get_plot_bounds(
+        args_dict,
+        -auto_max, auto_max,
+        -auto_max, auto_max,
+    )
+
+    # -- matplotlib config ----------------------------------------------------
+    setup_plot_env(notex=args_dict.get("notex", False), output_file=None)
+
+    # -- figure (dual panel) --------------------------------------------------
+    dpi = args_dict.get("dpi", 150)
+    fig, axes = plt.subplots(1, 2, figsize=(10, 8), dpi=dpi, sharex=True, sharey=True)
+
     plot_specs = [
-        (axes[0], ion_value, f"Ion temperature\n$\\gamma_p={gamma_p:.3f}$"),
-        (axes[1], electron_value, f"Electron temperature\n$\\gamma_e={gamma_e:.3f}$"),
+        (axes[0], ion_value, "Ion temperature",
+         rf"$\gamma_p={gamma_p:.3f}$"),
+        (axes[1], electron_value, "Electron temperature",
+         rf"$\gamma_e={gamma_e:.3f}$"),
     ]
 
-    for axis, values, title in plot_specs:
-        contour = axis.contourf(
-            x_plot,
-            z_plot,
-            values,
-            levels=levels,
-            cmap=args_dict["cmap"],
-            extend="both",
-        )
-        horizon = plt.Circle((0.0, 0.0), r_h, color="black", zorder=5)
-        axis.add_patch(horizon)
-        axis.set_xlim(0.0, x_max)
-        axis.set_ylim(-x_max, x_max)
-        axis.set_aspect("equal", "box")
-        axis.set_xlabel("x [r_g]")
-        axis.set_title(title)
-        cbar = fig.colorbar(contour, ax=axis, fraction=0.046, pad=0.04)
-        cbar.set_label("log10(T [K])")
+    kerr_a = args_dict.get("kerr_a", 0.0)
 
-    axes[0].set_ylabel("z [r_g]")
-    fig.suptitle(f"t = {sim_time:.2e}")
+    for ax, values, title, subtitle in plot_specs:
+        mesh = ax.pcolormesh(
+            x_faces, z_faces, values,
+            cmap=args_dict["cmap"],
+            norm=norm,
+            shading="flat",
+            rasterized=True,
+        )
+
+        # -- GR overlays per panel --------------------------------------------
+        if kerr_a != 0.0:
+            if args_dict.get("horizon_mask", False):
+                draw_horizon(
+                    ax, kerr_a, mask=True, outline=False,
+                    mask_color=args_dict.get("horizon_mask_color", "k"),
+                )
+            if args_dict.get("horizon", False):
+                draw_horizon(
+                    ax, kerr_a, mask=False, outline=True,
+                    outline_color=args_dict.get("horizon_color", "k"),
+                )
+            if args_dict.get("ergosphere", False):
+                draw_ergosphere_xz(
+                    ax, kerr_a,
+                    color=args_dict.get("ergosphere_color", "gray"),
+                )
+
+        # -- axes -------------------------------------------------------------
+        ax.set_xlim(x1_min, x1_max)
+        ax.set_ylim(x2_min, x2_max)
+        ax.set_aspect("equal", "box")
+
+        if args_dict.get("notex", False):
+            ax.set_xlabel("x [r_g]")
+            ax.set_title(f"{title}\n{subtitle}")
+        else:
+            ax.set_xlabel(r"$x$ [$r_\mathrm{g}$]")
+            ax.set_title(title + "\n" + subtitle)
+
+        # -- colourbar per panel ----------------------------------------------
+        cbar = fig.colorbar(mesh, ax=ax, fraction=0.046, pad=0.04)
+        if use_log:
+            cbar.set_label(r"$\log_{10}(T\ [\mathrm{K}])$")
+        else:
+            cbar.set_label(r"$T$ (K)")
+
+    if args_dict.get("notex", False):
+        axes[0].set_ylabel("z [r_g]")
+        fig.suptitle(f"t = {sim_time:.2e}")
+    else:
+        axes[0].set_ylabel(r"$z$ [$r_\mathrm{g}$]")
+        fig.suptitle(r"$t = {:.2e}$".format(sim_time))
+
+    # -- save -----------------------------------------------------------------
     os.makedirs(args_dict["output_directory"], exist_ok=True)
     out_name = f"{args_dict['prefix']}{file_index:04d}.png"
     out_path = os.path.join(args_dict["output_directory"], out_name)
@@ -197,6 +266,60 @@ def _make_frame(task):
     plt.close(fig)
 
     return out_path
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate CKS x-z ion and electron temperature frames "
+                    "from Parthenon PHDF files."
+    )
+    parser.add_argument(
+        "files", nargs="+", help="Input PHDF files"
+    )
+    parser.add_argument(
+        "--output-directory", required=True, help="Directory to write PNG frames"
+    )
+    parser.add_argument(
+        "--prefix", default="xztemp", help="Output filename prefix"
+    )
+    parser.add_argument(
+        "--workers", type=int, default=1, help="Worker processes"
+    )
+
+    # CKS coordinate parameters
+    parser.add_argument(
+        "--kerr-a", type=float, default=0.0,
+        help="Kerr spin parameter for horizon marker (0 = no BH)",
+    )
+    parser.add_argument(
+        "--kerr-h", type=float, default=0.0,
+        help="Modified polar mapping parameter h",
+    )
+    parser.add_argument(
+        "--r0", type=float, default=0.0,
+        help="Radial offset in r = exp(x1) + r0",
+    )
+
+    # Temperature specific
+    parser.add_argument(
+        "--temperature-unit-k",
+        type=float,
+        default=TEMPERATURE_UNIT_K,
+        help="Conversion factor from code temperature Theta to Kelvin",
+    )
+
+    # -- common args (plot bounds, colour scale, GR, grid, output) ------------
+    add_common_args(parser)
+
+    parser.set_defaults(
+        cmap="plasma",
+        dpi=150,
+    )
+    return parser.parse_args()
 
 
 def main():
@@ -210,22 +333,39 @@ def main():
         "kerr_a": args.kerr_a,
         "kerr_h": args.kerr_h,
         "r0": args.r0,
-        "x_max": args.x_max,
-        "level_min": args.level_min,
-        "level_max": args.level_max,
-        "level_count": args.level_count,
-        "cmap": args.cmap,
         "temperature_unit_k": args.temperature_unit_k,
+        "cmap": args.cmap,
+        "norm": args.norm,
+        "vmin": args.vmin,
+        "vmax": args.vmax,
+        "r_max": args.r_max,
+        "x1_min": args.x1_min,
+        "x1_max": args.x1_max,
+        "x2_min": args.x2_min,
+        "x2_max": args.x2_max,
+        "dpi": args.dpi,
+        "notex": args.notex,
+        "horizon": args.horizon,
+        "horizon_mask": args.horizon_mask,
+        "horizon_color": args.horizon_color,
+        "horizon_mask_color": args.horizon_mask_color,
+        "ergosphere": args.ergosphere,
+        "ergosphere_color": args.ergosphere_color,
+        "grid": args.grid,
+        "grid_color": args.grid_color,
+        "grid_alpha": args.grid_alpha,
     }
 
     tasks = [(i, f, shared) for i, f in enumerate(files_sorted)]
 
     if args.workers <= 1:
         for task in tasks:
-            _make_frame(task)
+            out = _make_frame(task)
+            print(out)
     else:
         with Pool(processes=args.workers) as pool:
-            pool.map(_make_frame, tasks)
+            for out in pool.imap_unordered(_make_frame, tasks):
+                print(out)
 
 
 if __name__ == "__main__":

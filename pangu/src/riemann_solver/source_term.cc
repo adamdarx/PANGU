@@ -19,19 +19,24 @@ parthenon::TaskStatus AddGeometricSource(parthenon::MeshData<parthenon::Real> *m
   auto pmb0 = md->GetBlockData(0)->GetBlockPointer();
   const auto package_core = pmb0->packages.Get("core");
   const auto kAdiabaticIndex = package_core->Param<Real>("adiabatic_index");
+  const auto enable_B = package_core->Param<bool>("enable_B");
+  const auto enable_heating = package_core->Param<bool>("enable_heating");
+  const auto& fnames = package_core->Param<std::vector<std::string>>("primitive_field_names");
 
   const auto bound_x1_interior = md->GetBoundsI(IndexDomain::interior);
   const auto bound_x2_interior = md->GetBoundsJ(IndexDomain::interior);
   const auto bound_x3_interior = md->GetBoundsK(IndexDomain::interior);
   auto block = IndexRange{0, md->NumBlocks() - 1};
 
-  PackIndexMap primitiveIndexMap;
-  const std::vector<std::string> primitive_tags = {
-      "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
-      "electron_entropy"
-  };
-  const auto primitive =
-      md->PackVariables(primitive_tags, primitiveIndexMap);
+  PackIndexMap idxMap;
+  auto primitive = md->PackVariables(fnames, idxMap);
+
+  const int iRHO = idxMap["density"].first;
+  const int iENY = idxMap["energy"].first;
+  const int iUX  = idxMap["weighted_velocity"].first;
+  const int iENT = idxMap["entropy"].first;
+  const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
+  const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
 
   PackIndexMap conservativeIndexMap;
   const std::vector<std::string> conservative_tags = {"conservative"};
@@ -66,14 +71,25 @@ parthenon::TaskStatus AddGeometricSource(parthenon::MeshData<parthenon::Real> *m
           }
         }
 
-        Real primitive_c_array[NPRIM];
-        for (int index = 0; index < NPRIM; ++index) {
-          primitive_c_array[index] = primitive(b, index, k, j, i);
+        Real pcarr[NPRIM] = {0};
+        pcarr[RHO] = primitive(b, iRHO, k, j, i);
+        pcarr[ENY] = primitive(b, iENY, k, j, i);
+        pcarr[UX1] = primitive(b, iUX,   k, j, i);
+        pcarr[UX2] = primitive(b, iUX+1, k, j, i);
+        pcarr[UX3] = primitive(b, iUX+2, k, j, i);
+        if (enable_B) {
+          pcarr[BX1] = primitive(b, iBX,   k, j, i);
+          pcarr[BX2] = primitive(b, iBX+1, k, j, i);
+          pcarr[BX3] = primitive(b, iBX+2, k, j, i);
+        }
+        pcarr[ENT] = primitive(b, iENT, k, j, i);
+        if (enable_heating) {
+          pcarr[KEL] = primitive(b, iKEL, k, j, i);
         }
 
         Real MixedEnergyMomentumTensor[4][4];
         for (int row = 0; row < 4; ++row) {
-          CalculateEnergyMomentumTensor(kAdiabaticIndex, primitive_c_array,
+          CalculateEnergyMomentumTensor(kAdiabaticIndex, pcarr,
                                              gcov, gcon, row,
                                              MixedEnergyMomentumTensor[row]);
         }
@@ -87,8 +103,13 @@ parthenon::TaskStatus AddGeometricSource(parthenon::MeshData<parthenon::Real> *m
             }
           }
 
-          conservative(b, UX1 + (dir - 1), k, j, i) +=
-              contraction * SqrtAbsMetricDeterminant * dt;
+          if (dir == 0) {
+            conservative(b, iENY, k, j, i) +=
+                contraction * SqrtAbsMetricDeterminant * dt;
+          } else {
+            conservative(b, iUX + (dir - 1), k, j, i) +=
+                contraction * SqrtAbsMetricDeterminant * dt;
+          }
         }
       });
 

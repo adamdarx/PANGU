@@ -12,6 +12,7 @@
 #include "prolong_restrict/prolong_restrict.hpp"
 #include "task_list/task_list.h"
 #include "metric/tensor_algebra.h"
+#include <parthenon/package.hpp>
 
 void ProblemGenerator(parthenon::MeshBlock *pmb,
                       parthenon::ParameterInput *pin) {
@@ -20,12 +21,19 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
   auto &resource = pmb->meshblock_data.Get();
   const auto kAdiabaticIndex = package_core->Param<Real>("adiabatic_index");
   const auto kFelInit = package_core->Param<Real>("fel_0");
+  const auto enable_B = package_core->Param<bool>("enable_B");
+  const auto enable_heating = package_core->Param<bool>("enable_heating");
+  const auto& fnames = package_core->Param<std::vector<std::string>>("primitive_field_names");
 
-  PackIndexMap primitiveIndexMap;
-  const std::vector<std::string> primitive_tags = {
-      "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
-      "electron_entropy"};
-  auto primitive = resource->PackVariables(primitive_tags, primitiveIndexMap);
+  PackIndexMap idxMap;
+  auto primitive = resource->PackVariables(fnames, idxMap);
+
+  const int iRHO = idxMap["density"].first;
+  const int iENY = idxMap["energy"].first;
+  const int iUX  = idxMap["weighted_velocity"].first;
+  const int iENT = idxMap["entropy"].first;
+  const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
+  const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
 
   auto covariant_metric = resource->Get("covariant_metric").data;
   auto contravariant_metric = resource->Get("contravariant_metric").data;
@@ -74,25 +82,31 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
           }
         }
 
-        primitive(RHO, k, j, i) = 1.0 * (coords.Xc<X1DIR>(i) < 0) +
+        primitive(iRHO, k, j, i) = 1.0 * (coords.Xc<X1DIR>(i) < 0) +
                                            0.125 * (coords.Xc<X1DIR>(i) >= 0);
-        primitive(ENY, k, j, i) =
+        primitive(iENY, k, j, i) =
             1.0 / (kAdiabaticIndex - 1.0) * (coords.Xc<X1DIR>(i) < 0) +
             0.1 / (kAdiabaticIndex - 1.0) * (coords.Xc<X1DIR>(i) >= 0);
-        primitive(UX1, k, j, i) = 0.;
-        primitive(UX2, k, j, i) = 0.;
-        primitive(UX3, k, j, i) = 0.;
-        primitive(BX1, k, j, i) = 0.5;
-        primitive(BX2, k, j, i) =
-            1. * (coords.Xc<X1DIR>(i) < 0) - 1. * (coords.Xc<X1DIR>(i) >= 0);
-        primitive(BX3, k, j, i) = 0.;
-        primitive(ENT, k, j, i) =
-            (kAdiabaticIndex - 1.0) * primitive(ENY, k, j, i) *
-            Kokkos::pow(primitive(RHO, k, j, i), -kAdiabaticIndex);
-        primitive(KEL, k, j, i) = kFelInit * primitive(ENT, k, j, i);
+        primitive(iUX, k, j, i) = 0.;
+        primitive(iUX+1, k, j, i) = 0.;
+        primitive(iUX+2, k, j, i) = 0.;
+        if (enable_B) {
+          primitive(iBX, k, j, i) = 0.5;
+          primitive(iBX+1, k, j, i) =
+              1. * (coords.Xc<X1DIR>(i) < 0) - 1. * (coords.Xc<X1DIR>(i) >= 0);
+          primitive(iBX+2, k, j, i) = 0.;
+        }
+        primitive(iENT, k, j, i) =
+            (kAdiabaticIndex - 1.0) * primitive(iENY, k, j, i) *
+            Kokkos::pow(primitive(iRHO, k, j, i), -kAdiabaticIndex);
+        if (enable_heating) {
+          primitive(iKEL, k, j, i) = kFelInit * primitive(iENT, k, j, i);
+        }
 
-        primitive(BX1, k, j, i) /= 2.0;
-        primitive(BX2, k, j, i) /= 3.0;
+        if (enable_B) {
+          primitive(iBX, k, j, i) /= 2.0;
+          primitive(iBX+1, k, j, i) /= 3.0;
+        }
       });
 }
 

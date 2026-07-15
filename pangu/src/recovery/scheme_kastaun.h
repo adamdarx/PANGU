@@ -165,7 +165,7 @@ int false_position(Real &mu, const Real D, const Real q, const Real bsq,
 }
 
 KOKKOS_INLINE_FUNCTION
-int invert(Real U[8], Real prim[8], Real gamma, Real gcov[4][4],
+int invert(Real U[9], Real prim[9], Real gamma, Real gcov[4][4],
            Real gcon[4][4], Real gdet) {
   (void)gdet;
 
@@ -247,6 +247,7 @@ int invert(Real U[8], Real prim[8], Real gamma, Real gcov[4][4],
   const Real Wmu_x = lorentz * mu * x;
   prim[RHO] = rho;
   prim[ENY] = internal_energy;
+  prim[ENT] = (gamma - 1.) * internal_energy * Kokkos::pow(rho, -gamma);
   for (int index = 0; index < 3; ++index) {
     prim[UX1 + index] = Wmu_x * (r_u[index] + rb * mu * b_u[index]);
   }

@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xxd \"D:\\\\home\\\\adamdarx\\\\Pangu\\\\athenak\\\\build\\\\bin\\\\torus.hydro_w.00000.bin\")",
+      "Bash(python compare_torus_init.py --athena athenak/build/bin/torus.hydro_w.00000.bin --var density --N 128 --no-plot)",
+      "Bash(python compare_torus_init.py --athena athenak/build/bin/torus.hydro_w.00000.bin --var density --N 256 --slice z --slice-pos 0.0)",
+      "Bash(python compare_torus_init.py --athena athenak/build/bin/torus.hydro_w.00000.bin --var density --N 256 --slice z)",
+      "Bash(python compare_torus_init.py)",
+      "Bash(python -c ' *)",
+      "Bash(awk NR>2 {print $1} *)",
+      "Bash(tasklist)",
+      "WebFetch(domain:gkeyll.readthedocs.io)",
+      "Bash(python3 *)",
+      "Read(//d//**)",
+      "Bash(python vis/python/plot_slice.py \"build/bin/gr_bondi.hydro_w.00100.bin\" dens bondi_test.png -d z -l 0.0 --r_max 10.0 -c inferno -n log --horizon --notex)",
+      "Bash(rm -f bondi_test.png)",
+      "Bash(mkdir -p frames/bondi_dens)",
+      "Bash(ffmpeg -version)",
+      "Bash(ffmpeg -y -framerate 10 -i frames/bondi_dens/frame_%05d.png -c:v libx264 -pix_fmt yuv420p -crf 18 bondi_density_evolution.mp4)",
+      "Bash(python -c \"import h5py; print\\('h5py OK'\\)\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(python *)",
+      "Bash(grep -E '\\\\.athinput|\\\\.pin|\\\\.in$')",
+      "Bash(git --no-pager diff scripts/python/xzplot.py)",
+      "Bash(git --no-pager diff scripts/python/xzplot_cks.py)",
+      "Bash(git checkout *)",
+      "Bash(sed -i 's/const std::vector<std::string> primitive_tags = {$/std::vector<std::string> primitive_tags = {/' pangu/src/riemann_solver/hll.cc)",
+      "Bash(sed -i '/\"electron_entropy\"/{N;s/\"electron_entropy\"\\\\n\\\\t    };/}/;}' pangu/src/riemann_solver/hll.cc)",
+      "Bash(xargs sed -i -e 's/\"electrons\"/\"electron\"/g' -e 's/\"electrons_on\"/\"electron_enable\"/g' -e s/kElectronsOn/kElectronEnable/g -e s/electrons_on/electron_enable/g -e 's/\"on\", true/\"enable\", true/g' -e 's/\"on\", false/\"enable\", false/g')",
+      "Bash(xargs sed -i -e 's/<electrons>/<electron>/g' -e 's/on = true/enable = true/g' -e 's/on = false/enable = false/g' -e 's/on = 1/enable = true/g' -e 's/on = 0/enable = false/g')",
+      "Bash(grep -v \"/\\\\.\")",
+      "Bash(xargs sed -i -e 's/\"electrons\"/\"electron\"/g' -e 's/\"on\", true/\"enable\", true/g' -e s/electrons_on/electron_enable/g)",
+      "Bash(grep -v \"//\")",
+      "Bash(grep -v \"iRho\\\\|iEny\\\\|iUx\\\\|iBx\\\\|iEnt\\\\|iKel\\\\|//\\\\|bcon\\\\|ucon\\\\|\\\\.h.*:\")",
+      "Bash(sed -i 's/pin->GetOrAddString\\(\"metric\", \"name\", \"Minkowski\"\\)/pin->GetOrAddString\\(\"metric\", \"type\", \"minkowski\"\\)/g' pangu/src/initialization/package_registration.cc)",
+      "Bash(sed -i 's/package_metric->AddParam<>\\(\"metric_name\"/package_metric->AddParam<>\\(\"metric_type\"/g' pangu/src/initialization/package_registration.cc)"
+    ]
+  }
+}

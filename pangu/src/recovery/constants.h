@@ -11,7 +11,7 @@
 
 using namespace parthenon::package::prelude;
 
-inline constexpr int NPRIM_RECV = 8;
+inline constexpr int NPRIM_RECV = 9;
 inline constexpr int64_t MAX_NEWT_ITER = 30;
 inline constexpr double NEWT_TOL = 1e-10;
 inline constexpr double MIN_NEWT_TOL = 1e-10;

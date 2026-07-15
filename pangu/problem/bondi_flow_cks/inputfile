@@ -1,0 +1,77 @@
+<parthenon/job>
+problem_id = bondi_flow
+
+<parthenon/mesh>
+refinement = static
+numlevel = 2
+nghost = 2
+
+nx1 = 32
+x1min = -10.0
+x1max = 10.0
+ix1_bc = outflow
+ox1_bc = outflow
+
+nx2 = 32
+x2min = -10.0
+x2max = 10.0
+ix2_bc = outflow
+ox2_bc = outflow
+
+nx3 = 32
+x3min = -10.0
+x3max = 10.0
+ix3_bc = outflow
+ox3_bc = outflow
+
+<parthenon/meshblock>
+nx1 = 8
+nx2 = 8
+nx3 = 8
+
+<parthenon/static_refinement1>
+level = 1
+x1min = -4.0
+x1max = 4.0
+x2min = -4.0
+x2max = 4.0
+x3min = -4.0
+x3max = 4.0
+
+<parthenon/time>
+dt_factor = 1.3
+dt_init = 1e-5
+nlim = -1
+tlim = 100.0
+integrator = rk2
+ncycle_out_mesh = -10000
+
+<core>
+cfl_number = 0.3
+adiabatic_index = 1.333333333
+riemann_solver = hll
+limiter = ppm4
+enable_heating = true
+density_floor = 1.0e-10
+energy_floor = 1.0e-14
+density_floor_pow = 0.0
+energy_floor_pow = 0.0
+
+<metric>
+type = cks
+h = 0.0
+a = 0.0
+excise = true
+r_excise = 1.0
+dexcise = 1.0e-8
+pexcise = 0.333e-12
+
+<bondi>
+mdot = 1.0
+rs = 8.0
+
+<parthenon/output0>
+file_type = hdf5
+write_xdmf = true
+dt = 1.0
+variables = density, entropy, electron_entropy, energy, weighted_velocity

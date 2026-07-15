@@ -10,6 +10,7 @@
 
 #include <basic_types.hpp>
 #include "initialization/variable_mnemonics.h"
+#include "interpolation/interpolater_ppm4.h"
 #include "interpolation/interpolater_mc.h"
 #include "physics/fast_magnetosonic_speed.h"
 #include "physics/contravariant_flux.h"
@@ -21,19 +22,26 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
   auto pmb0 = md->GetBlockData(0)->GetBlockPointer();
   const auto package_core = pmb0->packages.Get("core");
   const auto &kAdiabaticIndex = package_core->Param<Real>("adiabatic_index");
+  const auto enable_B = package_core->Param<bool>("enable_B");
+  const auto enable_heating = package_core->Param<bool>("enable_heating");
+  const auto &limiter = package_core->Param<std::string>("limiter");
+  const auto& fnames = package_core->Param<std::vector<std::string>>("primitive_field_names");
 
   const auto bound_x1_interior = md->GetBoundsI(IndexDomain::interior);
   const auto bound_x2_interior = md->GetBoundsJ(IndexDomain::interior);
   const auto bound_x3_interior = md->GetBoundsK(IndexDomain::interior);
   auto block = IndexRange{0, md->NumBlocks() - 1};
 
-  PackIndexMap primitiveIndexMap;
-  const std::vector<std::string> primitive_tags = {
-      "density", "energy", "weighted_velocity", "magnetic_field", "entropy",
-      "electron_entropy"
-    };
-  const auto primitive =
-      md->PackVariables(primitive_tags, primitiveIndexMap);
+  PackIndexMap idxMap;
+  auto primitive = md->PackVariables(fnames, idxMap);
+
+  const int iRHO = idxMap["density"].first;
+  const int iENY = idxMap["energy"].first;
+  const int iUX  = idxMap["weighted_velocity"].first;
+  const int iENT = idxMap["entropy"].first;
+  const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
+  const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
+
   PackIndexMap conservativeIndexMap;
   const std::vector<std::string> conservative_tags = {"conservative"};
   auto conservative =
@@ -61,24 +69,45 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
   const int offset_x2 = (meshgrid_size_x2 > 1) ? 1 : 0;
   const int offset_x3 = (meshgrid_size_x3 > 1) ? 1 : 0;
 
+  const bool use_mc = (limiter == "mc");
+
   pmb0->par_for(
       PARTHENON_AUTO_LABEL, block.s, block.e,
       bound_x3_interior.s - offset_x3, bound_x3_interior.e + offset_x3,
       bound_x2_interior.s - offset_x2, bound_x2_interior.e + offset_x2,
       bound_x1_interior.s, bound_x1_interior.e + 1,
       KOKKOS_LAMBDA(const int b, const int k, const int j, const int i) {
-        Real primitiveLeft[NPRIM];
-        Real primitiveRight[NPRIM];
-        for (int index = 0; index < NPRIM; ++index) {
-          primitiveLeft[index] = primitive(b, index, k, j, i - 1) +
-                                  0.5 * InterpolateMC(primitive(b, index, k, j, i - 2),
-                                                      primitive(b, index, k, j, i - 1),
-                                                      primitive(b, index, k, j, i));
-          primitiveRight[index] = primitive(b, index, k, j, i) -
-                                   0.5 * InterpolateMC(primitive(b, index, k, j, i - 1),
-                                                      primitive(b, index, k, j, i),
-                                                      primitive(b, index, k, j, i + 1));
-        }
+        Real primitiveLeft[NPRIM] = {0}, primitiveRight[NPRIM] = {0};
+
+        auto recon = [&](int pidx, int cidx) {
+          Real ql_i, qr_im1, ql_ip1, qr_i;
+          if (use_mc) {
+            MC(primitive(b, pidx, k, j, i - 3), primitive(b, pidx, k, j, i - 2),
+               primitive(b, pidx, k, j, i - 1), primitive(b, pidx, k, j, i),
+               primitive(b, pidx, k, j, i + 1), ql_i, qr_im1);
+            MC(primitive(b, pidx, k, j, i - 2), primitive(b, pidx, k, j, i - 1),
+               primitive(b, pidx, k, j, i), primitive(b, pidx, k, j, i + 1),
+               primitive(b, pidx, k, j, i + 2), ql_ip1, qr_i);
+          } else {
+            PPM4(primitive(b, pidx, k, j, i - 3), primitive(b, pidx, k, j, i - 2),
+                 primitive(b, pidx, k, j, i - 1), primitive(b, pidx, k, j, i),
+                 primitive(b, pidx, k, j, i + 1), ql_i, qr_im1);
+            PPM4(primitive(b, pidx, k, j, i - 2), primitive(b, pidx, k, j, i - 1),
+                 primitive(b, pidx, k, j, i), primitive(b, pidx, k, j, i + 1),
+                 primitive(b, pidx, k, j, i + 2), ql_ip1, qr_i);
+          }
+          primitiveLeft[cidx] = ql_i;
+          primitiveRight[cidx] = qr_i;
+        };
+
+        int p = 0;
+        recon(p++, RHO);
+        recon(p++, ENY);
+        for (int d = 0; d < 3; ++d) recon(p++, UX1 + d);
+        if (enable_B) for (int d = 0; d < 3; ++d) recon(p++, BX1 + d);
+        recon(p++, ENT);
+        if (enable_heating) recon(p++, KEL);
+
         Real conservativeLeft[NPRIM];
         Real conservativeRight[NPRIM];
         Real fluxLeft[NPRIM];
@@ -124,13 +153,29 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
             kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
             MetricDeterminantFace, X1DIR, fluxRight);
 
-        for (int index = 0; index < NPRIM; ++index) {
-          conservative(b).flux(X1DIR, index, k, j, i) =
-              (maxFastCenter * fluxLeft[index] +
-               minFastCenter * fluxRight[index] -
-               maxFastCenter * minFastCenter *
-                   (conservativeRight[index] - conservativeLeft[index])) /
-              (maxFastCenter + minFastCenter + 1e-20);
+        Real fluxHLL[NPRIM];
+        for (int ci = 0; ci < NPRIM; ++ci) {
+          fluxHLL[ci] = (maxFastCenter * fluxLeft[ci] +
+                         minFastCenter * fluxRight[ci] -
+                         maxFastCenter * minFastCenter *
+                             (conservativeRight[ci] - conservativeLeft[ci])) /
+                        (maxFastCenter + minFastCenter + 1e-20);
+        }
+
+        int f = 0;
+        conservative(b).flux(X1DIR, f++, k, j, i) = fluxHLL[RHO];
+        conservative(b).flux(X1DIR, f++, k, j, i) = fluxHLL[ENY];
+        conservative(b).flux(X1DIR, f++, k, j, i) = fluxHLL[UX1];
+        conservative(b).flux(X1DIR, f++, k, j, i) = fluxHLL[UX2];
+        conservative(b).flux(X1DIR, f++, k, j, i) = fluxHLL[UX3];
+        if (enable_B) {
+          conservative(b).flux(X1DIR, f++, k, j, i) = fluxHLL[BX1];
+          conservative(b).flux(X1DIR, f++, k, j, i) = fluxHLL[BX2];
+          conservative(b).flux(X1DIR, f++, k, j, i) = fluxHLL[BX3];
+        }
+        conservative(b).flux(X1DIR, f++, k, j, i) = fluxHLL[ENT];
+        if (enable_heating) {
+          conservative(b).flux(X1DIR, f++, k, j, i) = fluxHLL[KEL];
         }
       });
 
@@ -141,18 +186,37 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
         bound_x1_interior.s - offset_x1, bound_x1_interior.e + offset_x1,
         bound_x2_interior.s, bound_x2_interior.e + 1,
         KOKKOS_LAMBDA(const int b, const int k, const int i, const int j) {
-          Real primitiveLeft[NPRIM];
-          Real primitiveRight[NPRIM];
-          for (int index = 0; index < NPRIM; ++index) {
-            primitiveLeft[index] = primitive(b, index, k, j - 1, i) +
-                                    0.5 * InterpolateMC(primitive(b, index, k, j - 2, i),
-                                                        primitive(b, index, k, j - 1, i),
-                                                        primitive(b, index, k, j, i));
-            primitiveRight[index] = primitive(b, index, k, j, i) -
-                                     0.5 * InterpolateMC(primitive(b, index, k, j - 1, i),
-                                                        primitive(b, index, k, j, i),
-                                                        primitive(b, index, k, j + 1, i));
-          }
+          Real primitiveLeft[NPRIM] = {0}, primitiveRight[NPRIM] = {0};
+
+          auto recon = [&](int pidx, int cidx) {
+            Real ql_i, qr_im1, ql_ip1, qr_i;
+            if (use_mc) {
+              MC(primitive(b, pidx, k, j - 3, i), primitive(b, pidx, k, j - 2, i),
+                 primitive(b, pidx, k, j - 1, i), primitive(b, pidx, k, j, i),
+                 primitive(b, pidx, k, j + 1, i), ql_i, qr_im1);
+              MC(primitive(b, pidx, k, j - 2, i), primitive(b, pidx, k, j - 1, i),
+                 primitive(b, pidx, k, j, i), primitive(b, pidx, k, j + 1, i),
+                 primitive(b, pidx, k, j + 2, i), ql_ip1, qr_i);
+            } else {
+              PPM4(primitive(b, pidx, k, j - 3, i), primitive(b, pidx, k, j - 2, i),
+                   primitive(b, pidx, k, j - 1, i), primitive(b, pidx, k, j, i),
+                   primitive(b, pidx, k, j + 1, i), ql_i, qr_im1);
+              PPM4(primitive(b, pidx, k, j - 2, i), primitive(b, pidx, k, j - 1, i),
+                   primitive(b, pidx, k, j, i), primitive(b, pidx, k, j + 1, i),
+                   primitive(b, pidx, k, j + 2, i), ql_ip1, qr_i);
+            }
+            primitiveLeft[cidx] = ql_i;
+            primitiveRight[cidx] = qr_i;
+          };
+
+          int p = 0;
+          recon(p++, RHO);
+          recon(p++, ENY);
+          for (int d = 0; d < 3; ++d) recon(p++, UX1 + d);
+          if (enable_B) for (int d = 0; d < 3; ++d) recon(p++, BX1 + d);
+          recon(p++, ENT);
+          if (enable_heating) recon(p++, KEL);
+
           Real conservativeLeft[NPRIM];
           Real conservativeRight[NPRIM];
           Real fluxLeft[NPRIM];
@@ -199,13 +263,29 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
               kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
               MetricDeterminantFace, X2DIR, fluxRight);
 
-          for (int index = 0; index < NPRIM; ++index) {
-            conservative(b).flux(X2DIR, index, k, j, i) =
-                (maxFastCenter * fluxLeft[index] +
-                 minFastCenter * fluxRight[index] -
-                 maxFastCenter * minFastCenter *
-                     (conservativeRight[index] - conservativeLeft[index])) /
-                (maxFastCenter + minFastCenter + 1e-20);
+          Real fluxHLL[NPRIM];
+          for (int ci = 0; ci < NPRIM; ++ci) {
+            fluxHLL[ci] = (maxFastCenter * fluxLeft[ci] +
+                           minFastCenter * fluxRight[ci] -
+                           maxFastCenter * minFastCenter *
+                               (conservativeRight[ci] - conservativeLeft[ci])) /
+                          (maxFastCenter + minFastCenter + 1e-20);
+          }
+
+          int f = 0;
+          conservative(b).flux(X2DIR, f++, k, j, i) = fluxHLL[RHO];
+          conservative(b).flux(X2DIR, f++, k, j, i) = fluxHLL[ENY];
+          conservative(b).flux(X2DIR, f++, k, j, i) = fluxHLL[UX1];
+          conservative(b).flux(X2DIR, f++, k, j, i) = fluxHLL[UX2];
+          conservative(b).flux(X2DIR, f++, k, j, i) = fluxHLL[UX3];
+          if (enable_B) {
+            conservative(b).flux(X2DIR, f++, k, j, i) = fluxHLL[BX1];
+            conservative(b).flux(X2DIR, f++, k, j, i) = fluxHLL[BX2];
+            conservative(b).flux(X2DIR, f++, k, j, i) = fluxHLL[BX3];
+          }
+          conservative(b).flux(X2DIR, f++, k, j, i) = fluxHLL[ENT];
+          if (enable_heating) {
+            conservative(b).flux(X2DIR, f++, k, j, i) = fluxHLL[KEL];
           }
         });
 
@@ -216,18 +296,36 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
         bound_x1_interior.s, bound_x1_interior.e,
         bound_x3_interior.s, bound_x3_interior.e + 1,
         KOKKOS_LAMBDA(const int b, const int j, const int i, const int k) {
-          Real primitiveLeft[NPRIM];
-          Real primitiveRight[NPRIM];
-          for (int index = 0; index < NPRIM; ++index) {
-            primitiveLeft[index] = primitive(b, index, k - 1, j, i) +
-                                    0.5 * InterpolateMC(primitive(b, index, k - 2, j, i),
-                                                        primitive(b, index, k - 1, j, i),
-                                                        primitive(b, index, k, j, i));
-            primitiveRight[index] = primitive(b, index, k, j, i) -
-                                     0.5 * InterpolateMC(primitive(b, index, k - 1, j, i),
-                                                        primitive(b, index, k, j, i),
-                                                        primitive(b, index, k + 1, j, i));
-          }
+          Real primitiveLeft[NPRIM] = {0}, primitiveRight[NPRIM] = {0};
+
+          auto recon = [&](int pidx, int cidx) {
+            Real ql_i, qr_im1, ql_ip1, qr_i;
+            if (use_mc) {
+              MC(primitive(b, pidx, k - 3, j, i), primitive(b, pidx, k - 2, j, i),
+                 primitive(b, pidx, k - 1, j, i), primitive(b, pidx, k, j, i),
+                 primitive(b, pidx, k + 1, j, i), ql_i, qr_im1);
+              MC(primitive(b, pidx, k - 2, j, i), primitive(b, pidx, k - 1, j, i),
+                 primitive(b, pidx, k, j, i), primitive(b, pidx, k + 1, j, i),
+                 primitive(b, pidx, k + 2, j, i), ql_ip1, qr_i);
+            } else {
+              PPM4(primitive(b, pidx, k - 3, j, i), primitive(b, pidx, k - 2, j, i),
+                   primitive(b, pidx, k - 1, j, i), primitive(b, pidx, k, j, i),
+                   primitive(b, pidx, k + 1, j, i), ql_i, qr_im1);
+              PPM4(primitive(b, pidx, k - 2, j, i), primitive(b, pidx, k - 1, j, i),
+                   primitive(b, pidx, k, j, i), primitive(b, pidx, k + 1, j, i),
+                   primitive(b, pidx, k + 2, j, i), ql_ip1, qr_i);
+            }
+            primitiveLeft[cidx] = ql_i;
+            primitiveRight[cidx] = qr_i;
+          };
+
+          int p = 0;
+          recon(p++, RHO);
+          recon(p++, ENY);
+          for (int d = 0; d < 3; ++d) recon(p++, UX1 + d);
+          if (enable_B) for (int d = 0; d < 3; ++d) recon(p++, BX1 + d);
+          recon(p++, ENT);
+          if (enable_heating) recon(p++, KEL);
 
           Real conservativeLeft[NPRIM];
           Real conservativeRight[NPRIM];
@@ -275,13 +373,29 @@ parthenon::TaskStatus CalculateHLL(parthenon::MeshData<parthenon::Real> *md) {
               kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
               MetricDeterminantFace, X3DIR, fluxRight);
 
-          for (int index = 0; index < NPRIM; ++index) {
-            conservative(b).flux(X3DIR, index, k, j, i) =
-                (maxFastCenter * fluxLeft[index] +
-                 minFastCenter * fluxRight[index] -
-                 maxFastCenter * minFastCenter *
-                     (conservativeRight[index] - conservativeLeft[index])) /
-                (maxFastCenter + minFastCenter + 1e-20);
+          Real fluxHLL[NPRIM];
+          for (int ci = 0; ci < NPRIM; ++ci) {
+            fluxHLL[ci] = (maxFastCenter * fluxLeft[ci] +
+                           minFastCenter * fluxRight[ci] -
+                           maxFastCenter * minFastCenter *
+                               (conservativeRight[ci] - conservativeLeft[ci])) /
+                          (maxFastCenter + minFastCenter + 1e-20);
+          }
+
+          int f = 0;
+          conservative(b).flux(X3DIR, f++, k, j, i) = fluxHLL[RHO];
+          conservative(b).flux(X3DIR, f++, k, j, i) = fluxHLL[ENY];
+          conservative(b).flux(X3DIR, f++, k, j, i) = fluxHLL[UX1];
+          conservative(b).flux(X3DIR, f++, k, j, i) = fluxHLL[UX2];
+          conservative(b).flux(X3DIR, f++, k, j, i) = fluxHLL[UX3];
+          if (enable_B) {
+            conservative(b).flux(X3DIR, f++, k, j, i) = fluxHLL[BX1];
+            conservative(b).flux(X3DIR, f++, k, j, i) = fluxHLL[BX2];
+            conservative(b).flux(X3DIR, f++, k, j, i) = fluxHLL[BX3];
+          }
+          conservative(b).flux(X3DIR, f++, k, j, i) = fluxHLL[ENT];
+          if (enable_heating) {
+            conservative(b).flux(X3DIR, f++, k, j, i) = fluxHLL[KEL];
           }
         });
 

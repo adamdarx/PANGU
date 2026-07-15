@@ -3,6 +3,7 @@ problem_id = fm_torus_cks
 
 <parthenon/mesh>
 refinement = static
+nghost = 4
 
 nx1 = 64
 x1min = -64
@@ -31,52 +32,42 @@ nx3 = 16
 dt_factor = 1.3
 dt_init = 1e-5
 nlim = -1
-tlim = 200
+tlim = 500
 integrator = rk2
 ncycle_out_mesh = -10000
 
 <core>
-cfl_number = 0.4
-adiabatic_index = 1.666666667
-q_factor_floor = 1.0
-q_factor_ceiling = 1.0
+cfl_number = 0.3
+adiabatic_index = 1.3333333333333333
 density_floor = 1e-5
-energy_floor = 4.641588833612779e-9
+energy_floor = 1e-7
 density_floor_pow = -1.5
 energy_floor_pow = -2.5
-
-<electrons>
-on = true
-# Select one heating model: constant, howes, kawazura, werner, rowan, sharma.
-model = constant
-gamma_e = 1.333333333
-gamma_p = 1.666666667
-limit_kel = true
-suppress_highb_heat = false
-enforce_positive_dissipation = false
-fel_0 = 0.1
-fel_constant = 0.1
-ratio_min = 0.001
-ratio_max = 1000.0
+riemann_solver = hll
+limiter = ppm4
+enable_B = false
+enable_heating = false
 
 <metric>
-name = CKS
+type = cks
 h = 0.7
 a = 0.9375
+excise = true
+r_excise = 1.0
+dexcise = 1.0e-8
+pexcise = 0.333e-10
 
 <fm_torus>
 rin = 6.0
 rmax = 12.0
 kappa = 1e-3
-perturbation = 4e-2
-beta = 100.0
-aphi_rho_cut = 0.2
+perturbation = 2e-2
 
 <parthenon/output0>
 file_type = hdf5
 write_xdmf = true
-dt = 1
-variables = density, entropy, electron_entropy
+dt = 10
+variables = density, energy, weighted_velocity
 
 <parthenon/static_refinement1>
 x1min = -32
@@ -87,7 +78,7 @@ x3min = -32
 x3max = 32
 level = 1
 
-<parthenon/static_refinement1>
+<parthenon/static_refinement2>
 x1min = -16
 x1max = 16
 x2min = -16
@@ -96,7 +87,7 @@ x3min = -16
 x3max = 16
 level = 2
 
-<parthenon/static_refinement1>
+<parthenon/static_refinement3>
 x1min = -4
 x1max = 4
 x2min = -4

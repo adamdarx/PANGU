@@ -1,0 +1,74 @@
+<parthenon/job>
+problem_id = magnetised_bondi
+
+<parthenon/mesh>
+refinement = none
+numlevel = 1
+
+nx1 = 200
+x1min = 0.587786665
+x1max = 2.302585093
+ix1_bc = outflow
+ox1_bc = outflow
+
+nx2 = 100
+x2min = 0.0
+x2max = 0.5
+ix2_bc = reflecting
+ox2_bc = reflecting
+
+nx3 = 1
+x3min = -3.141592653589793
+x3max = 3.141592653589793
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 200
+nx2 = 100
+nx3 = 1
+
+<parthenon/time>
+dt_factor = 1.3
+dt_init = 1e-5
+nlim = -1
+tlim = 20.0
+integrator = rk2
+ncycle_out = 1000
+ncycle_out_mesh = -10000
+
+<core>
+cfl_number = 0.4
+adiabatic_index = 1.3333333333333333
+riemann_solver = laxf
+reconstruction = mc
+density_floor = 1.0e-6
+energy_floor = 1.0e-8
+density_floor_pow = -1.5
+energy_floor_pow = -2.5
+sigma_max = 10000.0
+lorentz_max = 50.0
+enable_heating = true
+enable_B = true
+
+<metric>
+name = MKS
+h = 0.0
+a = 0.0
+
+<bondi>
+mdot = 0.08482300164692426
+rs = 8.0
+rin = 0.0
+atmosphere_factor = 1.0e-7
+magnetized = true
+sigma_inner = 1000.0
+field = monopole
+sigma_norm = max
+fixed_radial_bc = true
+
+<parthenon/output0>
+file_type = hdf5
+write_xdmf = true
+dt = 20.0
+variables = density, energy, weighted_velocity, magnetic_field, entropy, electron_entropy
