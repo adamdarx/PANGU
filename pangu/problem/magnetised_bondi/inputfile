@@ -40,6 +40,7 @@ ncycle_out_mesh = -10000
 <core>
 cfl_number = 0.4
 adiabatic_index = 1.3333333333333333
+recovery = chainer
 riemann_solver = laxf
 reconstruction = mc
 density_floor = 1.0e-6

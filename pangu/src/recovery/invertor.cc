@@ -8,10 +8,12 @@
 #include <vector>
 
 #include "initialization/variable_mnemonics.h"
+#include "metric/christoffel.h"
 #include "recovery/constants.h"
 #include "recovery/scheme_1d.h"
 #include "recovery/scheme_1d_vsq.h"
 #include "recovery/scheme_2d.h"
+#include "recovery/scheme_kastaun.h"
 
 parthenon::TaskStatus Recovery(parthenon::MeshData<parthenon::Real> *md) {
   PARTHENON_INSTRUMENT
@@ -23,14 +25,21 @@ parthenon::TaskStatus Recovery(parthenon::MeshData<parthenon::Real> *md) {
       package_core->Param<parthenon::Real>("adiabatic_index");
   const auto enable_B = package_core->Param<bool>("enable_B");
   const auto enable_heating = package_core->Param<bool>("enable_heating");
+  const bool use_robuster =
+      package_core->Param<std::string>("recovery") == "robuster";
   const auto& fnames = package_core->Param<std::vector<std::string>>("primitive_field_names");
   const auto met_type_inv = package_metric_inv->Param<std::string>("metric_type");
+  int mtype_int_inv = MetricType::Minkowski;
+  if (met_type_inv == "bl") { mtype_int_inv = MetricType::BL; }
+  else if (met_type_inv == "cks") { mtype_int_inv = MetricType::CKS; }
+  else if (met_type_inv == "mks") { mtype_int_inv = MetricType::MKS; }
   const bool is_cks_inv = (met_type_inv == "cks");
   const Real r_excise_inv = package_metric_inv->Param<Real>("r_excise");
   const Real dexcise_inv = package_metric_inv->Param<Real>("dexcise");
   const Real pexcise_inv = package_metric_inv->Param<Real>("pexcise");
   const Real e_excise_inv = pexcise_inv / (kAdiabaticIndex - 1.0);
   const Real kerr_a_inv = package_metric_inv->Param<Real>("a");
+  const Real mks_h_inv = package_metric_inv->Param<Real>("h");
   const Real kerr_a2_inv = kerr_a_inv * kerr_a_inv;
 
   const auto bound_x1_interior = md->GetBoundsI(IndexDomain::interior);
@@ -53,43 +62,40 @@ parthenon::TaskStatus Recovery(parthenon::MeshData<parthenon::Real> *md) {
   const auto conservative =
       md->PackVariables(conservative_tags, conservativeIndexMap);
 
-  auto flag =
-      md->PackVariables(std::vector<std::string>{"flag"});
-  auto covariant_metric =
-      md->PackVariables(std::vector<std::string>{"covariant_metric"});
-  auto contravariant_metric =
-      md->PackVariables(std::vector<std::string>{"contravariant_metric"});
-  auto metric_determinant =
-      md->PackVariables(std::vector<std::string>{"metric_determinant"});
+  // The "flag" field only exists on the chainer recovery path; the robuster
+  // (Kastaun) path never reads or writes it.
+  parthenon::MeshBlockVarPack<Real> flag;
+  if (!use_robuster) {
+    flag = md->PackVariables(std::vector<std::string>{"flag"});
+  }
 
   pmb0->par_for(
       PARTHENON_AUTO_LABEL, block.s, block.e,
       bound_x3_interior.s, bound_x3_interior.e, bound_x2_interior.s, bound_x2_interior.e,
       bound_x1_interior.s, bound_x1_interior.e,
       KOKKOS_LAMBDA(const int b, const int k, const int j, const int i) {
+        const auto &coords_inv = primitive.GetCoords(b);
+        const Real x = coords_inv.Xc<X1DIR>(i);
+        const Real y = coords_inv.Xc<X2DIR>(j);
+        const Real z = coords_inv.Xc<X3DIR>(k);
+        const Real x_code_inv[4] = {0.0, x, y, z};
+
         if (is_cks_inv) {
-          const auto &coords_inv = primitive.GetCoords(b);
-          const Real x = coords_inv.Xc<X1DIR>(i);
-          const Real y = coords_inv.Xc<X2DIR>(j);
-          const Real z = coords_inv.Xc<X3DIR>(k);
           const Real rad2 = x*x + y*y + z*z;
           const Real sa = SQR(rad2 - kerr_a2_inv) + 4.0*kerr_a2_inv*z*z;
           const Real r_bl = Kokkos::sqrt(0.5*(rad2 - kerr_a2_inv + Kokkos::sqrt(sa)));
-          if (r_bl < r_excise_inv) { flag(b, 0, k, j, i) = 0; return; }
+          if (r_bl < r_excise_inv) {
+            if (!use_robuster) flag(b, 0, k, j, i) = 0;
+            return;
+          }
         }
 
         Real gcov[4][4], gcon[4][4];
-        for (int row = 0; row < 4; ++row) {
-          for (int col = 0; col < 4; ++col) {
-            gcov[row][col] =
-                covariant_metric(b, CENTER * 16 + col * 4 + row, k, j, i);
-            gcon[row][col] =
-                contravariant_metric(b, CENTER * 16 + col * 4 + row, k, j, i);
-          }
-        }
-        Real gdet = metric_determinant(b, CENTER, k, j, i);
+        Real gdet;
+        ComputeMetricAtLocation(mtype_int_inv, x_code_inv, kerr_a_inv, mks_h_inv,
+                                gcov, gcon, gdet);
 
-        flag(b, 0, k, j, i) = 0;
+        if (!use_robuster) flag(b, 0, k, j, i) = 0;
 
         const parthenon::Real sqrt_abs_g = Kokkos::sqrt(Kokkos::fabs(gdet));
         const parthenon::Real alpha = 1.0 / Kokkos::sqrt(-gcon[0][0]);
@@ -167,17 +173,27 @@ parthenon::TaskStatus Recovery(parthenon::MeshData<parthenon::Real> *md) {
         }
         primitiveHarm[ENT] = primitiveCArray[ENT];
 
-        flag(b, 0, k, j, i) =
-            Scheme2D::invert(conservativeHarm, primitiveHarm, kAdiabaticIndex,
-                             gcov, gcon, gdet) == 0;
-        if (!flag(b, 0, k, j, i)) {
+        if (use_robuster) {
+          // Kastaun et al. (2021) one-dimensional root solve: no flag, no
+          // FixRecovery. On failure keep the previous-stage primitives; the
+          // FixPrimitive floors at the start of the next stage act as backup.
+          const int status =
+              SchemeKastaun::invert(conservativeHarm, primitiveHarm,
+                                    kAdiabaticIndex, gcov, gcon, gdet);
+          if (status != 0) return;
+        } else {
           flag(b, 0, k, j, i) =
-              Scheme1Dvsq::invert(conservativeHarm, primitiveHarm,
-                                  kAdiabaticIndex, gcov, gcon, gdet) == 0;
+              Scheme2D::invert(conservativeHarm, primitiveHarm, kAdiabaticIndex,
+                               gcov, gcon, gdet) == 0;
           if (!flag(b, 0, k, j, i)) {
             flag(b, 0, k, j, i) =
-                Scheme1D::invert(conservativeHarm, primitiveHarm,
-                                 kAdiabaticIndex, gcov, gcon, gdet) == 0;
+                Scheme1Dvsq::invert(conservativeHarm, primitiveHarm,
+                                    kAdiabaticIndex, gcov, gcon, gdet) == 0;
+            if (!flag(b, 0, k, j, i)) {
+              flag(b, 0, k, j, i) =
+                  Scheme1D::invert(conservativeHarm, primitiveHarm,
+                                   kAdiabaticIndex, gcov, gcon, gdet) == 0;
+            }
           }
         }
 

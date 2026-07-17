@@ -6,6 +6,7 @@
 #include "amr_criteria/refinement_package.hpp"
 #include "bvals/comms/bvals_in_one.hpp"
 #include "initialization/variable_mnemonics.h"
+#include "metric/christoffel.h"
 #include "interface/metadata.hpp"
 #include "interface/update.hpp"
 #include "mesh/meshblock_pack.hpp"
@@ -145,11 +146,6 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
   const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
   const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
 
-  auto covariant_metric = resource->Get("covariant_metric").data;
-  auto contravariant_metric = resource->Get("contravariant_metric").data;
-  auto metric_determinant = resource->Get("metric_determinant").data;
-  auto connection = resource->Get("connection").data;
-
   auto cellbounds = pmb->cellbounds;
   const auto ib = cellbounds.GetBoundsI(IndexDomain::entire);
   const auto jb = cellbounds.GetBoundsJ(IndexDomain::entire);
@@ -187,84 +183,6 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
 
         Real gcon[4][4];
         invert(gcov, gcon);
-
-        const Real gdet = determinant(gcov);
-        const Real x_code_loc[4][4] = {
-            {0.0, coords.Xc<X1DIR>(i), coords.Xc<X2DIR>(j),
-             coords.Xc<X3DIR>(k)},
-            {0.0, coords.Xf<X1DIR, X1DIR>(k, j, i),
-             coords.Xf<X2DIR, X1DIR>(k, j, i),
-             coords.Xf<X3DIR, X1DIR>(k, j, i)},
-            {0.0, coords.Xf<X1DIR, X2DIR>(k, j, i),
-             coords.Xf<X2DIR, X2DIR>(k, j, i),
-             coords.Xf<X3DIR, X2DIR>(k, j, i)},
-            {0.0, coords.Xf<X1DIR, X3DIR>(k, j, i),
-             coords.Xf<X2DIR, X3DIR>(k, j, i),
-             coords.Xf<X3DIR, X3DIR>(k, j, i)}};
-
-        for (int loc = 0; loc < 4; ++loc) {
-          Real gcov_loc[4][4];
-          Real gcon_loc[4][4];
-          MKS::CalculateCodeMetric(x_code_loc[loc], gcov_loc, kerr_h, kerr_a);
-          invert(gcov_loc, gcon_loc);
-          metric_determinant(loc, k, j, i) = determinant(gcov_loc);
-          for (int row = 0; row < 4; ++row) {
-            for (int col = 0; col < 4; ++col) {
-              covariant_metric(loc, col, row, k, j, i) = gcov_loc[row][col];
-              contravariant_metric(loc, col, row, k, j, i) = gcon_loc[row][col];
-            }
-          }
-        }
-
-        constexpr Real MetricDiffDelta = 1.0e-5;
-
-        Real dgcov[4][4][4];
-        for (int dir = 0; dir < 4; ++dir) {
-          for (int row = 0; row < 4; ++row) {
-            for (int col = 0; col < 4; ++col) {
-              dgcov[dir][row][col] = 0.0;
-            }
-          }
-          if (dir > 0) {
-            Real gp[4][4], gm[4][4];
-            Real x_plus[4] = {0.0, x1, x2, x3};
-            Real x_minus[4] = {0.0, x1, x2, x3};
-            x_plus[dir] += MetricDiffDelta;
-            x_minus[dir] -= MetricDiffDelta;
-
-            MKS::CalculateCodeMetric(x_plus, gp, kerr_h, kerr_a);
-            MKS::CalculateCodeMetric(x_minus, gm, kerr_h, kerr_a);
-            for (int row = 0; row < 4; ++row) {
-              for (int col = 0; col < 4; ++col) {
-                dgcov[dir][row][col] =
-                    (gp[row][col] - gm[row][col]) / (2.0 * MetricDiffDelta);
-              }
-            }
-          }
-        }
-
-        Real conn_cov[4][4][4];
-        for (int ii = 0; ii < 4; ++ii) {
-          for (int jj = 0; jj < 4; ++jj) {
-            for (int kk = 0; kk < 4; ++kk) {
-              conn_cov[ii][jj][kk] =
-                  0.5 *
-                  (dgcov[jj][ii][kk] + dgcov[kk][ii][jj] - dgcov[ii][jj][kk]);
-            }
-          }
-        }
-
-        for (int ii = 0; ii < 4; ++ii) {
-          for (int jj = 0; jj < 4; ++jj) {
-            for (int kk = 0; kk < 4; ++kk) {
-              Real conn_val = 0.0;
-              for (int ll = 0; ll < 4; ++ll) {
-                conn_val += gcon[ii][ll] * conn_cov[ll][jj][kk];
-              }
-              connection(ii, jj, kk, k, j, i) = conn_val;
-            }
-          }
-        }
 
         const Real alpha = 1.0 / Kokkos::sqrt(-gcon[0][0]);
         const Real beta1 = gcon[0][1] * alpha * alpha;
@@ -384,6 +302,16 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
   const Real beta_target = pin->GetOrAddReal("fm_torus", "beta", 100.0);
   const Real aphi_rho_cut = pin->GetOrAddReal("fm_torus", "aphi_rho_cut", 0.2);
 
+  // Metric type and params for on-the-fly metric computation
+  const auto package_metric = pmesh->packages.Get("metric");
+  const auto mtype_str = package_metric->Param<std::string>("metric_type");
+  int mtype_int = MetricType::Minkowski;
+  if (mtype_str == "bl") { mtype_int = MetricType::BL; }
+  else if (mtype_str == "cks") { mtype_int = MetricType::CKS; }
+  else if (mtype_str == "mks") { mtype_int = MetricType::MKS; }
+  const Real kerr_a = package_metric->Param<Real>("a");
+  const Real kerr_h = package_metric->Param<Real>("h");
+
   Real local_rhomax = 0.0;
   Real local_umax = 0.0;
 
@@ -445,10 +373,6 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
     const int iENY = idxMap["energy"].first;
     const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
 
-    auto covariant_metric = resource->Get("covariant_metric").data;
-    auto contravariant_metric = resource->Get("contravariant_metric").data;
-    auto metric_determinant = resource->Get("metric_determinant").data;
-
     auto cellbounds = pmb->cellbounds;
     const auto ib = cellbounds.GetBoundsI(IndexDomain::entire);
     const auto jb = cellbounds.GetBoundsJ(IndexDomain::entire);
@@ -498,8 +422,12 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
           const int jj = j - jb.s;
           const int ii = i - ib.s;
 
-          const Real sqrt_abs_gdet = Kokkos::sqrt(
-              Kokkos::fabs(metric_determinant(CENTER, k, j, i)));
+          const Real x_code_c[4] = {0.0, coords.Xc<X1DIR>(i),
+                                    coords.Xc<X2DIR>(j), coords.Xc<X3DIR>(k)};
+          Real gcov_c[4][4], gcon_c[4][4], gdet_c;
+          ComputeMetricAtLocation(mtype_int, x_code_c, kerr_a, kerr_h,
+                                  gcov_c, gcon_c, gdet_c);
+          const Real sqrt_abs_gdet = Kokkos::sqrt(Kokkos::fabs(gdet_c));
           const Real dx1 = coords.Dxc<X1DIR>(i);
           const Real dx2 = coords.Dxc<X2DIR>(j);
 
@@ -530,28 +458,17 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
     const int iBX  = idxMap["magnetic_field"].first;
     const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
 
-    auto covariant_metric = resource->Get("covariant_metric").data;
-    auto contravariant_metric = resource->Get("contravariant_metric").data;
-
-    auto cellbounds = pmb->cellbounds;
-    const auto ib_interior = cellbounds.GetBoundsI(IndexDomain::interior);
-    const auto jb_interior = cellbounds.GetBoundsJ(IndexDomain::interior);
-    const auto kb_interior = cellbounds.GetBoundsK(IndexDomain::interior);
-
     Real block_bsq_max = 0.0;
     pmb->par_reduce(
         PARTHENON_AUTO_LABEL, kb_interior.s, kb_interior.e, jb_interior.s,
         jb_interior.e, ib_interior.s, ib_interior.e,
         KOKKOS_LAMBDA(const int k, const int j, const int i,
                       Real &local_max) {
-          Real gcov[4][4];
-          Real gcon[4][4];
-          for (int row = 0; row < 4; ++row) {
-            for (int col = 0; col < 4; ++col) {
-              gcov[row][col] = covariant_metric(CENTER, col, row, k, j, i);
-              gcon[row][col] = contravariant_metric(CENTER, col, row, k, j, i);
-            }
-          }
+          const Real x_code_bsq[4] = {0.0, coords.Xc<X1DIR>(i),
+                                      coords.Xc<X2DIR>(j), coords.Xc<X3DIR>(k)};
+          Real gcov[4][4], gcon[4][4], gdet_bsq;
+          ComputeMetricAtLocation(mtype_int, x_code_bsq, kerr_a, kerr_h,
+                                  gcov, gcon, gdet_bsq);
 
           Real primitive_c_array[NPRIM] = {0};
           primitive_c_array[RHO] = primitive(iRHO, k, j, i);

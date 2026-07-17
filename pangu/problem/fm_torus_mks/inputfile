@@ -39,6 +39,7 @@ ncycle_out_mesh = -10000
 <core>
 cfl_number = 0.4
 adiabatic_index = 1.666666667
+recovery = chainer
 density_floor = 1e-5
 energy_floor = 4.641588833612779e-9
 density_floor_pow = -1.5

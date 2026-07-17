@@ -49,6 +49,7 @@ ncycle_out_mesh = -10000
 <core>
 cfl_number = 0.3
 adiabatic_index = 1.333333333
+recovery = chainer
 riemann_solver = hll
 limiter = ppm4
 enable_heating = true

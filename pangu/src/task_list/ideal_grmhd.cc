@@ -86,7 +86,12 @@ TaskCollection Simulator::MakeTaskCollection(BlockList_t &blocks,
     auto post_recover = recover_task;
     if (enable_heating)
       post_recover = tl.AddTask(recover_task, ApplyElectronHeating, mc1.get());
-    auto fix_rec = tl.AddTask(post_recover, FixRecovery, mc1.get());
+    // The robuster (Kastaun) recovery path has no flag field and needs no
+    // FixRecovery pass.
+    const auto &recovery_name =
+        pmesh->packages.Get("core")->Param<std::string>("recovery");
+    if (recovery_name == "chainer")
+      tl.AddTask(post_recover, FixRecovery, mc1.get());
   }
 
   // Region 2: Boundary conditions, fill derived, timestep estimation.

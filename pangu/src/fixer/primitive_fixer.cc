@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "initialization/variable_mnemonics.h"
+#include "metric/christoffel.h"
 #include "physics/state_calculation.h"
 #include "physics/heating_model.h"
 
@@ -30,11 +31,13 @@ parthenon::TaskStatus FixPrimitive(parthenon::MeshData<parthenon::Real> *md) {
   const auto enable_heating = package_core->Param<bool>("enable_heating");
   const auto& fnames = package_core->Param<std::vector<std::string>>("primitive_field_names");
 
-  const auto metric_type = package_metric->Param<std::string>("metric_type");
-  int metric_type_id = 0;
-  if (metric_type == "mks") { metric_type_id = 1; }
-  else if (metric_type == "cks") { metric_type_id = 2; }
+  const auto metric_type_str = package_metric->Param<std::string>("metric_type");
+  int mtype_int = MetricType::Minkowski;
+  if (metric_type_str == "bl") { mtype_int = MetricType::BL; }
+  else if (metric_type_str == "cks") { mtype_int = MetricType::CKS; }
+  else if (metric_type_str == "mks") { mtype_int = MetricType::MKS; }
   const auto kerr_a = package_metric->Param<Real>("a");
+  const auto mks_h = package_metric->Param<Real>("h");
   const Real kerr_a2 = kerr_a * kerr_a;
   const Real r_excise = package_metric->Param<Real>("r_excise");
   const Real dexcise = package_metric->Param<Real>("dexcise");
@@ -56,11 +59,6 @@ parthenon::TaskStatus FixPrimitive(parthenon::MeshData<parthenon::Real> *md) {
   const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
   const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
 
-  auto covariant_metric =
-      md->PackVariables(std::vector<std::string>{"covariant_metric"});
-  auto contravariant_metric =
-      md->PackVariables(std::vector<std::string>{"contravariant_metric"});
-
   const Real umax2 = lorentz_max * lorentz_max - 1.0;
 
   pmb0->par_for(
@@ -76,11 +74,12 @@ parthenon::TaskStatus FixPrimitive(parthenon::MeshData<parthenon::Real> *md) {
         const auto x = coords.Xc<X1DIR>(i);
         const auto y = coords.Xc<X2DIR>(j);
         const auto z = coords.Xc<X3DIR>(k);
+        const Real x_code[4] = {0.0, x, y, z};
 
         Real r = 1.0;
-        if (metric_type_id == 1) {
+        if (mtype_int == MetricType::MKS) {
           r = Kokkos::exp(x);
-        } else if (metric_type_id == 2) {
+        } else if (mtype_int == MetricType::CKS) {
           const Real rad2 = x * x + y * y + z * z;
           const Real sqrtarg = SQR(rad2 - kerr_a2) + 4.0 * kerr_a2 * z * z;
           r = Kokkos::sqrt(0.5 * (rad2 - kerr_a2 + Kokkos::sqrt(sqrtarg)));
@@ -90,14 +89,8 @@ parthenon::TaskStatus FixPrimitive(parthenon::MeshData<parthenon::Real> *md) {
         const Real eng_floor = energy_floor * Kokkos::pow(Kokkos::fmax(r, 1.0), energy_floor_pow);
 
         Real gcov[4][4], gcon[4][4];
-        for (int row = 0; row < 4; ++row) {
-          for (int col = 0; col < 4; ++col) {
-            gcov[row][col] =
-                covariant_metric(b, CENTER * 16 + col * 4 + row, k, j, i);
-            gcon[row][col] =
-                contravariant_metric(b, CENTER * 16 + col * 4 + row, k, j, i);
-          }
-        }
+        Real gdet;
+        ComputeMetricAtLocation(mtype_int, x_code, kerr_a, mks_h, gcov, gcon, gdet);
 
         const Real rho = primitive(b, iRHO, k, j, i);
         const Real ug = primitive(b, iENY, k, j, i);
@@ -160,7 +153,7 @@ parthenon::TaskStatus FixPrimitive(parthenon::MeshData<parthenon::Real> *md) {
               clampByRatio(ratio, primitive(b, iENT, k, j, i), primitive(b, iKEL, k, j, i));
         }
 
-        if (metric_type_id == 2 && r < r_excise) {
+        if (mtype_int == MetricType::CKS && r < r_excise) {
           primitive(b, iRHO, k, j, i) = dexcise;
           primitive(b, iENY, k, j, i) = e_excise;
           primitive(b, iUX,   k, j, i) = 0.0;

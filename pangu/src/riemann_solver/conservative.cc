@@ -9,6 +9,7 @@
 
 #include <basic_types.hpp>
 #include "initialization/variable_mnemonics.h"
+#include "metric/christoffel.h"
 #include "physics/contravariant_flux.h"
 
 parthenon::TaskStatus CalculateConservative(
@@ -43,12 +44,15 @@ parthenon::TaskStatus CalculateConservative(
   auto conservative =
       md->PackVariablesAndFluxes(conservative_tags, conservativeIndexMap);
 
-  auto covariant_metric =
-      md->PackVariables(std::vector<std::string>{"covariant_metric"});
-  auto contravariant_metric =
-      md->PackVariables(std::vector<std::string>{"contravariant_metric"});
-  auto metric_determinant =
-      md->PackVariables(std::vector<std::string>{"metric_determinant"});
+  // Metric type and parameters for on-the-fly metric computation
+  const auto package_metric = pmb0->packages.Get("metric");
+  const auto metric_type_str = package_metric->Param<std::string>("metric_type");
+  int mtype_int = MetricType::Minkowski;
+  if (metric_type_str == "bl") { mtype_int = MetricType::BL; }
+  else if (metric_type_str == "cks") { mtype_int = MetricType::CKS; }
+  else if (metric_type_str == "mks") { mtype_int = MetricType::MKS; }
+  const Real kerr_a = package_metric->Param<Real>("a");
+  const Real mks_h = package_metric->Param<Real>("h");
 
   pmb0->par_for(
       PARTHENON_AUTO_LABEL, block.s, block.e,
@@ -56,16 +60,13 @@ parthenon::TaskStatus CalculateConservative(
       bound_x2_interior.s, bound_x2_interior.e,
       bound_x1_interior.s, bound_x1_interior.e,
       KOKKOS_LAMBDA(const int b, const int k, const int j, const int i) {
+        const auto &coords = primitive.GetCoords(b);
         Real gcov[4][4];
         Real gcon[4][4];
-        for (int row = 0; row < 4; ++row) {
-          for (int col = 0; col < 4; ++col) {
-            gcov[row][col] =
-                covariant_metric(b, CENTER * 16 + col * 4 + row, k, j, i);
-            gcon[row][col] =
-                contravariant_metric(b, CENTER * 16 + col * 4 + row, k, j, i);
-          }
-        }
+        Real gdet;
+        const Real x_code[4] = {0.0, coords.Xc<X1DIR>(i), coords.Xc<X2DIR>(j),
+                                coords.Xc<X3DIR>(k)};
+        ComputeMetricAtLocation(mtype_int, x_code, kerr_a, mks_h, gcov, gcon, gdet);
 
         Real pcarr[NPRIM] = {0};
         pcarr[RHO] = primitive(b, iRHO, k, j, i);
@@ -86,7 +87,7 @@ parthenon::TaskStatus CalculateConservative(
         Real ccarr[NPRIM];
         CalculateContravariantFlux(
             kAdiabaticIndex, pcarr, gcov, gcon,
-            metric_determinant(b, CENTER, k, j, i), X0DIR, ccarr);
+            gdet, X0DIR, ccarr);
 
         int c = 0;
         conservative(b, c++, k, j, i) = ccarr[RHO];

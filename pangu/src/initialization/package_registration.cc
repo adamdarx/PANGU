@@ -34,6 +34,10 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
   const auto kEnergyFloorPow =
       pin->GetOrAddReal("core", "energy_floor_pow", -2.5);
   const auto kEnableB = pin->GetOrAddBoolean("core", "enable_B", false);
+  const auto kRecovery = pin->GetOrAddString("core", "recovery", "chainer");
+  PARTHENON_REQUIRE_THROWS(
+      kRecovery == "chainer" || kRecovery == "robuster",
+      "<core>/recovery must be 'chainer' or 'robuster', got: " + kRecovery);
   const auto kEnableHeating = pin->GetOrAddBoolean("core", "enable_heating", false);
   const auto kSigmaMax = pin->GetOrAddReal("core", "sigma_max", 50);
   const auto kLorentzMax = pin->GetOrAddReal("core", "lorentz_max", 50);
@@ -61,6 +65,7 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
   package_core->AddParam<>("density_floor_pow", kDensityFloorPow);
   package_core->AddParam<>("energy_floor_pow", kEnergyFloorPow);
   package_core->AddParam<>("enable_B", kEnableB);
+  package_core->AddParam<>("recovery", kRecovery);
   package_core->AddParam<>("enable_heating", kEnableHeating);
   package_core->AddParam<>("sigma_max", kSigmaMax);
   package_core->AddParam<>("lorentz_max", kLorentzMax);
@@ -132,10 +137,12 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
        parthenon::Metadata::Independent, parthenon::Metadata::FillGhost},
       std::vector<int>({n_components}));
   package_core->AddField(std::string("conservative"), m);
-  m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost,
-       parthenon::Metadata::OneCopy});
-  package_core->AddField(std::string("flag"), m);
+  if (kRecovery == "chainer") {
+    m = parthenon::Metadata(
+        {parthenon::Metadata::Cell, parthenon::Metadata::FillGhost,
+         parthenon::Metadata::OneCopy});
+    package_core->AddField(std::string("flag"), m);
+  }
 
   package_core->EstimateTimestepMesh = EstimateTimestepMesh;
   return package_core;
@@ -164,27 +171,6 @@ std::shared_ptr<parthenon::StateDescriptor> Initialize(
   package_metric->AddParam<>("r_excise", kRExcise);
   package_metric->AddParam<>("dexcise", kDExcise);
   package_metric->AddParam<>("pexcise", kPExcise);
-
-  parthenon::Metadata m;
-  m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::OneCopy},
-      std::vector<int>({4, 4, 4}));
-  package_metric->AddField(std::string("covariant_metric"), m);
-
-  m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::OneCopy},
-      std::vector<int>({4, 4, 4}));
-  package_metric->AddField(std::string("contravariant_metric"), m);
-
-  m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::OneCopy},
-      std::vector<int>({4}));
-  package_metric->AddField(std::string("metric_determinant"), m);
-
-  m = parthenon::Metadata(
-      {parthenon::Metadata::Cell, parthenon::Metadata::OneCopy},
-      std::vector<int>({4, 4, 4}));
-  package_metric->AddField(std::string("connection"), m);
 
   return package_metric;
 }

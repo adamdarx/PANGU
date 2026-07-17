@@ -39,6 +39,7 @@ ncycle_out_mesh = -10000
 <core>
 cfl_number = 0.4
 adiabatic_index = 1.666666667
+recovery = chainer
 enable_heating = true
 enable_B = false
 

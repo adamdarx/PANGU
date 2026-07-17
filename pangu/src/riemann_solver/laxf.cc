@@ -10,6 +10,7 @@
 
 #include <basic_types.hpp>
 #include "initialization/variable_mnemonics.h"
+#include "metric/christoffel.h"
 #include "interpolation/interpolater_ppm4.h"
 #include "interpolation/interpolater_mc.h"
 #include "physics/fast_magnetosonic_speed.h"
@@ -51,12 +52,15 @@ parthenon::TaskStatus CalculateLAXF(parthenon::MeshData<parthenon::Real> *md) {
   auto FastMagnetosonicSpeed =
       md->PackVariables(fast_ms_tags, fastMsIndexMap);
 
-  auto covariant_metric =
-      md->PackVariables(std::vector<std::string>{"covariant_metric"});
-  auto contravariant_metric =
-      md->PackVariables(std::vector<std::string>{"contravariant_metric"});
-  auto metric_determinant =
-      md->PackVariables(std::vector<std::string>{"metric_determinant"});
+  // Metric type and parameters for on-the-fly metric computation
+  const auto package_metric = pmb0->packages.Get("metric");
+  const auto metric_type_str = package_metric->Param<std::string>("metric_type");
+  int mtype_int = MetricType::Minkowski;
+  if (metric_type_str == "bl") { mtype_int = MetricType::BL; }
+  else if (metric_type_str == "cks") { mtype_int = MetricType::CKS; }
+  else if (metric_type_str == "mks") { mtype_int = MetricType::MKS; }
+  const Real kerr_a = package_metric->Param<Real>("a");
+  const Real mks_h = package_metric->Param<Real>("h");
 
   const auto meshgrid_size_x1 =
       pmb0->cellbounds.ncellsi(IndexDomain::entire);
@@ -113,15 +117,15 @@ parthenon::TaskStatus CalculateLAXF(parthenon::MeshData<parthenon::Real> *md) {
         Real fluxLeft[NPRIM];
         Real fluxRight[NPRIM];
 
+        const auto &coords = primitive.GetCoords(b);
+        const Real x_code_face[4] = {
+            0.0, coords.Xf<X1DIR, X1DIR>(k, j, i),
+            coords.Xf<X2DIR, X1DIR>(k, j, i),
+            coords.Xf<X3DIR, X1DIR>(k, j, i)};
         Real gcovFace[4][4], gconFace[4][4];
-        for (int row = 0; row < 4; ++row) {
-          for (int col = 0; col < 4; ++col) {
-            gcovFace[row][col] =
-                covariant_metric(b, FACEX1 * 16 + col * 4 + row, k, j, i);
-            gconFace[row][col] =
-                contravariant_metric(b, FACEX1 * 16 + col * 4 + row, k, j, i);
-          }
-        }
+        Real gdetFace;
+        ComputeMetricAtLocation(mtype_int, x_code_face, kerr_a, mks_h,
+                                gcovFace, gconFace, gdetFace);
 
         Real fastMaxL, fastMaxR;
         Real fastMinL, fastMinR;
@@ -139,20 +143,18 @@ parthenon::TaskStatus CalculateLAXF(parthenon::MeshData<parthenon::Real> *md) {
             maxFastCenter, minFastCenter);
         FastMagnetosonicSpeed(b, Vector3D::X1, k, j, i) = fastMsCenter;
 
-        const auto MetricDeterminantFace =
-            metric_determinant(b, FACEX1, k, j, i);
         CalculateContravariantFlux(
             kAdiabaticIndex, primitiveLeft, gcovFace, gconFace,
-            MetricDeterminantFace, X0DIR, conservativeLeft);
+            gdetFace, X0DIR, conservativeLeft);
         CalculateContravariantFlux(
             kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
-            MetricDeterminantFace, X0DIR, conservativeRight);
+            gdetFace, X0DIR, conservativeRight);
         CalculateContravariantFlux(
             kAdiabaticIndex, primitiveLeft, gcovFace, gconFace,
-            MetricDeterminantFace, X1DIR, fluxLeft);
+            gdetFace, X1DIR, fluxLeft);
         CalculateContravariantFlux(
             kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
-            MetricDeterminantFace, X1DIR, fluxRight);
+            gdetFace, X1DIR, fluxRight);
 
         Real fluxLF[NPRIM];
         for (int ci = 0; ci < NPRIM; ++ci) {
@@ -221,15 +223,15 @@ parthenon::TaskStatus CalculateLAXF(parthenon::MeshData<parthenon::Real> *md) {
           Real fluxLeft[NPRIM];
           Real fluxRight[NPRIM];
 
+          const auto &coords = primitive.GetCoords(b);
+          const Real x_code_face[4] = {
+              0.0, coords.Xf<X1DIR, X2DIR>(k, j, i),
+              coords.Xf<X2DIR, X2DIR>(k, j, i),
+              coords.Xf<X3DIR, X2DIR>(k, j, i)};
           Real gcovFace[4][4], gconFace[4][4];
-          for (int row = 0; row < 4; ++row) {
-            for (int col = 0; col < 4; ++col) {
-              gcovFace[row][col] =
-                  covariant_metric(b, FACEX2 * 16 + col * 4 + row, k, j, i);
-              gconFace[row][col] =
-                  contravariant_metric(b, FACEX2 * 16 + col * 4 + row, k, j, i);
-            }
-          }
+          Real gdetFace;
+          ComputeMetricAtLocation(mtype_int, x_code_face, kerr_a, mks_h,
+                                  gcovFace, gconFace, gdetFace);
 
           Real fastMaxL, fastMaxR;
           Real fastMinL, fastMinR;
@@ -247,20 +249,18 @@ parthenon::TaskStatus CalculateLAXF(parthenon::MeshData<parthenon::Real> *md) {
               maxFastCenter, minFastCenter);
           FastMagnetosonicSpeed(b, Vector3D::X2, k, j, i) = fastMsCenter;
 
-          const auto MetricDeterminantFace =
-              metric_determinant(b, FACEX2, k, j, i);
           CalculateContravariantFlux(
               kAdiabaticIndex, primitiveLeft, gcovFace, gconFace,
-              MetricDeterminantFace, X0DIR, conservativeLeft);
+              gdetFace, X0DIR, conservativeLeft);
           CalculateContravariantFlux(
               kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
-              MetricDeterminantFace, X0DIR, conservativeRight);
+              gdetFace, X0DIR, conservativeRight);
           CalculateContravariantFlux(
               kAdiabaticIndex, primitiveLeft, gcovFace, gconFace,
-              MetricDeterminantFace, X2DIR, fluxLeft);
+              gdetFace, X2DIR, fluxLeft);
           CalculateContravariantFlux(
               kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
-              MetricDeterminantFace, X2DIR, fluxRight);
+              gdetFace, X2DIR, fluxRight);
 
           Real fluxLF[NPRIM];
           for (int ci = 0; ci < NPRIM; ++ci) {
@@ -329,15 +329,15 @@ parthenon::TaskStatus CalculateLAXF(parthenon::MeshData<parthenon::Real> *md) {
           Real fluxLeft[NPRIM];
           Real fluxRight[NPRIM];
 
+          const auto &coords = primitive.GetCoords(b);
+          const Real x_code_face[4] = {
+              0.0, coords.Xf<X1DIR, X3DIR>(k, j, i),
+              coords.Xf<X2DIR, X3DIR>(k, j, i),
+              coords.Xf<X3DIR, X3DIR>(k, j, i)};
           Real gcovFace[4][4], gconFace[4][4];
-          for (int row = 0; row < 4; ++row) {
-            for (int col = 0; col < 4; ++col) {
-              gcovFace[row][col] =
-                  covariant_metric(b, FACEX3 * 16 + col * 4 + row, k, j, i);
-              gconFace[row][col] =
-                  contravariant_metric(b, FACEX3 * 16 + col * 4 + row, k, j, i);
-            }
-          }
+          Real gdetFace;
+          ComputeMetricAtLocation(mtype_int, x_code_face, kerr_a, mks_h,
+                                  gcovFace, gconFace, gdetFace);
 
           Real fastMaxL, fastMaxR;
           Real fastMinL, fastMinR;
@@ -355,20 +355,18 @@ parthenon::TaskStatus CalculateLAXF(parthenon::MeshData<parthenon::Real> *md) {
               maxFastCenter, minFastCenter);
           FastMagnetosonicSpeed(b, Vector3D::X3, k, j, i) = fastMsCenter;
 
-          const auto MetricDeterminantFace =
-              metric_determinant(b, FACEX3, k, j, i);
           CalculateContravariantFlux(
               kAdiabaticIndex, primitiveLeft, gcovFace, gconFace,
-              MetricDeterminantFace, X0DIR, conservativeLeft);
+              gdetFace, X0DIR, conservativeLeft);
           CalculateContravariantFlux(
               kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
-              MetricDeterminantFace, X0DIR, conservativeRight);
+              gdetFace, X0DIR, conservativeRight);
           CalculateContravariantFlux(
               kAdiabaticIndex, primitiveLeft, gcovFace, gconFace,
-              MetricDeterminantFace, X3DIR, fluxLeft);
+              gdetFace, X3DIR, fluxLeft);
           CalculateContravariantFlux(
               kAdiabaticIndex, primitiveRight, gcovFace, gconFace,
-              MetricDeterminantFace, X3DIR, fluxRight);
+              gdetFace, X3DIR, fluxRight);
 
           Real fluxLF[NPRIM];
           for (int ci = 0; ci < NPRIM; ++ci) {

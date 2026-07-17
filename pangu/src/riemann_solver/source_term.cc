@@ -9,6 +9,7 @@
 
 #include <basic_types.hpp>
 #include "initialization/variable_mnemonics.h"
+#include "metric/christoffel.h"
 #include "physics/energy_momentum_tensor.h"
 
 parthenon::TaskStatus AddGeometricSource(parthenon::MeshData<parthenon::Real> *md,
@@ -43,33 +44,36 @@ parthenon::TaskStatus AddGeometricSource(parthenon::MeshData<parthenon::Real> *m
   auto conservative =
       md->PackVariablesAndFluxes(conservative_tags, conservativeIndexMap);
 
-  auto covariant_metric =
-      md->PackVariables(std::vector<std::string>{"covariant_metric"});
-  auto contravariant_metric =
-      md->PackVariables(std::vector<std::string>{"contravariant_metric"});
-  auto metric_determinant =
-      md->PackVariables(std::vector<std::string>{"metric_determinant"});
-  auto connection =
-      md->PackVariables(std::vector<std::string>{"connection"});
+  // Metric type and parameters for on-the-fly Christoffel computation
+  const auto package_metric = pmb0->packages.Get("metric");
+  const auto metric_type_str = package_metric->Param<std::string>("metric_type");
+  int mtype_int = MetricType::Minkowski;
+  if (metric_type_str == "bl") {
+    mtype_int = MetricType::BL;
+  } else if (metric_type_str == "cks") {
+    mtype_int = MetricType::CKS;
+  } else if (metric_type_str == "mks") {
+    mtype_int = MetricType::MKS;
+  }
+  const Real kerr_a = package_metric->Param<Real>("a");
+  const Real mks_h = package_metric->Param<Real>("h");
 
   pmb0->par_for(
       PARTHENON_AUTO_LABEL, block.s, block.e,
       bound_x3_interior.s, bound_x3_interior.e, bound_x2_interior.s, bound_x2_interior.e,
       bound_x1_interior.s, bound_x1_interior.e,
       KOKKOS_LAMBDA(const int b, const int k, const int j, const int i) {
-        Real gcov[4][4];
-        Real gcon[4][4];
-        const auto SqrtAbsMetricDeterminant =
-            Kokkos::sqrt(Kokkos::abs(metric_determinant(b, CENTER, k, j, i)));
+        // Compute metric on-the-fly at cell center
+        const auto &coords = primitive.GetCoords(b);
+        const Real x_code[4] = {0.0, coords.Xc<X1DIR>(i), coords.Xc<X2DIR>(j),
+                                coords.Xc<X3DIR>(k)};
+        Real gcov[4][4], gcon[4][4], gdet;
+        ComputeMetricAtLocation(mtype_int, x_code, kerr_a, mks_h, gcov, gcon, gdet);
+        const auto SqrtAbsMetricDeterminant = Kokkos::sqrt(Kokkos::fabs(gdet));
 
-        for (int row = 0; row < 4; ++row) {
-          for (int col = 0; col < 4; ++col) {
-            gcov[row][col] =
-                covariant_metric(b, CENTER * 16 + col * 4 + row, k, j, i);
-            gcon[row][col] =
-                contravariant_metric(b, CENTER * 16 + col * 4 + row, k, j, i);
-          }
-        }
+        // Compute Christoffel connection on-the-fly at this cell center
+        Real conn[4][4][4];
+        ComputeChristoffelConnection(mtype_int, x_code, kerr_a, mks_h, conn);
 
         Real pcarr[NPRIM] = {0};
         pcarr[RHO] = primitive(b, iRHO, k, j, i);
@@ -99,7 +103,7 @@ parthenon::TaskStatus AddGeometricSource(parthenon::MeshData<parthenon::Real> *m
           for (int row = 0; row < 4; ++row) {
             for (int col = 0; col < 4; ++col) {
               contraction += MixedEnergyMomentumTensor[row][col] *
-                             connection(b, col * 16 + dir * 4 + row, k, j, i);
+                             conn[col][dir][row];
             }
           }
 

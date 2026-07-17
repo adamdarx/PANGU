@@ -3,7 +3,6 @@
 
 Each mesh block is plotted individually via pcolormesh at its native resolution.
 The slice is taken at the equatorial plane (y ≈ 0), not each block's local mid-y.
-Block boundaries are overlaid and coloured by refinement level.
 Uses raw h5py — no dependency on parthenon_tools.
 """
 
@@ -16,7 +15,6 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import numpy as np
 
 
@@ -200,18 +198,6 @@ def _make_frame(task):
             aspect="auto",
         )
 
-        if not args_dict.get("no_block_bounds"):
-            rect = mpatches.Rectangle(
-                (xf[0], zf[0]),
-                xf[-1] - xf[0],
-                zf[-1] - zf[0],
-                linewidth=1.2,
-                edgecolor="k",
-                facecolor="none",
-                zorder=3,
-            )
-            ax.add_patch(rect)
-
     # -- horizon -------------------------------------------------------------
     horizon = plt.Circle((0.0, 0.0), r_h, color="black", zorder=5)
     ax.add_patch(horizon)
@@ -265,11 +251,11 @@ def parse_args():
         help="Kerr spin parameter for horizon marker",
     )
     parser.add_argument(
-        "--x-max", type=float, default=-1.0,
+        "--x-max", type=float, default=50.0,
         help="Maximum display radius; <= 0 means auto",
     )
     parser.add_argument(
-        "--level-min", type=float, default=-7.0,
+        "--level-min", type=float, default=-8.0,
         help="Lower colour bound (log10 by default, raw if --linear)",
     )
     parser.add_argument(
@@ -291,10 +277,6 @@ def parse_args():
         "--tensor-component", type=int, nargs=2, default=None,
         help="Tensor component (i,j) to plot",
     )
-    parser.add_argument(
-        "--no-block-bounds", action="store_true",
-        help="Hide block boundary rectangles",
-    )
     return parser.parse_args()
 
 
@@ -315,7 +297,6 @@ def main():
         "linear": args.linear,
         "vector_component": args.vector_component,
         "tensor_component": args.tensor_component,
-        "no_block_bounds": args.no_block_bounds,
     }
 
     tasks = [(i, f, shared) for i, f in enumerate(files_sorted)]

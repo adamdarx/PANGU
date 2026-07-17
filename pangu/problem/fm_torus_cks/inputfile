@@ -39,11 +39,12 @@ ncycle_out_mesh = -10000
 <core>
 cfl_number = 0.3
 adiabatic_index = 1.3333333333333333
+recovery = robuster
 density_floor = 1e-5
 energy_floor = 1e-7
 density_floor_pow = -1.5
 energy_floor_pow = -2.5
-riemann_solver = hll
+riemann_solver = laxf
 limiter = ppm4
 enable_B = false
 enable_heating = false

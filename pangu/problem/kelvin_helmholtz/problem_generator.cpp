@@ -35,11 +35,6 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
   const int iBX  = enable_B ? idxMap["magnetic_field"].first : -1;
   const int iKEL = enable_heating ? idxMap["electron_entropy"].first : -1;
 
-  auto covariant_metric = resource->Get("covariant_metric").data;
-  auto contravariant_metric = resource->Get("contravariant_metric").data;
-  auto metric_determinant = resource->Get("metric_determinant").data;
-  auto connection = resource->Get("connection").data;
-
   auto cellbounds = pmb->cellbounds;
   const auto ib = cellbounds.GetBoundsI(IndexDomain::entire);
   const auto jb = cellbounds.GetBoundsJ(IndexDomain::entire);
@@ -50,40 +45,6 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
   pmb->par_for(
       PARTHENON_AUTO_LABEL, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int k, const int j, const int i) {
-        Real gcov[4][4];
-        Real gcon[4][4];
-        for (int row = 0; row < 4; ++row) {
-          for (int col = 0; col < 4; ++col) {
-            gcov[row][col] = 0.0;
-            gcon[row][col] = 0.0;
-          }
-        }
-        gcov[0][0] = -1.0;
-        gcov[1][1] = 1.0;
-        gcov[2][2] = 1.0;
-        gcov[3][3] = 1.0;
-        gcon[0][0] = -1.0;
-        gcon[1][1] = 1.0;
-        gcon[2][2] = 1.0;
-        gcon[3][3] = 1.0;
-
-        for (int loc = 0; loc < 4; ++loc) {
-          for (int row = 0; row < 4; ++row) {
-            for (int col = 0; col < 4; ++col) {
-              covariant_metric(loc, col, row, k, j, i) = gcov[row][col];
-              contravariant_metric(loc, col, row, k, j, i) = gcon[row][col];
-            }
-          }
-          metric_determinant(loc, k, j, i) = -1.0;
-        }
-        for (int dir = 0; dir < 4; ++dir) {
-          for (int row = 0; row < 4; ++row) {
-            for (int col = 0; col < 4; ++col) {
-              connection(dir, col, row, k, j, i) = 0.0;
-            }
-          }
-        }
-
         auto generator = random_pool.get_state();
         primitive(iRHO, k, j, i) =
             1.0 * (Kokkos::abs(coords.Xc<X2DIR>(j)) > 0.25) +
