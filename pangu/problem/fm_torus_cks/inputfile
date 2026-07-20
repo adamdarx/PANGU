@@ -63,6 +63,7 @@ rin = 6.0
 rmax = 12.0
 kappa = 1e-3
 perturbation = 2e-2
+magnetic_field = sane
 
 <parthenon/output0>
 file_type = hdf5

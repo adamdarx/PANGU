@@ -59,6 +59,7 @@ kappa = 1e-3
 perturbation = 4e-2
 beta = 100.0
 aphi_rho_cut = 0.2
+magnetic_field = sane
 
 <parthenon/output0>
 file_type = hdf5

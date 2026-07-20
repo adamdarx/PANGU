@@ -123,6 +123,8 @@ void ProblemGenerator(parthenon::MeshBlock *pmb,
       pin->GetOrAddReal("fm_torus", "perturbation", 4.0e-2);
   const Real beta_target = pin->GetOrAddReal("fm_torus", "beta", 100.0);
   const Real aphi_rho_cut = pin->GetOrAddReal("fm_torus", "aphi_rho_cut", 0.2);
+  const std::string magnetic_field =
+      pin->GetOrAddString("fm_torus", "magnetic_field", "sane");
 
   const Real a2 = kerr_a * kerr_a;
   const Real l = lfish_calc(rmax, kerr_a);
@@ -301,6 +303,10 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
       package_core->Param<std::vector<std::string>>("primitive_field_names");
   const Real beta_target = pin->GetOrAddReal("fm_torus", "beta", 100.0);
   const Real aphi_rho_cut = pin->GetOrAddReal("fm_torus", "aphi_rho_cut", 0.2);
+  const std::string magnetic_field =
+      pin->GetOrAddString("fm_torus", "magnetic_field", "sane");
+  const bool is_mad = (magnetic_field == "mad");
+  const Real rin = pin->GetOrAddReal("fm_torus", "rin", 6.0);
 
   // Metric type and params for on-the-fly metric computation
   const auto package_metric = pmesh->packages.Get("metric");
@@ -410,8 +416,22 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
                       primitive(iRHO, k, j - 1, i) +
                       primitive(iRHO, k, j - 1, i - 1));
           const Real expr = rho_average - aphi_rho_cut;
-          vectorPotential(k - kb.s, j - jb.s, i - ib.s) =
-              (expr > 0.0) ? expr : 0.0;
+          Real aphi = (expr > 0.0) ? expr : 0.0;
+          if (is_mad && aphi > 0.0) {
+            const Real x_code_vp[4] = {0.0,
+                coords.Xc<X1DIR>(i) - 0.5 * coords.Dxc<X1DIR>(i),
+                coords.Xc<X2DIR>(j) - 0.5 * coords.Dxc<X2DIR>(j),
+                coords.Xc<X3DIR>(k)};
+            Real y_vp[4];
+            MKS::CalculatePhysicalCoordinates(x_code_vp, y_vp, kerr_h, kerr_a);
+            const Real r_vp = y_vp[1];
+            const Real th_vp = y_vp[2];
+            const Real sin_theta = Kokkos::sin(th_vp);
+            const Real mad_scale = Kokkos::pow((r_vp / rin) * sin_theta, 3.0) *
+                                   Kokkos::exp(-r_vp / 400.0);
+            aphi *= mad_scale;
+          }
+          vectorPotential(k - kb.s, j - jb.s, i - ib.s) = aphi;
         });
 
     pmb->par_for(
