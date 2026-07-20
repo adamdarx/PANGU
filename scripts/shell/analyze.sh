@@ -163,6 +163,8 @@ extract_metric_param() {
   ' "$file_path"
 }
 
+mkdir -p "$PIC_ROOT"
+
 metric_file="$ROOT_DIR/pangu/problem/$PROBLEM/inputfile"
 kerr_a="0.9375"
 kerr_h="0.0"

@@ -33,7 +33,8 @@
       "Bash(grep -v \"//\")",
       "Bash(grep -v \"iRho\\\\|iEny\\\\|iUx\\\\|iBx\\\\|iEnt\\\\|iKel\\\\|//\\\\|bcon\\\\|ucon\\\\|\\\\.h.*:\")",
       "Bash(sed -i 's/pin->GetOrAddString\\(\"metric\", \"name\", \"Minkowski\"\\)/pin->GetOrAddString\\(\"metric\", \"type\", \"minkowski\"\\)/g' pangu/src/initialization/package_registration.cc)",
-      "Bash(sed -i 's/package_metric->AddParam<>\\(\"metric_name\"/package_metric->AddParam<>\\(\"metric_type\"/g' pangu/src/initialization/package_registration.cc)"
+      "Bash(sed -i 's/package_metric->AddParam<>\\(\"metric_name\"/package_metric->AddParam<>\\(\"metric_type\"/g' pangu/src/initialization/package_registration.cc)",
+      "Bash(cd *)"
     ]
   }
 }
