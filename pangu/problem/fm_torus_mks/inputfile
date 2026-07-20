@@ -24,7 +24,7 @@ ix3_bc = periodic
 ox3_bc = periodic
 
 <parthenon/meshblock>
-nx1 = 512
+nx1 = 1024
 nx2 = 512
 nx3 = 1
 
@@ -44,6 +44,8 @@ density_floor = 1e-5
 energy_floor = 1e-7
 density_floor_pow = -1.5
 energy_floor_pow = -2.5
+riemann_solver = laxf
+limiter = mc
 enable_heating = true
 enable_B = true
 

@@ -489,10 +489,9 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
                       Real &local_max) {
           const Real x_code_bsq[4] = {0.0, coords.Xc<X1DIR>(i),
                                       coords.Xc<X2DIR>(j), coords.Xc<X3DIR>(k)};
-          Real gcov[4][4], gcon[4][4], gdet_bsq;
+          Real gcov[4][4], gcon[4][4];
           MKS::CalculateCodeMetric(x_code_bsq, gcov, kerr_h, kerr_a);
           invert(gcov, gcon);
-          gdet_bsq = determinant(gcov);
 
           Real primitive_c_array[NPRIM] = {0};
           primitive_c_array[RHO] = primitive(iRHO, k, j, i);
