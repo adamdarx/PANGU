@@ -6,7 +6,7 @@
 #include "amr_criteria/refinement_package.hpp"
 #include "bvals/comms/bvals_in_one.hpp"
 #include "initialization/variable_mnemonics.h"
-#include "metric/christoffel.h"
+
 #include "interface/metadata.hpp"
 #include "interface/update.hpp"
 #include "mesh/meshblock_pack.hpp"
@@ -308,13 +308,7 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
   const bool is_mad = (magnetic_field == "mad");
   const Real rin = pin->GetOrAddReal("fm_torus", "rin", 6.0);
 
-  // Metric type and params for on-the-fly metric computation
   const auto package_metric = pmesh->packages.Get("metric");
-  const auto mtype_str = package_metric->Param<std::string>("metric_type");
-  int mtype_int = MetricType::Minkowski;
-  if (mtype_str == "bl") { mtype_int = MetricType::BL; }
-  else if (mtype_str == "cks") { mtype_int = MetricType::CKS; }
-  else if (mtype_str == "mks") { mtype_int = MetricType::MKS; }
   const Real kerr_a = package_metric->Param<Real>("a");
   const Real kerr_h = package_metric->Param<Real>("h");
 
@@ -445,8 +439,9 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
           const Real x_code_c[4] = {0.0, coords.Xc<X1DIR>(i),
                                     coords.Xc<X2DIR>(j), coords.Xc<X3DIR>(k)};
           Real gcov_c[4][4], gcon_c[4][4], gdet_c;
-          ComputeMetricAtLocation(mtype_int, x_code_c, kerr_a, kerr_h,
-                                  gcov_c, gcon_c, gdet_c);
+          MKS::CalculateCodeMetric(x_code_c, gcov_c, kerr_h, kerr_a);
+          invert(gcov_c, gcon_c);
+          gdet_c = determinant(gcov_c);
           const Real sqrt_abs_gdet = Kokkos::sqrt(Kokkos::fabs(gdet_c));
           const Real dx1 = coords.Dxc<X1DIR>(i);
           const Real dx2 = coords.Dxc<X2DIR>(j);
@@ -469,6 +464,14 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
   Real local_bsq_max = 0.0;
   for (const auto &pmb : pmesh->block_list) {
     auto &resource = pmb->meshblock_data.Get();
+    auto cellbounds = pmb->cellbounds;
+    const auto ib = cellbounds.GetBoundsI(IndexDomain::entire);
+    const auto jb = cellbounds.GetBoundsJ(IndexDomain::entire);
+    const auto kb = cellbounds.GetBoundsK(IndexDomain::entire);
+    const auto ib_interior = cellbounds.GetBoundsI(IndexDomain::interior);
+    const auto jb_interior = cellbounds.GetBoundsJ(IndexDomain::interior);
+    const auto kb_interior = cellbounds.GetBoundsK(IndexDomain::interior);
+    auto coords = pmb->coords;
     PackIndexMap idxMap;
     auto primitive = resource->PackVariables(fnames, idxMap);
     const int iRHO = idxMap["density"].first;
@@ -487,8 +490,9 @@ void MeshPostInitialization(parthenon::Mesh *pmesh,
           const Real x_code_bsq[4] = {0.0, coords.Xc<X1DIR>(i),
                                       coords.Xc<X2DIR>(j), coords.Xc<X3DIR>(k)};
           Real gcov[4][4], gcon[4][4], gdet_bsq;
-          ComputeMetricAtLocation(mtype_int, x_code_bsq, kerr_a, kerr_h,
-                                  gcov, gcon, gdet_bsq);
+          MKS::CalculateCodeMetric(x_code_bsq, gcov, kerr_h, kerr_a);
+          invert(gcov, gcon);
+          gdet_bsq = determinant(gcov);
 
           Real primitive_c_array[NPRIM] = {0};
           primitive_c_array[RHO] = primitive(iRHO, k, j, i);

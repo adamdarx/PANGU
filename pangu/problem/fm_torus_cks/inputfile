@@ -32,7 +32,7 @@ nx3 = 16
 dt_factor = 1.3
 dt_init = 1e-5
 nlim = -1
-tlim = 500
+tlim = 10000
 integrator = rk2
 ncycle_out_mesh = -10000
 
@@ -90,10 +90,19 @@ x3max = 16
 level = 2
 
 <parthenon/static_refinement3>
+x1min = -8
+x1max = 8
+x2min = -8
+x2max = 8
+x3min = -8
+x3max = 8
+level = 3
+
+<parthenon/static_refinement4>
 x1min = -4
 x1max = 4
 x2min = -4
 x2max = 4
 x3min = -4
 x3max = 4
-level = 3
+level = 4

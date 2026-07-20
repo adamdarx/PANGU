@@ -32,16 +32,16 @@ nx3 = 1
 dt_factor = 1.3
 dt_init = 1e-5
 nlim = -1
-tlim = 2000
+tlim = 10000
 integrator = rk2
 ncycle_out_mesh = -10000
 
 <core>
-cfl_number = 0.4
-adiabatic_index = 1.666666667
+cfl_number = 0.3
+adiabatic_index = 1.3333333333333333
 recovery = chainer
 density_floor = 1e-5
-energy_floor = 4.641588833612779e-9
+energy_floor = 1e-7
 density_floor_pow = -1.5
 energy_floor_pow = -2.5
 enable_heating = true
