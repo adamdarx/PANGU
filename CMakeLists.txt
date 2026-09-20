@@ -83,7 +83,7 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tst/smoke/geometry_contract_audit.py"
             --root "${CMAKE_CURRENT_SOURCE_DIR}"
             --manifest
-              "${CMAKE_CURRENT_SOURCE_DIR}/docs/geometry/geo-1-access-contract.json")
+              "${CMAKE_CURRENT_SOURCE_DIR}/tst/reference/contracts/geo-1-access-contract.json")
   set_tests_properties(pangu.geo1.geometry_contract PROPERTIES
     LABELS "geometry;geo1;architecture")
 
@@ -92,8 +92,8 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tst/smoke/electron_contract_audit.py"
             --root "${CMAKE_CURRENT_SOURCE_DIR}"
-            --contract "${CMAKE_CURRENT_SOURCE_DIR}/docs/electrons/eh-0-contract.json"
-            --reference "${CMAKE_CURRENT_SOURCE_DIR}/docs/electrons/eh-0-reference.json")
+            --contract "${CMAKE_CURRENT_SOURCE_DIR}/tst/reference/contracts/eh-0-contract.json"
+            --reference "${CMAKE_CURRENT_SOURCE_DIR}/tst/reference/contracts/eh-0-reference.json")
   set_tests_properties(pangu.eh0.electron_contract PROPERTIES
     LABELS "electrons;eh0;architecture;reference")
 
@@ -663,7 +663,7 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     NAME pangu.stage5.acceptance_records
     COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tst/regression/phase5_acceptance_gate.py"
-            --records "${CMAKE_CURRENT_SOURCE_DIR}/docs/comparisons")
+            --records "${CMAKE_CURRENT_SOURCE_DIR}/tst/reference/comparisons")
   set_tests_properties(pangu.stage5.acceptance_records PROPERTIES
     LABELS "stage5;regression;comparison;multitime")
 

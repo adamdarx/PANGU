@@ -24,7 +24,10 @@ def require(condition: bool, message: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--records", type=Path, default=Path("docs/comparisons"), help="comparison directory"
+        "--records",
+        type=Path,
+        default=Path("tst/reference/comparisons"),
+        help="comparison directory",
     )
     args = parser.parse_args()
 

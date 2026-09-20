@@ -677,9 +677,6 @@ MPI, HDF5, and PANGU revision. A plugin that adds a solver or a new equation
 system should own its complete package and task contribution rather than
 masquerading as a local source term.
 
-The complete interface description is available in
-[`docs/development/plugins.md`](docs/development/plugins.md).
-
 ## 8. Citation, Provenance, and License
 
 PANGU is distributed under the
@@ -690,9 +687,8 @@ must also preserve the notices required by incorporated or adapted work.
 PANGU builds on Parthenon and Kokkos and contains implementations informed by
 published methods and the public Parthenon, AthenaK, AthenaPK, KHARMA, HARM,
 HARMPI, and BHAC ecosystems. The applicable code provenance and upstream
-copyright statements are recorded in [`NOTICE`](NOTICE) and the detailed
-[`license inventory`](docs/migration/license_inventory.md). Algorithm names
-or rewritten interfaces do not remove the obligation to cite the original
+copyright statements are recorded in [`NOTICE`](NOTICE). Algorithm names or
+rewritten interfaces do not remove the obligation to cite the original
 method and software sources.
 
 PANGU does not yet provide a released DOI or `CITATION.cff`. Until a formal
@@ -708,8 +704,8 @@ Contributions should preserve the separation between the Driver, physical
 packages, numerical registries, problem generators, and plugins. Before
 opening a pull request:
 
-1. Follow the naming and source-layout rules in
-   [`docs/development/naming_conventions.md`](docs/development/naming_conventions.md).
+1. Follow the naming and source-layout conventions established by the
+   existing source tree.
 2. Keep PPM, PLM, MC, LLF, HLLC, HLLD, GRMHD, MPI, GPU, API, and other
    established abbreviations fully capitalized in prose and identifiers
    where the naming convention requires them.

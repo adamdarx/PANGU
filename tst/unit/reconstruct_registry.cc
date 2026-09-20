@@ -112,7 +112,7 @@ struct Baseline {
 };
 
 // Recorded from the implementations validated against the AthenaK comparisons in
-// docs/comparisons; a coefficient or limiter change moves these values.
+// tst/reference/comparisons; a coefficient or limiter change moves these values.
 constexpr Baseline kBaselines[]{
     {"dc", 0.92000000000000004, 1.4399999999999999, 1.0, 0.125, 1.0,
      0.90000000000000002},
