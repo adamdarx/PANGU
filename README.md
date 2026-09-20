@@ -1,5 +1,7 @@
 # PANGU
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22857644.svg)](https://doi.org/10.5281/zenodo.22857644)
+
 **Parthenon-Based Astrophysics for Numerical Relativity and General-Relativistic Magnetohydrodynamics in a Unified Framework**
 
 ## 1. Introduction
@@ -691,10 +693,11 @@ copyright statements are recorded in [`NOTICE`](NOTICE). Algorithm names or
 rewritten interfaces do not remove the obligation to cite the original
 method and software sources.
 
-PANGU does not yet provide a released DOI or `CITATION.cff`. Until a formal
-release record is added, publications should identify the exact PANGU Git
-commit and cite Parthenon, Kokkos, the physical and numerical methods used,
-and any upstream implementation named in `NOTICE`. Archive the output of
+PANGU releases are archived on Zenodo under
+[DOI: 10.5281/zenodo.22857644](https://doi.org/10.5281/zenodo.22857644).
+Publications should also identify the exact PANGU Git commit and cite
+Parthenon, Kokkos, the physical and numerical methods used, and any upstream
+implementation named in `NOTICE`. Archive the output of
 `pangu --pangu-version`, the input file, plugin lockfile, and dependency
 versions with the calculation.
 
