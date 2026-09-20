@@ -1,0 +1,124 @@
+# SYNC-3: low-mass magnetized atmosphere around an x-boosted puncture.
+# Tracker-driven AMR, stage-local FOFC, chi-atmosphere protection, and restart
+# are exercised together without invoking the CKS excision path.
+
+<parthenon/job>
+problem_id = sync_grmhd_boosted_puncture
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = adaptive
+numlevel = 2
+nghost = 2
+nx1 = 32
+x1min = -8.0
+x1max = 8.0
+ix1_bc = nr_outflow
+ox1_bc = nr_outflow
+nx2 = 32
+x2min = -8.0
+x2max = 8.0
+ix2_bc = nr_outflow
+ox2_bc = nr_outflow
+nx3 = 32
+x3min = -8.0
+x3max = 8.0
+ix3_bc = nr_outflow
+ox3_bc = nr_outflow
+
+<parthenon/meshblock>
+nx1 = 8
+nx2 = 8
+nx3 = 8
+
+<parthenon/time>
+integrator = rk2
+tlim = 2.0
+nlim = -1
+ncycle_out_mesh = 5
+
+<numerical_relativity>
+cfl = 0.15
+finite_difference_order = 2
+matter_source = grmhd
+dissipation = 0.1
+chi_div_floor = 1.0e-5
+damp_kappa1 = 0.02
+damp_kappa2 = 0.0
+lapse_harmonic = 0.0
+lapse_oplog = 2.0
+lapse_advect = 1.0
+shift_gamma = 1.0
+shift_eta = 2.0
+shift_advect = 1.0
+tracker_enabled = true
+tracker_count = 1
+tracker_0_center_x1 = 0.0
+tracker_0_center_x2 = 0.0
+tracker_0_center_x3 = 0.0
+tracker_0_mass = 1.0
+tracker_refinement_radius = 3.8
+tracker_0_refinement_level = 1
+amr_method = tracker
+weyl_enabled = false
+waveform_enabled = false
+horizon_enabled = false
+
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.3333333333333333
+gamma_max = 1000.0
+sigma_max = 1.0e12
+reconstruct = plm
+rsolver = hlle
+cfl = 0.15
+density_floor = 1.0e-10
+pressure_floor = 1.0e-12
+fofc = true
+puncture_protection = chi_atmosphere
+puncture_chi_threshold = 0.15
+puncture_density = 1.0e-8
+puncture_pressure = 1.0e-10
+nscalars = 0
+
+<problem>
+punc_ADM_mass = 1.0
+punc_velocity_x1 = 0.8
+punc_velocity_x2 = 0.0
+punc_velocity_x3 = 0.0
+punc_center_x1 = 0.0
+punc_center_x2 = 0.0
+punc_center_x3 = 0.0
+constraint_mask_radius = 0.5
+atmosphere_density = 1.0e-8
+atmosphere_pressure = 1.0e-10
+btilde1 = 1.0e-6
+btilde2 = 0.0
+btilde3 = 0.0
+
+<parthenon/output1>
+file_type = hst
+dt = 0.05
+data_format = %20.15e
+
+<parthenon/output2>
+file_type = hdf5
+dt = 0.25
+variables = mhd.prim,mhd.cons,mhd.b_cell,mhd.b_face,mhd.divb,mhd.fofc,mhd.recovery,nr.z4c,nr.adm,nr.tmunu,nr.constraints,nr.constraint_mask
+id = sync_grmhd_puncture
+single_precision_output = false
+ghost_zones = false
+
+<parthenon/output3>
+file_type = rst
+dt = 1.0
+id = restart

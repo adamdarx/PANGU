@@ -1,0 +1,111 @@
+# AthenaK reference for PANGU SYNC-2.  This is the public dynamic-GRMHD
+# linear-wave configuration reduced to a thin 3D mesh and PLM+HLLE.
+
+<job>
+basename = athenak_sync_grmhd_linear_wave
+
+<mesh>
+nghost = 3
+nx1 = 64
+x1min = -0.5
+x1max = 0.5
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 4
+x2min = -0.25
+x2max = 0.25
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 4
+x3min = -0.25
+x3max = 0.25
+ix3_bc = periodic
+ox3_bc = periodic
+
+<meshblock>
+nx1 = 32
+nx2 = 4
+nx3 = 4
+
+<mesh_refinement>
+refinement = none
+max_nmb_per_rank = 512
+num_levels = 1
+
+<coord>
+special_rel = false
+general_rel = true
+minkowski = true
+
+<adm>
+
+<time>
+evolution = dynamic
+integrator = rk2
+cfl_number = 0.3
+nlim = -1
+tlim = 1.0
+ndiag = 20
+
+<mhd>
+reconstruct = plm
+rsolver = hlle
+gamma = 1.333333
+tfloor = 1.0e-10
+dyn_eos = ideal
+eos = ideal
+dyn_error = reset_floor
+
+<problem>
+pgen_name = linear_wave
+wave_flag = 0
+amp = 1.0e-6
+dens = 4.0
+pgas = 1.0
+vx0 = -0.1
+vy0 = 0.3
+vz0 = -0.05
+bx0 = 2.5
+by0 = 1.8
+bz0 = -1.2
+along_x1 = true
+along_x2 = false
+along_x3 = false
+
+<output1>
+file_type = tab
+variable = mhd_w_bcc
+data_format = %.17e
+dt = 0.12740874403053475
+slice_x2 = 0.0
+slice_x3 = 0.0
+ghost_zones = false
+
+<output2>
+file_type = tab
+variable = mhd_u_bcc
+data_format = %.17e
+dt = 0.12740874403053475
+slice_x2 = 0.0
+slice_x3 = 0.0
+ghost_zones = false
+
+<output3>
+file_type = tab
+variable = adm
+data_format = %.17e
+dt = 0.12740874403053475
+slice_x2 = 0.0
+slice_x3 = 0.0
+ghost_zones = false
+
+# The binary header records time with full double precision.  This lightweight
+# output makes the one-period termination time auditable independently of the
+# six-digit time printed by AthenaK's tabular output header.
+<output4>
+file_type = bin
+variable = mhd_w_bcc
+dt = 2.0
+slice_x2 = 0.0
+slice_x3 = 0.0
+ghost_zones = false

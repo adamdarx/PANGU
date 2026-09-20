@@ -1,0 +1,67 @@
+# Vacuum Z4c linear gravitational wave. The default wave travels along x1 and
+# completes one period at t=1.
+
+<parthenon/job>
+problem_id = nr_linear_wave
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+nghost = 3
+nx1 = 32
+x1min = 0.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 32
+x2min = 0.0
+x2max = 1.0
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 32
+x3min = 0.0
+x3max = 1.0
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 32
+nx2 = 32
+nx3 = 32
+
+<parthenon/time>
+integrator = rk4
+tlim = 1.0
+nlim = -1
+ncycle_out_mesh = 10
+
+<numerical_relativity>
+cfl = 0.3
+finite_difference_order = 4
+dissipation = 1.0
+
+<problem>
+amplitude = 1.0e-8
+kx1 = 1.0
+kx2 = 0.0
+kx3 = 0.0
+
+<parthenon/output1>
+file_type = hst
+dt = 0.05
+
+<parthenon/output2>
+file_type = hdf5
+dt = 0.05
+variables = nr.z4c,nr.adm
+id = linear_wave
+single_precision_output = false
+ghost_zones = false

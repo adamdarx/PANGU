@@ -1,0 +1,95 @@
+# SYNC-2 diagonal three-dimensional dynamic-GRMHD eigenmode.  The mesh,
+# background state, amplitude, RK, reconstruction, and Riemann solver match
+# AthenaK's public lwave_dyngrmhd GPU regression.
+
+<parthenon/job>
+problem_id = sync_grmhd_linear_wave
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = adaptive
+numlevel = 2
+nghost = 2
+derefine_count = 1
+nx1 = 32
+x1min = -0.5
+x1max = 0.5
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 16
+x2min = -0.25
+x2max = 0.25
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 16
+x3min = -0.25
+x3max = 0.25
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 4
+nx2 = 4
+nx3 = 4
+
+<parthenon/time>
+integrator = rk2
+# AthenaK's ParameterInput stores the computed one-period limit to six
+# decimal places: (1/3)/abs(lambda_fast_left) -> 0.424696.
+tlim = 0.424696
+nlim = -1
+ncycle_out_mesh = 20
+
+<numerical_relativity>
+cfl = 0.3
+finite_difference_order = 2
+matter_source = zero
+
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.333333
+gamma_max = 1000.0
+sigma_max = 1.0e12
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-10
+pressure_floor = 1.0e-10
+fofc = false
+nscalars = 0
+amr_method = conserved_density_max
+amr_value_max = 4.2225
+amr_interval = 5
+amr_initial_refinement = false
+
+<problem>
+wave_flag = 0
+amp = 1.0e-3
+dens = 4.0
+pgas = 1.0
+vx0 = -0.1
+vy0 = 0.3
+vz0 = -0.05
+bx0 = 2.5
+by0 = 1.8
+bz0 = -1.2
+along_x1 = false
+along_x2 = false
+along_x3 = false
+
+<parthenon/output1>
+file_type = hdf5
+dt = 1.0
+variables = mhd.prim,mhd.cons,mhd.b_cell,mhd.b_face,mhd.divb,nr.z4c,nr.adm,nr.tmunu,nr.constraints
+id = sync_grmhd_wave
+single_precision_output = false
+ghost_zones = false

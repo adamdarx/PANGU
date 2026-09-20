@@ -1,0 +1,21 @@
+PANGU — Parthenon-based Astrophysics: Numerical Relativity and GRMHD, Unified
+
+PANGU is a clean Parthenon application architecture informed by the public AthenaK,
+AthenaPK, KHARMA, and Parthenon code bases. PANGU source files carry their own license;
+the bundled or sibling upstream projects retain their original licenses and notices.
+
+The PPMC reconstruction in src/reconstruct/hydro_reconstruction.h is a PANGU-adapted
+derivative of AthenaPK src/recon/ppm_simple.hpp. Its applicable upstream notices are:
+Copyright (c) 2020-2021, Athena-Parthenon Collaboration; Copyright (c) 2020,
+James M. Stone and the Athena code team. It is distributed under BSD-3-Clause.
+
+The Newtonian MHD LLF/HLLE/HLLD algebra and Gardiner--Stone corner-EMF formulas in
+src/mhd are PANGU adaptations of the corresponding AthenaK algorithms. AthenaK is
+Copyright (c) 2020 James M. Stone and the AthenaK team and is distributed under
+BSD-3-Clause. PANGU replaces AthenaK mesh, communication, and task infrastructure with
+Parthenon Face/Edge metadata, communication, AMR, and task APIs.
+
+The stage-1 advection smoke problem follows the public Parthenon advection example's
+driver/task concepts and APIs, but is organized behind PANGU-owned registries, package
+boundaries, parameter schema, provenance, test harness, and input layout. See
+docs/migration/license_inventory.md and docs/migration/source_disposition.md.

@@ -1,0 +1,83 @@
+# SYNC-1 unmagnetized polytropic TOV star in isotropic Cartesian coordinates.
+# The initial profile and EOS parameters match AthenaK's whisky_tov reference.
+
+<parthenon/job>
+problem_id = sync_grhd_tov
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 48
+x1min = -20.0
+x1max = 20.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 48
+x2min = -20.0
+x2max = 20.0
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 48
+x3min = -20.0
+x3max = 20.0
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 24
+nx2 = 24
+nx3 = 24
+
+<parthenon/time>
+integrator = rk2
+tlim = 0.0
+nlim = 0
+ncycle_out_mesh = 1
+
+<numerical_relativity>
+cfl = 0.2
+finite_difference_order = 2
+matter_source = grhd
+
+<hydro>
+physics = gr
+eos = ideal
+gamma = 2.0
+gamma_max = 1000.0
+reconstruct = plm
+rsolver = hlle
+cfl = 0.2
+density_floor = 1.0e-13
+pressure_floor = 1.0e-24
+fofc = false
+
+<problem>
+write_final_csv = false
+rhoc = 1.28e-3
+kappa = 100.0
+npoints = 20000
+dr = 1.0e-3
+rho_cut = 1.28e-13
+v_pert = 0.0
+
+<parthenon/output1>
+file_type = hdf5
+dt = 1.0
+variables = hydro.prim,hydro.cons,nr.z4c,nr.adm,nr.tmunu,nr.constraints,nr.constraint_mask
+id = sync_grhd_tov
+single_precision_output = false
+ghost_zones = false
+
+<parthenon/output2>
+file_type = hst
+dt = 0.25
+data_format = %20.15e

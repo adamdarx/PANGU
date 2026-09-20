@@ -1,0 +1,128 @@
+# NR-6 constraint-satisfying equal-mass binary-black-hole initial data.  The
+# optional TwoPuncturesC spectral solver is selected at configure time; this
+# deck performs a short CUDA initialization/evolution check without AMR.
+
+<parthenon/job>
+problem_id = nr_two_punctures
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+numlevel = 1
+nghost = 2
+nx1 = 32
+x1min = -10.0
+x1max = 10.0
+ix1_bc = nr_outflow
+ox1_bc = nr_outflow
+nx2 = 32
+x2min = -10.0
+x2max = 10.0
+ix2_bc = nr_outflow
+ox2_bc = nr_outflow
+nx3 = 32
+x3min = -10.0
+x3max = 10.0
+ix3_bc = nr_outflow
+ox3_bc = nr_outflow
+
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 16
+
+<parthenon/time>
+integrator = rk4
+tlim = 0.025
+nlim = 2
+ncycle_out_mesh = 1
+
+<numerical_relativity>
+cfl = 0.2
+finite_difference_order = 2
+dissipation = 0.1
+chi_div_floor = 1.0e-5
+damp_kappa1 = 0.02
+damp_kappa2 = 0.0
+lapse_harmonic = 0.0
+lapse_oplog = 2.0
+lapse_advect = 1.0
+slow_start_lapse = true
+slow_start_amplitude = 0.6
+slow_start_time = 20.0
+slow_start_index = 1.0
+shift_gamma = 1.0
+shift_eta = 2.0
+shift_advect = 1.0
+tracker_enabled = true
+tracker_count = 2
+tracker_0_center_x1 = 3.257
+tracker_0_center_x2 = 0.0
+tracker_0_center_x3 = 0.0
+tracker_0_mass = 0.505
+tracker_1_center_x1 = -3.257
+tracker_1_center_x2 = 0.0
+tracker_1_center_x3 = 0.0
+tracker_1_mass = 0.505
+weyl_enabled = true
+waveform_enabled = false
+horizon_enabled = false
+
+<problem>
+par_b = 3.257
+par_m_plus = 0.483
+par_m_minus = 0.483
+target_M_plus = 0.505
+target_M_minus = 0.505
+par_P_plus1 = 0.0
+par_P_plus2 = -0.133
+par_P_plus3 = 0.0
+par_P_minus1 = 0.0
+par_P_minus2 = 0.133
+par_P_minus3 = 0.0
+par_S_plus1 = 0.0
+par_S_plus2 = 0.0
+par_S_plus3 = 0.0
+par_S_minus1 = 0.0
+par_S_minus2 = 0.0
+par_S_minus3 = 0.0
+center_offset1 = 0.0
+center_offset2 = 0.0
+center_offset3 = 0.0
+give_bare_mass = true
+grid_setup_method = 0
+npoints_A = 30
+npoints_B = 30
+npoints_phi = 16
+Newton_tol = 1.0e-10
+Newton_maxit = 5
+TP_epsilon = 0.0
+TP_Tiny = 0.0
+TP_Extend_Radius = 0.0
+adm_tol = 1.0e-10
+do_residuum_debug_output = false
+solve_momentum_constraint = false
+initial_lapse_psi_exponent = -2.0
+swap_xz = false
+constraint_mask_radius = 0.75
+
+<parthenon/output1>
+file_type = hst
+dt = 0.0125
+
+<parthenon/output2>
+file_type = hdf5
+variables = nr.z4c,nr.adm,nr.constraints,nr.weyl
+dt = 0.025
+
+<parthenon/output3>
+file_type = rst
+dt = 0.025

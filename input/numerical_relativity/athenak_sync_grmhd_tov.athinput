@@ -1,0 +1,105 @@
+# AthenaK reference for the PANGU SYNC-3 magnetized isotropic TOV gate.
+
+<job>
+basename = athenak_sync_grmhd_tov
+
+<mesh>
+nghost = 3
+nx1 = 64
+x1min = -20.0
+x1max = 20.0
+ix1_bc = diode
+ox1_bc = diode
+nx2 = 64
+x2min = -20.0
+x2max = 20.0
+ix2_bc = diode
+ox2_bc = diode
+nx3 = 64
+x3min = -20.0
+x3max = 20.0
+ix3_bc = diode
+ox3_bc = diode
+
+<meshblock>
+nx1 = 32
+nx2 = 32
+nx3 = 32
+
+<time>
+evolution = dynamic
+integrator = rk2
+cfl_number = 0.1
+nlim = -1
+tlim = 2.0
+ndiag = 10
+
+<coord>
+general_rel = true
+m = 1.0
+a = 0.0
+excise = false
+
+<mhd>
+eos = ideal
+dyn_eos = ideal
+dyn_error = reset_floor
+reconstruct = plm
+rsolver = hlle
+dfloor = 1.0e-16
+tfloor = 1.0e-16
+dthreshold = 1.02
+# Avoid AthenaK's guard that maps the exact endpoint 2.0 to 2.00001.
+gamma = 1.999999999999
+dyn_scratch = 1
+fofc = true
+enforce_maximum = false
+
+<adm>
+
+<z4c>
+
+<problem>
+rhoc = 1.28e-3
+kappa = 100.0
+npoints = 20000
+dr = 1.0e-3
+rho_cut = 1.0e-16
+b_norm = 1.0
+pcut = 1.0e-6
+magindex = 1
+isotropic = true
+minkowski = false
+v_pert = 0.0
+p_pert = 0.0
+user_hist = true
+
+<output1>
+file_type = hst
+dt = 1.0
+data_format = %20.15e
+
+<output2>
+file_type = bin
+variable = mhd_w_bcc
+dt = 1.0
+
+<output3>
+file_type = bin
+variable = mhd_u
+dt = 1.0
+
+<output4>
+file_type = bin
+variable = z4c
+dt = 1.0
+
+<output5>
+file_type = bin
+variable = adm
+dt = 1.0
+
+<output6>
+file_type = bin
+variable = mhd_divb
+dt = 1.0

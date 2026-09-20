@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "phase": "SYNC-3",
+  "metric": "compile-time selected",
+  "mode": "compile-time selected",
+  "geometry_access": {
+    "metric_evaluations": 120,
+    "derivative_evaluations": 4,
+    "total": 124,
+    "by_file": {
+      "plugins/electron/electron/electron_package.cc": {
+        "MetricAt": 2,
+        "DerivativesAt": 0
+      },
+      "src/mhd/mhd_package.cc": {
+        "MetricAt": 3,
+        "DerivativesAt": 0
+      },
+      "src/z4c/sync_grhd.cc": {
+        "MetricAt": 6,
+        "DerivativesAt": 0
+      },
+      "src/z4c/sync_grmhd.cc": {
+        "MetricAt": 10,
+        "DerivativesAt": 0
+      },
+      "src/pgen/hydro_problems.cc": {
+        "MetricAt": 5,
+        "DerivativesAt": 0
+      },
+      "src/pgen/mhd_problems.cc": {
+        "MetricAt": 41,
+        "DerivativesAt": 0
+      },
+      "src/pgen/numerical_relativity.cc": {
+        "MetricAt": 1,
+        "DerivativesAt": 0
+      },
+      "plugins/radiation_cooling/radiation/cooling_source.cc": {
+        "MetricAt": 1,
+        "DerivativesAt": 0
+      },
+      "src/relativity/relativistic_hydro.cc": {
+        "MetricAt": 12,
+        "DerivativesAt": 2
+      },
+      "src/relativity/relativistic_mhd.cc": {
+        "MetricAt": 39,
+        "DerivativesAt": 2
+      }
+    }
+  }
+}

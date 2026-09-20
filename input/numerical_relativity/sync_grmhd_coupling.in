@@ -1,0 +1,84 @@
+# SYNC-2 low-source GRMHD/CT gate.  The eigenmode is deliberately scaled so
+# that active and test-fluid paths differ only through resolvable Z4c feedback.
+
+<parthenon/job>
+problem_id = sync_grmhd_linear_wave
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 64
+x1min = -0.5
+x1max = 0.5
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 4
+x2min = -0.25
+x2max = 0.25
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 4
+x3min = -0.25
+x3max = 0.25
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 32
+nx2 = 4
+nx3 = 4
+
+<parthenon/time>
+integrator = rk2
+tlim = 0.02
+nlim = 4
+ncycle_out_mesh = 1
+
+<numerical_relativity>
+cfl = 0.3
+finite_difference_order = 2
+matter_source = grmhd
+
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.6666666666666667
+gamma_max = 1000.0
+sigma_max = 1.0e12
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-30
+pressure_floor = 1.0e-30
+fofc = false
+nscalars = 0
+
+<problem>
+wave_flag = 1
+amp = 1.0e-20
+dens = 1.0e-18
+pgas = 1.0e-19
+vx0 = 0.0
+vy0 = 0.0
+vz0 = 0.0
+bx0 = 5.0e-11
+by0 = 2.0e-11
+bz0 = -1.0e-11
+along_x1 = true
+
+<parthenon/output1>
+file_type = hdf5
+dt = 0.02
+variables = mhd.prim,mhd.cons,mhd.b_cell,mhd.b_face,mhd.divb,nr.z4c,nr.adm,nr.tmunu,nr.constraints
+id = sync_grmhd_wave
+single_precision_output = false
+ghost_zones = false

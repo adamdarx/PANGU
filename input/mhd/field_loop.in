@@ -1,0 +1,59 @@
+# PANGU stage-3 field-loop advection test
+
+<parthenon/job>
+problem_id = field_loop
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+nghost = 3
+nx1 = 128
+x1min = -1.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 64
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 64
+nx2 = 32
+nx3 = 1
+
+<parthenon/time>
+integrator = rk2
+tlim = 0.2
+nlim = 10000
+ncycle_out_mesh = 20
+
+<mhd>
+eos = ideal
+gamma = 1.6666666666666667
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+fofc = true
+nscalars = 0
+
+<problem>
+x0 = 0.0
+y0 = 0.0
+radius = 0.3
+amplitude = 1.0e-3
+vflow = 1.0
+pressure = 1.0
+
+<parthenon/output1>
+file_type = hst
+dt = 0.05

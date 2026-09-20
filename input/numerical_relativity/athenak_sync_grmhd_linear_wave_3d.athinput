@@ -1,0 +1,112 @@
+# AthenaK reference for PANGU's SYNC-2 diagonal three-dimensional eigenmode.
+
+<job>
+basename = athenak_sync_grmhd_linear_wave_3d
+
+<mesh>
+nghost = 2
+nx1 = 32
+x1min = -0.5
+x1max = 0.5
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 16
+x2min = -0.25
+x2max = 0.25
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 16
+x3min = -0.25
+x3max = 0.25
+ix3_bc = periodic
+ox3_bc = periodic
+
+<meshblock>
+nx1 = 4
+nx2 = 4
+nx3 = 4
+
+<mesh_refinement>
+refinement = adaptive
+max_nmb_per_rank = 2048
+num_levels = 2
+
+<amr_criterion1>
+method = min_max
+variable = mhd_u_d
+value_max = 4.2225
+
+<coord>
+special_rel = false
+general_rel = true
+minkowski = true
+
+<adm>
+
+<time>
+evolution = dynamic
+integrator = rk2
+cfl_number = 0.3
+nlim = -1
+tlim = 1.0
+ndiag = 20
+
+<mhd>
+reconstruct = plm
+rsolver = hlle
+gamma = 1.333333
+tfloor = 1.0e-10
+dyn_eos = ideal
+eos = ideal
+dyn_error = reset_floor
+
+<problem>
+pgen_name = linear_wave
+wave_flag = 0
+amp = 1.0e-3
+dens = 4.0
+pgas = 1.0
+vx0 = -0.1
+vy0 = 0.3
+vz0 = -0.05
+bx0 = 2.5
+by0 = 1.8
+bz0 = -1.2
+along_x1 = false
+along_x2 = false
+along_x3 = false
+
+<output1>
+file_type = tab
+variable = mhd_w_bcc
+data_format = %.17e
+dt = 0.0424696
+slice_x2 = 0.0
+slice_x3 = 0.0
+ghost_zones = false
+
+<output2>
+file_type = tab
+variable = mhd_u_bcc
+data_format = %.17e
+dt = 0.0424696
+slice_x2 = 0.0
+slice_x3 = 0.0
+ghost_zones = false
+
+<output3>
+file_type = tab
+variable = adm
+data_format = %.17e
+dt = 0.0424696
+slice_x2 = 0.0
+slice_x3 = 0.0
+ghost_zones = false
+
+<output4>
+file_type = bin
+variable = mhd_w_bcc
+dt = 1.0
+slice_x2 = 0.0
+slice_x3 = 0.0
+ghost_zones = false

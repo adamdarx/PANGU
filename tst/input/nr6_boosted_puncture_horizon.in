@@ -1,0 +1,114 @@
+# NR-6 non-spherical apparent-horizon validation for AthenaK's x-boosted
+# unit-mass puncture. Two nested static levels resolve the Lorentz-contracted
+# short axis while retaining a sufficiently distant outer boundary.
+
+<parthenon/job>
+problem_id = nr_boosted_puncture
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = static
+nghost = 2
+nx1 = 64
+x1min = -4.0
+x1max = 4.0
+ix1_bc = nr_outflow
+ox1_bc = nr_outflow
+nx2 = 64
+x2min = -4.0
+x2max = 4.0
+ix2_bc = nr_outflow
+ox2_bc = nr_outflow
+nx3 = 64
+x3min = -4.0
+x3max = 4.0
+ix3_bc = nr_outflow
+ox3_bc = nr_outflow
+
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 16
+
+<parthenon/static_refinement0>
+level = 1
+x1min = -2.0
+x1max = 2.0
+x2min = -2.0
+x2max = 2.0
+x3min = -2.0
+x3max = 2.0
+
+<parthenon/static_refinement1>
+level = 2
+x1min = -1.0
+x1max = 1.0
+x2min = -1.0
+x2max = 1.0
+x3min = -1.0
+x3max = 1.0
+
+<parthenon/time>
+integrator = rk4
+tlim = 10.0
+nlim = 200
+ncycle_out_mesh = 1
+
+<numerical_relativity>
+cfl = 0.2
+finite_difference_order = 2
+dissipation = 0.1
+chi_div_floor = 1.0e-5
+damp_kappa1 = 0.02
+damp_kappa2 = 0.0
+lapse_harmonic = 0.0
+lapse_oplog = 2.0
+lapse_advect = 1.0
+slow_start_lapse = true
+slow_start_amplitude = 0.6
+slow_start_time = 20.0
+slow_start_index = 1.0
+shift_gamma = 1.0
+shift_eta = 2.0
+shift_advect = 1.0
+tracker_enabled = true
+tracker_refinement_radius = -1.0
+tracker_0_mass = 1.0
+weyl_enabled = false
+waveform_enabled = false
+horizon_enabled = true
+horizon_output_grid = true
+horizon_start_time_0 = 0.0
+horizon_stop_time_0 = 1.0e30
+horizon_ntheta = 40
+horizon_lmax = 12
+horizon_iterations = 150
+horizon_initial_radius = 0.4
+horizon_flow_gain = 1.0
+horizon_flow = standard
+horizon_mass_tolerance = 1.0e-2
+horizon_hmean_limit = 100.0
+horizon_expand_guess = 1.0
+diagnostic_directory = diagnostics
+
+<problem>
+punc_ADM_mass = 1.0
+punc_velocity_x1 = 0.8660254
+punc_velocity_x2 = 0.0
+punc_velocity_x3 = 0.0
+punc_center_x1 = 0.0
+punc_center_x2 = 0.0
+punc_center_x3 = 0.0
+constraint_mask_radius = 0.5
+
+<parthenon/output1>
+file_type = hst
+dt = 0.125

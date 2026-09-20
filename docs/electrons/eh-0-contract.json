@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "phase": "EH-0",
+  "module": "electrons",
+  "reference": {
+    "code": "KHARMA",
+    "commit": "0866de81df88113cc95472c073c3dab8458e1d39",
+    "source": "kharma/kharma/electrons/electrons.cpp"
+  },
+  "runtime_optionality": {
+    "canonical_key": "electrons/enabled",
+    "heating_key": "electrons/heating",
+    "compatibility_alias": "electrons/on",
+    "disabled_registers_package": false,
+    "disabled_registers_fields": false,
+    "disabled_adds_tasks": false,
+    "disabled_changes_grmhd_kernel": false
+  },
+  "supported_assemblies": [
+    {
+      "metric": "cks",
+      "mode": "dynamic",
+      "required": true,
+      "tests": ["cuda_build", "initialization", "one_step", "short_evolution", "custom_boundary", "restart", "smr"]
+    },
+    {
+      "metric": "mks",
+      "mode": "static",
+      "required": true,
+      "tests": ["cuda_build", "initialization", "one_step", "short_evolution", "kharma_multitime", "restart"]
+    },
+    {
+      "metric": "mks",
+      "mode": "dynamic",
+      "required": true,
+      "tests": ["cuda_build", "static_dynamic_initialization", "static_dynamic_one_step"]
+    },
+    {
+      "metric": "cks",
+      "mode": "static",
+      "required": true,
+      "tests": ["cuda_build", "no_refinement_smoke"]
+    }
+  ],
+  "dependency_contract": {
+    "allowed": [
+      "parthenon",
+      "mhd_public_fields",
+      "relativity_public_invariants",
+      "assembled_geometry_interface"
+    ],
+    "forbidden_source_tokens": [
+      "geometry/metric/cks",
+      "geometry/metric/mks",
+      "metric::CKS",
+      "metric::MKS",
+      "ProblemType",
+      "pgen/",
+      "#define"
+    ]
+  },
+  "fields": [
+    {
+      "name": "electrons.cons",
+      "metadata": ["Cell", "Independent", "WithFluxes", "FillGhost", "Restart"],
+      "registered_when_disabled": false
+    },
+    {
+      "name": "electrons.prim",
+      "metadata": ["Cell", "Derived"],
+      "registered_when_disabled": false
+    },
+    {
+      "name": "electrons.diagnostics",
+      "metadata": ["Cell", "Derived", "OneCopy", "Optional"],
+      "registered_when_disabled": false
+    }
+  ],
+  "components": [
+    "Ktot",
+    "Kel_Constant",
+    "Kel_Howes",
+    "Kel_Kawazura",
+    "Kel_Werner",
+    "Kel_Rowan",
+    "Kel_Sharma"
+  ],
+  "models": ["constant", "howes", "kawazura", "werner", "rowan", "sharma"],
+  "implemented_models": ["constant", "howes", "kawazura", "werner", "rowan", "sharma"],
+  "diagnostic_components": [
+    "raw_dissipation",
+    "applied_dissipation",
+    "heating_fraction",
+    "tp_over_te",
+    "flags"
+  ],
+  "transport_storage": {
+    "field": null,
+    "policy": "reuse_riemann_coefficients_in_passive_flux_storage_then_finalize",
+    "coefficient_slots": [0, 1],
+    "reason": "temporarily store C_L and C_R in the existing electrons.cons face-flux storage, then overwrite them with final entropy fluxes; this avoids both a global scratch field and duplicate GRMHD wave-speed evaluation"
+  },
+  "task_order": [
+    "grmhd_riemann",
+    "fofc_fluid_and_emf",
+    "passive_scalar_flux_and_corner_emf",
+    "parthenon_flux_correction",
+    "fluid_rk_cell_and_face_update_and_independent_electron_rk_update",
+    "fluid_sources_and_boundary_exchange",
+    "grmhd_c2p_floors_ceilings_and_excision",
+    "electron_u2p",
+    "electron_heating_entire_domain",
+    "electron_p2u",
+    "timestep_and_refinement"
+  ],
+  "scope": {
+    "initial_physics": ["srmhd", "grmhd"],
+    "electron_pressure_backreaction": false,
+    "thermal_conduction": false,
+    "radiative_cooling": false,
+    "coulomb_coupling": false,
+    "pair_processes": false,
+    "energy_changing_external_sources_supported": false
+  },
+  "implementation_status": "dissipative_all_models"
+}

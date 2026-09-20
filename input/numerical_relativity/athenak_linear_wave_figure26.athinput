@@ -1,0 +1,59 @@
+# AthenaK reference deck for the axis-aligned Figure 26 linear-wave profile.
+
+<job>
+basename = athenak_linear_fd2_n64
+
+<mesh>
+nghost = 2
+nx1 = 64
+x1min = 0.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 64
+x2min = 0.0
+x2max = 1.0
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 64
+x3min = 0.0
+x3max = 1.0
+ix3_bc = periodic
+ox3_bc = periodic
+
+<meshblock>
+nx1 = 64
+nx2 = 64
+nx3 = 64
+
+<time>
+evolution = dynamic
+integrator = rk2
+cfl_number = 0.3
+nlim = -1
+tlim = 1.0
+ndiag = 10
+
+<z4c>
+diss = 1.0
+
+<problem>
+pgen_name = z4c_linear_wave
+amp = 1.0e-8
+kx1 = 1
+kx2 = 0
+kx3 = 0
+
+<output1>
+file_type = tab
+variable = z4c
+data_format = %.16e
+dt = 1.0
+slice_x2 = 0.5
+slice_x3 = 0.5
+ghost_zones = false
+
+<output2>
+file_type = hst
+data_format = %12.5e
+dt = -1

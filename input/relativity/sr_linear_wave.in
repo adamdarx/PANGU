@@ -1,0 +1,61 @@
+# PANGU stage-5 smooth special-relativistic wave
+<parthenon/job>
+problem_id = sr_linear_wave
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 128
+x1min = 0.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 1
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+<parthenon/meshblock>
+nx1 = 64
+nx2 = 1
+nx3 = 1
+<parthenon/time>
+integrator = rk2
+# AthenaK's SR linear-wave generator freezes this period to 1.70755.
+tlim = 1.70755
+nlim = 10000
+ncycle_out_mesh = 20
+<hydro>
+physics = sr
+eos = ideal
+gamma = 1.3333333333333333
+gamma_max = 1000.0
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+fofc = false
+<geometry>
+background = minkowski
+<problem>
+ambient_density = 1.0
+ambient_pressure = 1.0
+amplitude = 1.0e-6
+x0 = 0.0
+vx0 = 0.1
+vy0 = 0.05
+vz0 = -0.02
+wave_flag = 4
+<parthenon/output1>
+file_type = hst
+dt = 0.2
+<parthenon/output2>
+file_type = hdf5
+dt = 0.2
+variables = hydro.prim

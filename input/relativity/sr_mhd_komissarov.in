@@ -1,0 +1,77 @@
+# Generic KHARMA Komissarov SRMHD shock deck; states are supplied by the runner.
+<parthenon/job>
+problem_id = sr_mhd_shock
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 400
+x1min = -2.0
+x1max = 2.0
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 1
+x2min = 0.0
+x2max = 1.0
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = 0.0
+x3max = 1.0
+ix3_bc = periodic
+ox3_bc = periodic
+<parthenon/meshblock>
+nx1 = 400
+nx2 = 1
+nx3 = 1
+<parthenon/time>
+integrator = rk2
+dt = 1.0e-4
+dt_init = 1.0e-4
+dt_init_force = true
+dt_floor = 1.0e-4
+dt_factor = 2.0
+tlim = 1.0
+nlim = -1
+ncycle_out_mesh = 1000
+<mhd>
+physics = sr
+eos = ideal
+gamma = 1.333333
+gamma_max = 1000.0
+sigma_max = 1.0e20
+reconstruct = plm
+rsolver = llf
+cfl = 0.5
+density_floor = 1.0e-20
+pressure_floor = 1.0e-20
+fofc = false
+<geometry>
+background = minkowski
+<problem>
+x0 = 0.0
+density_left = 1.0
+pressure_left = 1.0
+velocity_1_left = 0.0
+velocity_2_left = 0.0
+velocity_3_left = 0.0
+density_right = 0.1
+pressure_right = 1.0
+velocity_1_right = 0.0
+velocity_2_right = 0.0
+velocity_3_right = 0.0
+b1 = 1.0
+b2_left = 0.0
+b2_right = 0.0
+b3_left = 0.0
+b3_right = 0.0
+<parthenon/output1>
+file_type = hst
+dt = 0.1
+<parthenon/output2>
+file_type = hdf5
+dt = 100.0
+single_precision_output = false
+variables = mhd.prim,mhd.b_cell,mhd.cmax,mhd.cmin,mhd.divb

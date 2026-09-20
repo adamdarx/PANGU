@@ -1,0 +1,52 @@
+# PANGU single-node strong-scaling benchmark: Orszag--Tang on 4 GPUs.
+# Run with four MPI ranks and one GPU per rank.  Each rank owns 36 of 144 blocks.
+<parthenon/job>
+problem_id = orszag_tang
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+nghost = 3
+nx1 = 1536
+x1min = 0.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 1536
+x2min = 0.0
+x2max = 1.0
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 128
+nx2 = 128
+nx3 = 1
+
+<parthenon/time>
+integrator = rk2
+tlim = 100.0
+nlim = -1
+ncycle_out = 100
+ncycle_out_mesh = 0
+perf_cycle_offset = 10
+
+<mhd>
+eos = ideal
+gamma = 1.6666666666666667
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+fofc = true
+nscalars = 0
+
+<problem>
+write_final_csv = false

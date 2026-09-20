@@ -1,0 +1,73 @@
+# KHARMA-aligned special-relativistic MHD linear eigenmodes.
+<parthenon/job>
+problem_id = sr_mhd_modes
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 64
+x1min = 0.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 64
+x2min = 0.0
+x2max = 1.0
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = 0.0
+x3max = 1.0
+ix3_bc = periodic
+ox3_bc = periodic
+<parthenon/meshblock>
+nx1 = 64
+nx2 = 64
+nx3 = 1
+<parthenon/time>
+integrator = rk2
+dt = 1.0e-4
+dt_init = 1.0e-4
+dt_init_force = true
+dt_floor = 1.0e-4
+dt_factor = 2.0
+tlim = 2.0
+nlim = -1
+ncycle_out_mesh = 1000
+<mhd>
+physics = sr
+eos = ideal
+gamma = 1.3333333333333333
+gamma_max = 1000.0
+sigma_max = 1.0e20
+reconstruct = plm
+rsolver = llf
+cfl = 0.9
+density_floor = 1.0e-20
+pressure_floor = 1.0e-20
+fofc = false
+<geometry>
+background = minkowski
+<problem>
+kharma_mode = 1
+mode_direction = 3
+amplitude = 1.0e-4
+phase = 0.0
+mode_density0 = 1.0
+mode_internal0 = 1.0
+mode_u10 = 0.0
+mode_u20 = 0.0
+mode_u30 = 0.0
+mode_b10 = 1.0
+mode_b20 = 0.0
+mode_b30 = 0.0
+<parthenon/output1>
+file_type = hst
+dt = 100.0
+<parthenon/output2>
+file_type = hdf5
+dt = 100.0
+single_precision_output = false
+variables = mhd.prim,mhd.b_cell,mhd.cmax,mhd.cmin,mhd.divb

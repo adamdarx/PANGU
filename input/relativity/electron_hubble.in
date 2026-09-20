@@ -1,0 +1,83 @@
+# EH-2: smooth adiabatic Hubble expansion with Constant electron heating enabled.
+<parthenon/job>
+problem_id = electron_hubble
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 256
+x1min = -1.0
+x1max = 1.0
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 1
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+<parthenon/meshblock>
+nx1 = 64
+nx2 = 1
+nx3 = 1
+<parthenon/time>
+integrator = rk2
+tlim = 1.0
+nlim = 10000
+ncycle_out_mesh = 100
+<mhd>
+physics = sr
+eos = ideal
+gamma = 1.3333333333333333
+gamma_max = 1000.0
+sigma_max = 1.0e20
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-12
+pressure_floor = 1.0e-16
+fofc = true
+<electrons>
+enabled = true
+heating = true
+gamma_e = 1.3333333333333333
+gamma_p = 1.6666666666666667
+init_to_fel_0 = true
+fel_0 = 0.01
+fel_constant = 0.1
+constant = true
+enforce_positive_dissipation = false
+suppress_highb_heat = false
+limit_kel = true
+tp_over_te_min = 1.0e-3
+tp_over_te_max = 1.0e3
+write_diagnostics = true
+<geometry>
+background = minkowski
+expected_metric = cks
+expected_mode = dynamic
+<problem>
+mach = 0.1
+v0 = 0.1
+x0 = 0.0
+b1 = 0.0
+b2_left = 0.0
+b2_right = 0.0
+<parthenon/output1>
+file_type = hst
+dt = 0.25
+<parthenon/output2>
+file_type = hdf5
+dt = 0.25
+single_precision_output = false
+ghost_zones = false
+variables = mhd.prim,mhd.cons,electrons.prim,electrons.cons,electrons.diagnostics
+
+<plugins>
+enabled = electron

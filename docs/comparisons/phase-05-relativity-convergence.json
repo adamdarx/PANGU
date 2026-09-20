@@ -1,0 +1,131 @@
+{
+  "minimum_observed_order_l1": 1.8573387398828378,
+  "minimum_required_order_l1": 1.8,
+  "passed": true,
+  "series": [
+    {
+      "case": "sr_hydro",
+      "errors": [
+        {
+          "directory": "run-phase5-conv-srhyd-n32",
+          "l1": 1.1222045267047023e-08,
+          "l2": 1.722666458490673e-08,
+          "linf": 5.475411990474299e-08,
+          "resolution": 32
+        },
+        {
+          "directory": "run-phase5-conv-srhyd-n64",
+          "l1": 3.0971150842182792e-09,
+          "l2": 5.2198073643425355e-09,
+          "linf": 2.089925499326739e-08,
+          "resolution": 64
+        },
+        {
+          "directory": "run-phase5-conv-srhyd-n128",
+          "l1": 7.914249818214217e-10,
+          "l2": 1.5501036347617015e-09,
+          "linf": 7.866066353834356e-09,
+          "resolution": 128
+        }
+      ],
+      "minimum_order_l1": 1.8573387398828378,
+      "orders_l1": [
+        1.8573387398828378,
+        1.9684004817160796
+      ]
+    },
+    {
+      "case": "gr_hydro",
+      "errors": [
+        {
+          "directory": "run-phase5-conv-grhyd-n32",
+          "l1": 1.0741467049006117e-08,
+          "l2": 1.661018610922017e-08,
+          "linf": 5.401215930067593e-08,
+          "resolution": 32
+        },
+        {
+          "directory": "run-phase5-conv-grhyd-n64",
+          "l1": 2.9457361045326542e-09,
+          "l2": 5.0240517315548476e-09,
+          "linf": 2.05789902896214e-08,
+          "resolution": 64
+        },
+        {
+          "directory": "run-phase5-conv-grhyd-n128",
+          "l1": 7.472029989858374e-10,
+          "l2": 1.488106221624961e-09,
+          "linf": 7.730575179998311e-09,
+          "resolution": 128
+        }
+      ],
+      "minimum_order_l1": 1.8664909506988216,
+      "orders_l1": [
+        1.8664909506988216,
+        1.9790560409000058
+      ]
+    },
+    {
+      "case": "sr_mhd",
+      "errors": [
+        {
+          "directory": "run-phase5-conv-srmhd-n32",
+          "l1": 4.362421598356212e-09,
+          "l2": 1.437727778041399e-08,
+          "linf": 7.85677092274284e-08,
+          "resolution": 32
+        },
+        {
+          "directory": "run-phase5-conv-srmhd-n64",
+          "l1": 1.201075731452621e-09,
+          "l2": 4.3316898550872624e-09,
+          "linf": 2.9850318106205975e-08,
+          "resolution": 64
+        },
+        {
+          "directory": "run-phase5-conv-srmhd-n128",
+          "l1": 3.0862883823162e-10,
+          "l2": 1.2799691605472656e-09,
+          "linf": 1.11734479446568e-08,
+          "resolution": 128
+        }
+      ],
+      "minimum_order_l1": 1.8608020831815384,
+      "orders_l1": [
+        1.8608020831815384,
+        1.9603823416668191
+      ]
+    },
+    {
+      "case": "gr_mhd",
+      "errors": [
+        {
+          "directory": "run-phase5-conv-grmhd-n32",
+          "l1": 4.345647556619437e-09,
+          "l2": 1.433011220480163e-08,
+          "linf": 7.848410021882302e-08,
+          "resolution": 32
+        },
+        {
+          "directory": "run-phase5-conv-grmhd-n64",
+          "l1": 1.1949790340327069e-09,
+          "l2": 4.3160429420222905e-09,
+          "linf": 2.9812877833101936e-08,
+          "resolution": 64
+        },
+        {
+          "directory": "run-phase5-conv-grmhd-n128",
+          "l1": 3.0666200141586403e-10,
+          "l2": 1.2748994310023782e-09,
+          "linf": 1.115761272263427e-08,
+          "resolution": 128
+        }
+      ],
+      "minimum_order_l1": 1.8625858666523123,
+      "orders_l1": [
+        1.8625858666523123,
+        1.9622639882709048
+      ]
+    }
+  ]
+}

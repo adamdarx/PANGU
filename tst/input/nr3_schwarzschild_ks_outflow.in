@@ -1,0 +1,67 @@
+# NR-3 physical-boundary and diagnostic-mask regression fixture.
+# The analytic Kerr--Schild data are evolved with Parthenon's outflow boundary
+# on every face.  The central diagnostic mask is not a physical excision.
+
+<parthenon/job>
+problem_id = nr_schwarzschild_ks
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 24
+x1min = -4.0
+x1max = 4.0
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 24
+x2min = -4.0
+x2max = 4.0
+ix2_bc = outflow
+ox2_bc = outflow
+nx3 = 24
+x3min = -4.0
+x3max = 4.0
+ix3_bc = outflow
+ox3_bc = outflow
+
+<parthenon/meshblock>
+nx1 = 12
+nx2 = 12
+nx3 = 12
+
+<parthenon/time>
+integrator = rk2
+tlim = 0.05
+nlim = -1
+ncycle_out_mesh = 1
+
+<numerical_relativity>
+cfl = 0.2
+finite_difference_order = 2
+floor_chi = false
+
+<problem>
+mass = 1.0
+constraint_mask_radius = 0.5
+
+<parthenon/output1>
+file_type = hst
+dt = 0.01
+data_format = %24.17e
+
+<parthenon/output2>
+file_type = hdf5
+dt = 0.01
+variables = nr.z4c,nr.adm,nr.constraints,nr.constraint_mask
+id = schwarzschild_kerr_schild_outflow
+single_precision_output = false
+ghost_zones = false

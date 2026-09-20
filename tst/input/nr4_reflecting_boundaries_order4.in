@@ -1,0 +1,62 @@
+# NR-4 fourth-order tensor-parity reflecting-boundary regression.
+
+<parthenon/job>
+problem_id = nr_linear_wave
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+nghost = 3
+nx1 = 8
+x1min = 0.0
+x1max = 1.0
+ix1_bc = nr_reflecting
+ox1_bc = nr_reflecting
+nx2 = 8
+x2min = 0.0
+x2max = 1.0
+ix2_bc = nr_reflecting
+ox2_bc = nr_reflecting
+nx3 = 8
+x3min = 0.0
+x3max = 1.0
+ix3_bc = nr_reflecting
+ox3_bc = nr_reflecting
+
+<parthenon/meshblock>
+nx1 = 8
+nx2 = 8
+nx3 = 8
+
+<parthenon/time>
+integrator = rk2
+tlim = 0.01
+nlim = 1
+ncycle_out_mesh = 1
+
+<numerical_relativity>
+cfl = 0.2
+finite_difference_order = 4
+dissipation = 0.0
+
+<problem>
+amplitude = 1.0e-3
+kx1 = 1.0
+kx2 = 0.5
+kx3 = 0.25
+
+<parthenon/output1>
+file_type = hdf5
+dt = 0.01
+variables = nr.z4c
+id = nr4_reflecting_order4
+single_precision_output = false
+ghost_zones = true

@@ -1,0 +1,108 @@
+# PANGU RC-4 control: unmagnetized MKS Fishbone--Moncrief torus cooled toward H/R=0.1.
+# The regression driver overrides resolution, final time, beta_cool, and output cadence.
+<parthenon/job>
+problem_id = gr_torus_sane
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+numlevel = 1
+nghost = 2
+nx1 = 64
+x1min = 0.1823215567939546
+x1max = 3.912023005428146
+nx2 = 32
+x2min = 1.0e-5
+x2max = 0.99999
+nx3 = 1
+
+<parthenon/meshblock>
+nx1 = 64
+nx2 = 32
+nx3 = 1
+
+<parthenon/time>
+integrator = rk2
+tlim = 200.0
+nlim = -1
+ncycle_out_mesh = 500
+
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.3333333333333333
+gamma_max = 20.0
+sigma_max = 3.4028234663852886e38
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-10
+pressure_floor = 0.333e-12
+fofc = true
+
+<electrons>
+enabled = false
+
+<geometry>
+background = mks
+expected_metric = mks
+expected_mode = static
+bh_spin = 0.9375
+hslope = 0.3
+
+<problem>
+fm_torus = true
+prograde = true
+r_edge = 6.0
+r_peak = 12.0
+rho_max = 1.0
+rho_min = 1.0e-5
+rho_pow = -1.5
+pgas_min = 0.333e-7
+pgas_pow = -2.5
+tilt_angle = 0.0
+pert_amp = 0.0
+potential_beta_min = 1.0e30
+potential_cutoff = 0.2
+potential_falloff = 0.0
+potential_r_pow = 0.0
+potential_rho_pow = 1.0
+vertical_field = false
+write_final_csv = false
+
+<radiation>
+model = target_thickness
+h_target = 0.1
+beta_cool = 0.6283185307179586
+start_time = 0.0
+ramp_time = 0.0
+rho_min = 1.0e-6
+sigma_max = 1.0e30
+bound_only = true
+track_energy = true
+
+<parthenon/output1>
+file_type = hst
+dt = 10.0
+data_format = %24.16e
+
+<parthenon/output2>
+file_type = hdf5
+dt = 200.0
+variables = mhd.prim,mhd.b_cell,mhd.divb,radiation.cumulative_removed_energy,radiation.cumulative_boundary_energy
+id = prim
+hdf5_compression_level = 0
+single_precision_output = false
+ghost_zones = false
+
+<parthenon/output3>
+file_type = rst
+dt = 10000.0
+id = restart
+hdf5_compression_level = 0
+
+<plugins>
+enabled = radiation_cooling

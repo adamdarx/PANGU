@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "source": {
+    "code": "KHARMA",
+    "commit": "0866de81df88113cc95472c073c3dab8458e1d39",
+    "file": "kharma/kharma/electrons/electrons.cpp",
+    "lines": "307-444"
+  },
+  "constants": {
+    "gamma_gas": 1.3333333333333333,
+    "gamma_electron": 1.3333333333333333,
+    "gamma_proton": 1.6666666666666667,
+    "electron_mass_cgs": 9.1093826e-28,
+    "proton_mass_cgs": 1.67262171e-24,
+    "constant_fraction": 0.1
+  },
+  "cases": [
+    {
+      "name": "disk_moderate",
+      "input": {
+        "rho": 1.0,
+        "internal_energy": 0.1,
+        "magnetic_b_squared": 0.02,
+        "electron_entropy": 0.01
+      },
+      "derived": {
+        "proton_temperature": 0.06666666666666668,
+        "electron_temperature": 0.01,
+        "tp_over_te": 6.666666666666668,
+        "beta_i": 6.666666666666668,
+        "werner_sigma": 0.02,
+        "rowan_beta_i": 6.666666666666668,
+        "rowan_sigma": 0.01764705882352941,
+        "rowan_beta_max": 14.166666666666666
+      },
+      "fractions": {
+        "constant": 0.1,
+        "howes": 0.11114012775155177,
+        "kawazura": 0.10407524866677852,
+        "werner": 0.26116917629021924,
+        "rowan": 0.445919544657038,
+        "sharma": 0.11332460789480643
+      }
+    },
+    {
+      "name": "corona_magnetized",
+      "input": {
+        "rho": 0.2,
+        "internal_energy": 0.02,
+        "magnetic_b_squared": 0.08,
+        "electron_entropy": 0.015
+      },
+      "derived": {
+        "proton_temperature": 0.06666666666666668,
+        "electron_temperature": 0.008772053214638599,
+        "tp_over_te": 7.599893096340876,
+        "beta_i": 0.33333333333333337,
+        "werner_sigma": 0.39999999999999997,
+        "rowan_beta_i": 0.33333333333333337,
+        "rowan_sigma": 0.35294117647058826,
+        "rowan_beta_max": 0.7083333333333333
+      },
+      "fractions": {
+        "constant": 0.1,
+        "howes": 0.9973400707488927,
+        "kawazura": 0.8539247099221324,
+        "werner": 0.299029033784546,
+        "rowan": 0.4626412976864275,
+        "sharma": 0.10690716290089985
+      }
+    },
+    {
+      "name": "weak_field_hot",
+      "input": {
+        "rho": 2.0,
+        "internal_energy": 0.4,
+        "magnetic_b_squared": 0.01,
+        "electron_entropy": 0.005
+      },
+      "derived": {
+        "proton_temperature": 0.13333333333333336,
+        "electron_temperature": 0.006299605249474366,
+        "tp_over_te": 21.165347359575996,
+        "beta_i": 53.33333333333334,
+        "werner_sigma": 0.005,
+        "rowan_beta_i": 53.33333333333334,
+        "rowan_sigma": 0.003947368421052632,
+        "rowan_beta_max": 63.33333333333333
+      },
+      "fractions": {
+        "constant": 0.1,
+        "howes": 0.007399463079642298,
+        "kawazura": 0.03230792498167544,
+        "werner": 0.2555887729251237,
+        "rowan": 0.49889741310865277,
+        "sharma": 0.06692922938425871
+      }
+    }
+  ]
+}

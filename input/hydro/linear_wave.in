@@ -1,0 +1,57 @@
+# PANGU stage-2 small-amplitude right-going acoustic wave
+
+<parthenon/job>
+problem_id = linear_wave
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 64
+x1min = 0.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 1
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 32
+nx2 = 1
+nx3 = 1
+
+<parthenon/time>
+integrator = rk2
+tlim = 0.1
+nlim = 1000
+ncycle_out_mesh = 20
+
+<hydro>
+eos = ideal
+gamma = 1.4
+reconstruct = plm
+rsolver = hllc
+cfl = 0.35
+fofc = true
+nscalars = 0
+
+<problem>
+ambient_density = 1.0
+ambient_pressure = 1.0
+amplitude = 1.0e-4
+x0 = 0.0
+
+<parthenon/output1>
+file_type = hst
+dt = 0.02

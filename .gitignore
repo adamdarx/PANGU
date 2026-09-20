@@ -1,0 +1,27 @@
+athenak/
+athenapk/
+kharma/
+build/
+build-*/
+run-*/
+/data/
+*.hst
+*.phdf
+*.rhdf
+*.xdmf
+pangu-advection-errors.dat
+pangu-hydro-errors.dat
+pangu-hydro-final*.csv
+
+# Local research campaigns, manuscript workspace, and generated media
+/draft/
+*.mp4
+
+# Root-level PANGU plans and outlines are local coordination artifacts
+/PANGU_*.md
+
+# Local Codex skill environment and Python caches
+.agents/
+skills-lock.json
+__pycache__/
+*.pyc

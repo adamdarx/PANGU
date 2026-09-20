@@ -1,0 +1,82 @@
+# SYNC-1 low-source smooth GRHD wave.  The matter scale is deliberately below
+# the roundoff response of the initially Minkowski Z4c fields, making this an
+# end-to-end Valencia/SRHD-equivalence gate while still exercising the genuine
+# GRHD stress-energy construction at every RK stage.
+
+<parthenon/job>
+problem_id = sync_grhd_linear_wave
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+numlevel = 1
+nghost = 2
+nx1 = 64
+x1min = 0.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 4
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 4
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 32
+nx2 = 4
+nx3 = 4
+
+<parthenon/time>
+integrator = rk2
+tlim = 0.02
+nlim = 4
+ncycle_out_mesh = 1
+
+<numerical_relativity>
+cfl = 0.3
+finite_difference_order = 2
+matter_source = grhd
+
+<hydro>
+physics = gr
+eos = ideal
+gamma = 1.6666666666666667
+gamma_max = 1000.0
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-30
+pressure_floor = 1.0e-30
+fofc = false
+
+<problem>
+write_final_csv = false
+ambient_density = 1.0e-18
+ambient_pressure = 1.0e-19
+amplitude = 1.0e-20
+vx0 = 0.2
+vy0 = 0.0
+vz0 = 0.0
+wave_flag = 4
+
+<parthenon/output1>
+file_type = hdf5
+dt = 0.02
+variables = hydro.prim,hydro.cons,nr.z4c,nr.adm,nr.tmunu,nr.constraints
+id = sync_grhd_wave
+single_precision_output = false
+ghost_zones = false

@@ -1,0 +1,321 @@
+{
+  "absolute_tolerance": 1e-13,
+  "bitwise_unequal": 0,
+  "case": "fixed-Kerr GRMHD split monopole",
+  "maximum_linf": 0.0,
+  "metadata_tolerance": 1e-14,
+  "passed": true,
+  "records": [
+    {
+      "athenak_file": "monopole_multitime.mhd_w_bcc.00000.tab",
+      "bitwise_unequal": 0,
+      "cycle": 0,
+      "fields": {
+        "B1": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "B2": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "B3": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "density": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "internal_energy_density": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u1": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u2": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u3": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        }
+      },
+      "maximum_linf": 0.0,
+      "pangu_file": "gr_monopole.out2.00000.phdf",
+      "time": 0.0,
+      "time_delta": 0.0,
+      "x_linf": 0.0,
+      "y_delta": 0.0,
+      "z_delta": 0.0
+    },
+    {
+      "athenak_file": "monopole_multitime.mhd_w_bcc.00001.tab",
+      "bitwise_unequal": 0,
+      "cycle": 1,
+      "fields": {
+        "B1": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "B2": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "B3": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "density": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "internal_energy_density": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u1": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u2": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u3": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        }
+      },
+      "maximum_linf": 0.0,
+      "pangu_file": "gr_monopole.out2.00001.phdf",
+      "time": 0.1875,
+      "time_delta": 0.0,
+      "x_linf": 0.0,
+      "y_delta": 0.0,
+      "z_delta": 0.0
+    },
+    {
+      "athenak_file": "monopole_multitime.mhd_w_bcc.00002.tab",
+      "bitwise_unequal": 0,
+      "cycle": 2,
+      "fields": {
+        "B1": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "B2": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "B3": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "density": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "internal_energy_density": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u1": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u2": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u3": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        }
+      },
+      "maximum_linf": 0.0,
+      "pangu_file": "gr_monopole.out2.00002.phdf",
+      "time": 0.375,
+      "time_delta": 0.0,
+      "x_linf": 0.0,
+      "y_delta": 0.0,
+      "z_delta": 0.0
+    },
+    {
+      "athenak_file": "monopole_multitime.mhd_w_bcc.00003.tab",
+      "bitwise_unequal": 0,
+      "cycle": 3,
+      "fields": {
+        "B1": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "B2": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "B3": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "density": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "internal_energy_density": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u1": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u2": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u3": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        }
+      },
+      "maximum_linf": 0.0,
+      "pangu_file": "gr_monopole.out2.00003.phdf",
+      "time": 0.5625,
+      "time_delta": 0.0,
+      "x_linf": 0.0,
+      "y_delta": 0.0,
+      "z_delta": 0.0
+    },
+    {
+      "athenak_file": "monopole_multitime.mhd_w_bcc.00004.tab",
+      "bitwise_unequal": 0,
+      "cycle": 4,
+      "fields": {
+        "B1": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "B2": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "B3": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "density": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "internal_energy_density": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u1": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u2": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        },
+        "u3": {
+          "bitwise_unequal": 0,
+          "l1": 0.0,
+          "l2": 0.0,
+          "linf": 0.0
+        }
+      },
+      "maximum_linf": 0.0,
+      "pangu_file": "gr_monopole.out2.final.phdf",
+      "time": 0.75,
+      "time_delta": 0.0,
+      "x_linf": 0.0,
+      "y_delta": 0.0,
+      "z_delta": 0.0
+    }
+  ],
+  "snapshot_pairs": 5
+}

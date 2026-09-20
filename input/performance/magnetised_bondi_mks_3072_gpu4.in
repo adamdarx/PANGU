@@ -1,0 +1,70 @@
+# PANGU single-node strong-scaling benchmark: 1D MKS magnetised Bondi on 4 GPUs.
+# Run with four MPI ranks and one GPU per rank.  Each rank owns 3 of 12 blocks.
+<parthenon/job>
+problem_id = magnetised_bondi_mks
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+numlevel = 1
+nghost = 3
+nx1 = 3072
+x1min = 0.6418538861723947
+x1max = 2.995732273553991
+ix1_bc = bondi_mhd_mks
+ox1_bc = bondi_mhd_mks
+nx2 = 1
+x2min = 0.0
+x2max = 1.0
+ix2_bc = reflecting
+ox2_bc = reflecting
+nx3 = 1
+x3min = 0.0
+x3max = 6.283185307179586
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 256
+nx2 = 1
+nx3 = 1
+
+<parthenon/time>
+integrator = rk2
+tlim = 1000.0
+nlim = -1
+ncycle_out = 100
+ncycle_out_mesh = 0
+perf_cycle_offset = 10
+dt_init = 1.0e-5
+dt_factor = 2.0
+
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.6666666666666667
+gamma_max = 3.4028234663852886e38
+sigma_max = 3.4028234663852886e38
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.1754943508222875e-38
+pressure_floor = 1.1754943508222875e-38
+fofc = false
+
+<geometry>
+background = mks
+expected_metric = mks
+expected_mode = static
+bh_spin = 0.0
+hslope = 0.3
+
+<problem>
+k_adi = 1.7906332358492045
+r_crit = 8.0
+sigma_target = 1.0e3
+sigma_rmin = 1.9
+write_final_csv = false

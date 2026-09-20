@@ -1,0 +1,141 @@
+# AthenaK short-time reference for the formal PANGU tilted Chakrabarti torus run.
+# This is a separate input; the upstream gr_chakrabarti_torus_sane_8_4.athinput
+# remains unchanged.  The deterministic configuration matches the PANGU run,
+# while independently generated random pressure perturbations are compared only
+# through perturbation-insensitive or explicitly disclosed norms.
+
+<comment>
+problem   = 45-degree tilted Chakrabarti torus, short reference trajectory
+reference = Chakrabarti, S. 1985, ApJ 288, 1
+
+<job>
+basename = tilted_chakrabarti_short
+
+<mesh>
+nghost = 4
+nx1 = 64
+x1min = -128.0
+x1max = 128.0
+ix1_bc = user
+ox1_bc = user
+nx2 = 64
+x2min = -128.0
+x2max = 128.0
+ix2_bc = user
+ox2_bc = user
+nx3 = 64
+x3min = -128.0
+x3max = 128.0
+ix3_bc = user
+ox3_bc = user
+
+<meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 16
+
+<mesh_refinement>
+refinement = static
+
+<refined_region1>
+level = 1
+x1min = -64.0
+x1max = 64.0
+x2min = -64.0
+x2max = 64.0
+x3min = -64.0
+x3max = 64.0
+
+<refined_region2>
+level = 2
+x1min = -32.0
+x1max = 32.0
+x2min = -32.0
+x2max = 32.0
+x3min = -32.0
+x3max = 32.0
+
+<refined_region3>
+level = 3
+x1min = -16.0
+x1max = 16.0
+x2min = -16.0
+x2max = 16.0
+x3min = -16.0
+x3max = 16.0
+
+<refined_region4>
+level = 4
+x1min = -8.0
+x1max = 8.0
+x2min = -8.0
+x2max = 8.0
+x3min = -8.0
+x3max = 8.0
+
+<refined_region5>
+level = 5
+x1min = -4.0
+x1max = 4.0
+x2min = -4.0
+x2max = 4.0
+x3min = -4.0
+x3max = 4.0
+
+<time>
+evolution = dynamic
+integrator = rk2
+cfl_number = 0.5
+nlim = -1
+tlim = 20.0
+ndiag = 100
+
+<coord>
+general_rel = true
+a = 0.9375
+excise = true
+dexcise = 1.0e-8
+pexcise = 0.333e-10
+
+<mhd>
+eos = ideal
+reconstruct = ppm4
+rsolver = hlle
+dfloor = 1.0e-8
+pfloor = 0.333e-10
+gamma = 1.4444444444444444
+fofc = true
+gamma_max = 20.0
+
+<problem>
+fm_torus = false
+chakrabarti_torus = true
+prograde = true
+r_edge = 10.0
+r_peak = 30.2
+n_param = 0.0
+tilt_angle = 45.0
+potential_beta_min = 100.0
+potential_cutoff = 0.2
+potential_falloff = 0.0
+potential_r_pow = 0.0
+potential_rho_pow = 1.0
+vertical_field = false
+rho_min = 1.0e-5
+rho_pow = -1.5
+pgas_min = 0.333e-7
+pgas_pow = -2.5
+rho_max = 1.0
+l = 0.0
+pert_amp = 2.0e-2
+user_hist = true
+
+<output1>
+file_type = hst
+dt = 10.0
+user_hist_only = true
+
+<output2>
+file_type = bin
+variable = mhd_w_bcc
+dt = 10.0

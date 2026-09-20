@@ -1,0 +1,64 @@
+# Reduced-resolution fixed-Kerr GRMHD split-monopole regression.
+<parthenon/job>
+problem_id = gr_monopole
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<parthenon/mesh>
+refinement = none
+nghost = 3
+nx1 = 32
+x1min = -10.0
+x1max = 10.0
+ix1_bc = monopole
+ox1_bc = monopole
+nx2 = 32
+x2min = -10.0
+x2max = 10.0
+ix2_bc = monopole
+ox2_bc = monopole
+nx3 = 16
+x3min = 0.0
+x3max = 10.0
+ix3_bc = monopole
+ox3_bc = monopole
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 8
+<parthenon/time>
+integrator = rk2
+tlim = 10.0
+nlim = 4
+ncycle_out_mesh = 1
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.3333333333333333
+gamma_max = 10.0
+sigma_max = 3.4028234663852886e38
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-6
+pressure_floor = 3.33e-9
+fofc = true
+<geometry>
+background = kerr_schild
+bh_spin = 0.5
+excision = true
+excision_radius = 1.0
+<problem>
+sigma_norm = 5000.0
+sigma_pow = -1.0
+rhomin = 1.0e-6
+umin = 1.0e-8
+a_norm = 1.0
+<parthenon/output1>
+file_type = hst
+dn = 1
+<parthenon/output2>
+file_type = hdf5
+dn = 1
+ghost_zones = true
+variables = mhd.prim,mhd.b_cell,mhd.divb,mhd.fofc

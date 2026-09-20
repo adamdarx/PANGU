@@ -1,0 +1,66 @@
+# Uniform periodic Z4c gauge-wave parity input matched to
+# tst/input/nr2_athenak_gauge_wave.athinput.
+
+<parthenon/job>
+problem_id = nr_gauge_wave
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 32
+x1min = 0.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 4
+x2min = 0.0
+x2max = 1.0
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 4
+x3min = 0.0
+x3max = 1.0
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 32
+nx2 = 4
+nx3 = 4
+
+<parthenon/time>
+integrator = rk4
+tlim = 1.0
+nlim = -1
+
+<numerical_relativity>
+cfl = 0.5
+finite_difference_order = 2
+dissipation = 0.02
+chi_div_floor = 1.0e-5
+damp_kappa1 = 0.02
+damp_kappa2 = 0.0
+lapse_harmonic = 1.0
+lapse_oplog = 0.0
+shift_gamma = 0.0
+shift_eta = 2.0
+
+<problem>
+amplitude = 0.01
+
+<parthenon/output1>
+file_type = hdf5
+dt = 0.015625
+variables = nr.z4c,nr.adm,nr.constraints
+id = nr4_athenak_gauge_wave_match
+single_precision_output = false
+ghost_zones = false

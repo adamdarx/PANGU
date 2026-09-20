@@ -1,0 +1,167 @@
+# PANGU CKS/dynamic 45-degree tilted Chakrabarti torus with strong cooling.
+# Default values are the AthenaK-aligned production run: 6000M, CFL=0.3,
+# output every 10M.
+<parthenon/job>
+problem_id = gr_chakrabarti_torus
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = static
+nghost = 4
+nx1 = 64
+x1min = -128.0
+x1max = 128.0
+ix1_bc = torus_mhd
+ox1_bc = torus_mhd
+nx2 = 64
+x2min = -128.0
+x2max = 128.0
+ix2_bc = torus_mhd
+ox2_bc = torus_mhd
+nx3 = 64
+x3min = -128.0
+x3max = 128.0
+ix3_bc = torus_mhd
+ox3_bc = torus_mhd
+
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 16
+
+<parthenon/static_refinement0>
+level = 1
+x1min = -64.0
+x1max = 64.0
+x2min = -64.0
+x2max = 64.0
+x3min = -64.0
+x3max = 64.0
+
+<parthenon/static_refinement1>
+level = 2
+x1min = -32.0
+x1max = 32.0
+x2min = -32.0
+x2max = 32.0
+x3min = -32.0
+x3max = 32.0
+
+<parthenon/static_refinement2>
+level = 3
+x1min = -16.0
+x1max = 16.0
+x2min = -16.0
+x2max = 16.0
+x3min = -16.0
+x3max = 16.0
+
+<parthenon/static_refinement3>
+level = 4
+x1min = -8.0
+x1max = 8.0
+x2min = -8.0
+x2max = 8.0
+x3min = -8.0
+x3max = 8.0
+
+<parthenon/static_refinement4>
+level = 5
+x1min = -4.0
+x1max = 4.0
+x2min = -4.0
+x2max = 4.0
+x3min = -4.0
+x3max = 4.0
+
+<parthenon/time>
+integrator = rk2
+tlim = 6000.0
+nlim = -1
+ncycle_out = 1000
+ncycle_out_mesh = 1000
+
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.44444444444
+gamma_max = 20.0
+sigma_max = 3.4028234663852886e38
+reconstruct = ppm4
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-8
+pressure_floor = 0.333e-10
+fofc = true
+
+<electrons>
+enabled = false
+
+<geometry>
+background = kerr_schild
+expected_metric = cks
+expected_mode = dynamic
+bh_spin = 0.9375
+excision = true
+excision_radius = 1.0
+dexcise = 1.0e-8
+pexcise = 0.333e-10
+
+<problem>
+fm_torus = false
+chakrabarti_torus = true
+prograde = true
+r_edge = 10.0
+r_peak = 30.2
+n_param = 0.0
+rho_max = 1.0
+rho_min = 1.0e-5
+rho_pow = -1.5
+pgas_min = 0.333e-7
+pgas_pow = -2.5
+tilt_angle = 45.0
+pert_amp = 0.02
+potential_beta_min = 100.0
+potential_cutoff = 0.2
+potential_falloff = 0.0
+potential_r_pow = 0.0
+potential_rho_pow = 1.0
+vertical_field = false
+write_final_csv = false
+
+<radiation>
+model = target_thickness
+h_target = 0.1
+beta_cool = 0.6283185307179586
+start_time = 0.0
+ramp_time = 100.0
+rho_min = 1.0e-6
+sigma_max = 10.0
+bound_only = true
+track_energy = true
+
+<parthenon/output1>
+file_type = hst
+dt = 10.0
+data_format = %24.16e
+
+<parthenon/output2>
+file_type = hdf5
+dt = 10.0
+variables = mhd.prim,mhd.b_cell
+id = prim
+hdf5_compression_level = 5
+single_precision_output = true
+ghost_zones = false
+
+<parthenon/output3>
+file_type = rst
+dt = 500.0
+id = restart
+hdf5_compression_level = 5
+
+<plugins>
+enabled = radiation_cooling

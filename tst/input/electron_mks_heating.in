@@ -1,0 +1,95 @@
+# EH-2: MKS/Static GRMHD constant-heating test fixture.
+<parthenon/job>
+problem_id = gr_monopole
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<parthenon/mesh>
+refinement = none
+numlevel = 1
+nghost = 3
+nx1 = 32
+x1min = 0.1823215567939546
+x1max = 3.912023005428146
+ix1_bc = monopole
+ox1_bc = monopole
+nx2 = 24
+x2min = 0.05
+x2max = 0.45
+ix2_bc = monopole
+ox2_bc = monopole
+nx3 = 1
+x3min = 0.0
+x3max = 6.283185307179586
+ix3_bc = periodic
+ox3_bc = periodic
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 12
+nx3 = 1
+<parthenon/time>
+integrator = rk2
+tlim = 0.02
+nlim = -1
+ncycle_out_mesh = 20
+dt_force = 0.01
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.3333333333333333
+gamma_max = 10.0
+sigma_max = 3.4028234663852886e38
+reconstruct = plm
+rsolver = hlle
+cfl = 0.2
+density_floor = 1.0e-6
+pressure_floor = 3.33e-9
+fofc = true
+<electrons>
+enabled = true
+heating = true
+gamma_e = 1.3333333333333333
+gamma_p = 1.6666666666666667
+init_to_fel_0 = true
+fel_0 = 0.01
+fel_constant = 0.1
+constant = true
+howes = false
+kawazura = false
+werner = false
+rowan = false
+sharma = false
+enforce_positive_dissipation = false
+suppress_highb_heat = true
+sigma_heat_cutoff = 1.0
+limit_kel = true
+tp_over_te_min = 1.0e-3
+tp_over_te_max = 1.0e3
+write_diagnostics = true
+<geometry>
+background = mks
+expected_metric = mks
+expected_mode = static
+bh_spin = 0.5
+hslope = 0.3
+<problem>
+sigma_norm = 5000.0
+sigma_pow = -1.0
+rhomin = 1.0e-6
+umin = 1.0e-8
+a_norm = 1.0
+<parthenon/output1>
+file_type = hst
+dt = 0.01
+<parthenon/output2>
+file_type = hdf5
+dt = 0.01
+single_precision_output = false
+ghost_zones = false
+variables = mhd.prim,mhd.cons,electrons.prim,electrons.cons,electrons.diagnostics,mhd.fofc
+<parthenon/output3>
+file_type = rst
+dt = 0.01
+
+<plugins>
+enabled = electron

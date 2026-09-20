@@ -1,0 +1,61 @@
+# Ingoing Schwarzschild Kerr--Schild data in Cartesian coordinates.
+# The horizon is regular on this slice; r=0 is outside this smoke domain.
+
+<parthenon/job>
+problem_id = nr_schwarzschild_ks
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 32
+x1min = -4.0
+x1max = 4.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 32
+x2min = -4.0
+x2max = 4.0
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 32
+x3min = -4.0
+x3max = 4.0
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 16
+
+<parthenon/time>
+integrator = rk2
+tlim = 0.0
+nlim = 0
+ncycle_out_mesh = 1
+
+<numerical_relativity>
+cfl = 0.4
+finite_difference_order = 2
+floor_chi = false
+
+<parthenon/output1>
+file_type = hst
+dt = 1.0
+
+<parthenon/output2>
+file_type = hdf5
+dt = 1.0
+variables = nr.z4c,nr.adm,nr.constraints
+id = schwarzschild_kerr_schild
+single_precision_output = false
+ghost_zones = false

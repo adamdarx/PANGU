@@ -1,0 +1,71 @@
+# Deterministic Apples-with-Apples robust-stability problem. The perturbation
+# is constant on each x1-x2 plane and varies along x3, matching the reference
+# problem geometry while making repeated PANGU runs bitwise reproducible.
+
+<parthenon/job>
+problem_id = nr_robust_stability
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 4
+x1min = 0.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 4
+x2min = 0.0
+x2max = 1.0
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 50
+x3min = 0.0
+x3max = 1.0
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 4
+nx2 = 4
+nx3 = 50
+
+<parthenon/time>
+integrator = rk4
+tlim = 10.0
+nlim = -1
+ncycle_out_mesh = 100
+
+<numerical_relativity>
+cfl = 0.5
+finite_difference_order = 2
+dissipation = 0.02
+chi_div_floor = 1.0e-5
+damp_kappa1 = 0.0
+damp_kappa2 = 0.02
+lapse_harmonic = 0.0
+lapse_oplog = 1.0
+shift_eta = 2.0
+
+<problem>
+rho = 1.0
+
+<parthenon/output1>
+file_type = hst
+dt = 0.5
+
+<parthenon/output2>
+file_type = hdf5
+dt = 0.5
+variables = nr.z4c
+id = robust_stability
+single_precision_output = false
+ghost_zones = false

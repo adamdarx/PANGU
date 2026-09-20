@@ -1,0 +1,88 @@
+# SYNC-3 magnetized polytropic TOV star in isotropic Cartesian coordinates.
+# The stellar profile and poloidal vector potential follow AthenaK mag_tov.
+
+<parthenon/job>
+problem_id = sync_grmhd_tov
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+nghost = 3
+nx1 = 64
+x1min = -20.0
+x1max = 20.0
+ix1_bc = nr_outflow
+ox1_bc = nr_outflow
+nx2 = 64
+x2min = -20.0
+x2max = 20.0
+ix2_bc = nr_outflow
+ox2_bc = nr_outflow
+nx3 = 64
+x3min = -20.0
+x3max = 20.0
+ix3_bc = nr_outflow
+ox3_bc = nr_outflow
+
+<parthenon/meshblock>
+nx1 = 32
+nx2 = 32
+nx3 = 32
+
+<parthenon/time>
+integrator = rk2
+tlim = 2.0
+nlim = -1
+ncycle_out_mesh = 10
+
+<numerical_relativity>
+cfl = 0.1
+finite_difference_order = 4
+matter_source = grmhd
+
+<mhd>
+physics = gr
+eos = ideal
+gamma = 2.0
+gamma_max = 1000.0
+sigma_max = 1.0e12
+reconstruct = plm
+rsolver = hlle
+cfl = 0.1
+density_floor = 1.0e-16
+pressure_floor = 1.0e-32
+fofc = true
+nscalars = 0
+
+<problem>
+write_final_csv = false
+rhoc = 1.28e-3
+kappa = 100.0
+npoints = 20000
+dr = 1.0e-3
+rho_cut = 1.0e-16
+v_pert = 0.0
+b_norm = 1.0
+pcut = 1.0e-6
+magindex = 1.0
+
+<parthenon/output1>
+file_type = hdf5
+dt = 0.25
+variables = mhd.prim,mhd.cons,mhd.b_cell,mhd.b_face,mhd.divb,mhd.fofc,nr.z4c,nr.adm,nr.tmunu,nr.constraints,nr.constraint_mask
+id = sync_grmhd_tov
+single_precision_output = false
+ghost_zones = false
+
+<parthenon/output2>
+file_type = hst
+dt = 0.05
+data_format = %20.15e

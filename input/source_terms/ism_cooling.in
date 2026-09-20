@@ -1,0 +1,64 @@
+# PANGU phase-4 optically thin ISM-cooling evolution comparison.
+<parthenon/job>
+problem_id = sod
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 64
+x1min = -0.5
+x1max = 0.5
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 1
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+<parthenon/meshblock>
+nx1 = 64
+nx2 = 1
+nx3 = 1
+<parthenon/time>
+integrator = rk2
+cfl = 0.1
+tlim = 0.01
+nlim = 1000
+<hydro>
+eos = ideal
+gamma = 1.6666666666666667
+reconstruct = plm
+rsolver = hllc
+cfl = 0.1
+fofc = false
+<units>
+length_cgs = 3.0856775809623245e18
+mass_cgs = 4.8786615973406100e31
+time_cgs = 3.15576e13
+mu = 1.0
+<source_terms>
+ism_cooling = true
+ism_heating_rate = 0.0
+<problem>
+x0 = 0.0
+density_left = 1.0
+density_right = 1.0
+pressure_left = 1.0
+pressure_right = 1.0
+velocity_left = 0.0
+velocity_right = 0.0
+<parthenon/output1>
+file_type = hst
+dt = 0.002
+data_format = %24.17e
+<parthenon/output2>
+file_type = hdf5
+dt = 0.002
+variables = hydro.prim

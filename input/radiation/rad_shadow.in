@@ -1,0 +1,80 @@
+# AthenaK-compatible two-dimensional radiation shadow test.
+
+<parthenon/job>
+problem_id = rad_shadow
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 128
+x1min = -0.5
+x1max = 0.5
+ix1_bc = radiation_shadow
+ox1_bc = outflow
+nx2 = 64
+x2min = -0.3
+x2max = 0.3
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 128
+nx2 = 64
+nx3 = 1
+
+<parthenon/time>
+integrator = rk2
+cfl = 0.3
+tlim = 1.25
+nlim = -1
+ncycle_out_mesh = 100
+
+<geometry>
+background = minkowski
+bh_spin = 0.0
+excision = false
+
+<hydro>
+physics = gr
+eos = ideal
+gamma = 2.0
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-12
+pressure_floor = 1.0e-12
+gamma_max = 1000.0
+fofc = false
+nscalars = 0
+
+<radiation>
+nlevel = 2
+rotate_geo = false
+angular_fluxes = false
+reconstruct = plm
+rad_source = true
+fixed_fluid = true
+affect_fluid = false
+arad = 1.0
+power_opacity = true
+kappa_s = 0.0
+kappa_p = 0.0
+beam_source = false
+dii_dt = 0.0
+
+<parthenon/output1>
+file_type = hdf5
+dt = 0.1
+variables = radiation.intensity,radiation.moments
+
+<plugins>
+enabled = radiation_transport

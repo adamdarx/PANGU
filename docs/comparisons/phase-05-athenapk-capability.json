@@ -1,0 +1,34 @@
+{
+  "accepted_fluid_methods": [
+    "euler",
+    "glmmhd"
+  ],
+  "athenapk_revision": "6d31f708650acdc0e9f54059a4fc5e54f81a1350",
+  "comparison_status": "not-applicable: frozen AthenaPK has only Newtonian Euler/GLM-MHD",
+  "evidence": [
+    "src/hydro/hydro.cpp",
+    "src/main.cpp"
+  ],
+  "passed": true,
+  "registered_problem_ids": [
+    "advection",
+    "blast",
+    "cloud",
+    "cluster",
+    "cpaw",
+    "diffusion",
+    "field_loop",
+    "kh",
+    "linear_wave",
+    "linear_wave_mhd",
+    "lw_implode",
+    "orszag_tang",
+    "rand_blast",
+    "shattering",
+    "sod",
+    "turbulence"
+  ],
+  "relativity_marker_hits": {},
+  "supports_fixed_background_general_relativity": false,
+  "supports_special_relativity": false
+}

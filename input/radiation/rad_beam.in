@@ -1,0 +1,94 @@
+# AthenaK-compatible flat-space radiation beam.
+
+<parthenon/job>
+problem_id = rad_beam
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 32
+x1min = -0.25
+x1max = 0.25
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 64
+x2min = 0.0
+x2max = 1.0
+ix2_bc = outflow
+ox2_bc = outflow
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 32
+nx2 = 32
+nx3 = 1
+
+<parthenon/time>
+integrator = rk2
+cfl = 0.3
+tlim = 1.0
+nlim = -1
+ncycle_out_mesh = 100
+
+<geometry>
+background = minkowski
+bh_spin = 0.0
+excision = false
+
+<hydro>
+physics = gr
+eos = ideal
+gamma = 1.6666666666666667
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-12
+pressure_floor = 1.0e-12
+gamma_max = 1000.0
+fofc = false
+nscalars = 0
+
+<radiation>
+nlevel = 10
+rotate_geo = false
+angular_fluxes = false
+reconstruct = plm
+rad_source = false
+fixed_fluid = true
+affect_fluid = false
+arad = 1.0
+kappa_s = 0.0
+kappa_a = 0.0
+kappa_p = 0.0
+beam_source = true
+dii_dt = 1.0
+
+<problem>
+pos_1 = 0.0
+pos_2 = 0.05
+pos_3 = 0.0
+dir_1 = 0.0
+dir_2 = 1.0
+dir_3 = 0.0
+width = 0.05
+spread = 60.0
+
+<parthenon/output1>
+file_type = hdf5
+dt = 0.2
+variables = radiation.intensity,radiation.moments
+
+<parthenon/output2>
+file_type = hst
+dt = 0.2
+
+<plugins>
+enabled = radiation_transport

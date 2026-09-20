@@ -1,0 +1,94 @@
+# PANGU formal MKS/Static SANE Fishbone--Moncrief torus: 3D 128x64x64, tlim=2000M.
+# One global MeshBlock, CUDA production, FP64 evolution, no electron package.
+<parthenon/job>
+problem_id = gr_torus_sane
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+numlevel = 1
+nghost = 4
+nx1 = 128
+x1min = 0.1823215567939546
+x1max = 3.912023005428146
+nx2 = 64
+x2min = 1.0e-5
+x2max = 0.99999
+nx3 = 64
+
+<parthenon/meshblock>
+nx1 = 128
+nx2 = 64
+nx3 = 64
+
+<parthenon/time>
+integrator = rk2
+tlim = 2000.0
+nlim = -1
+ncycle_out_mesh = 100
+
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.3333333333333333
+gamma_max = 20.0
+sigma_max = 3.4028234663852886e38
+reconstruct = ppm4
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-10
+pressure_floor = 0.333e-12
+fofc = true
+
+<electrons>
+enabled = false
+
+<geometry>
+background = mks
+expected_metric = mks
+expected_mode = static
+bh_spin = 0.9375
+hslope = 0.3
+
+<problem>
+fm_torus = true
+prograde = true
+r_edge = 6.0
+r_peak = 12.0
+rho_max = 1.0
+rho_min = 1.0e-5
+rho_pow = -1.5
+pgas_min = 0.333e-7
+pgas_pow = -2.5
+tilt_angle = 0.0
+pert_amp = 2.0e-2
+potential_beta_min = 100.0
+potential_cutoff = 0.2
+potential_falloff = 0.0
+potential_r_pow = 0.0
+potential_rho_pow = 1.0
+vertical_field = false
+write_final_csv = false
+
+<parthenon/output1>
+file_type = hst
+dt = 10.0
+data_format = %24.16e
+
+<parthenon/output2>
+file_type = hdf5
+dt = 10.0
+variables = mhd.prim,mhd.b_cell
+id = prim
+hdf5_compression_level = 5
+single_precision_output = true
+ghost_zones = false
+
+<parthenon/output3>
+file_type = rst
+dt = 500.0
+id = restart
+hdf5_compression_level = 5

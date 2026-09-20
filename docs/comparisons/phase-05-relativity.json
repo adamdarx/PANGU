@@ -1,0 +1,59 @@
+{
+  "date": "2026-08-05",
+  "passed": true,
+  "reference_commits": {
+    "athenak": "8a6a8efa149e5e18658f20d9cac8c68304706760",
+    "athenapk": "6d31f708650acdc0e9f54059a4fc5e54f81a1350",
+    "parthenon": "c28b096b93b2f467f3fec8fb72a3c70eee55883f"
+  },
+  "minimum_l1_convergence_order": {
+    "sr_hydro": 1.8573387398828378,
+    "gr_hydro": 1.8664909506988216,
+    "sr_mhd": 1.8608020831815384,
+    "gr_mhd": 1.8625858666523123
+  },
+  "pangu_athenak_multitime": {
+    "sr_hydro_shock_6_files_linf": 4.796163466380676e-14,
+    "sr_mhd_shock_6_files_linf": 4.996003610813204e-15,
+    "sr_hydro_linear_wave_10_files_linf": 4.440892098500626e-15,
+    "sr_mhd_linear_wave_9_files_linf": 1.7319479184152442e-14,
+    "gr_bondi_5_files_linf": 6.245004513516506e-17,
+    "gr_monopole_5_files_linf": 0.0,
+    "gr_monopole_bitwise_unequal_values": 0,
+    "gr_torus_6_files_high_precision_line_linf": 5.689893001203927e-16,
+    "gr_torus_6_files_full_grid_float32_reference_linf": 2.9785493738110347e-08
+  },
+  "framework_gates": {
+    "mpi_amr_case": "fixed-Kerr-Schild GRMHD linear wave",
+    "mpi_ranks": 2,
+    "mpi_amr_initial_blocks": 4,
+    "mpi_amr_final_blocks": 8,
+    "mpi_amr_levels": [0, 1],
+    "mpi_amr_cycles": 4,
+    "mpi_amr_all_finite": true,
+    "mpi_amr_initial_max_divb": 0.0,
+    "mpi_amr_final_max_divb": 0.0,
+    "srmhd_restart_linf": 0.0,
+    "srmhd_restart_max_divb": 0.0,
+    "srmhd_restart_sha256": "eddaefb60c95c32e98765df2254b1ea948981128cde39a86e3ee1b29f3ae7da6",
+    "cpu_ctest_passed": 18,
+    "cpu_ctest_total": 18,
+    "cuda_build": "clang-18/CUDA-12.0/Kokkos-Ampere86",
+    "cuda_relativity_unit": true,
+    "cuda_srmhd_cycles": 4,
+    "cuda_srmhd_meshblocks": 2,
+    "cuda_srmhd_final_max_divb": 0.0
+  },
+  "controlled_failure_tests": {
+    "high_lorentz_factor_recovery": true,
+    "high_magnetization_repair": true,
+    "nonfinite_state_repair": true
+  },
+  "athenapk": {
+    "comparison_status": "not-applicable: frozen AthenaPK has only Newtonian Euler/GLM-MHD",
+    "accepted_fluid_methods": ["euler", "glmmhd"],
+    "supports_special_relativity": false,
+    "supports_fixed_background_general_relativity": false,
+    "source_audit_passed": true
+  }
+}

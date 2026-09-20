@@ -1,0 +1,102 @@
+# AthenaK reference for the PANGU SYNC-1 isotropic TOV initialization/evolution gate.
+
+<job>
+basename = athenak_sync_grhd_tov
+
+<mesh>
+nghost = 2
+nx1 = 48
+x1min = -20.0
+x1max = 20.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 48
+x2min = -20.0
+x2max = 20.0
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 48
+x3min = -20.0
+x3max = 20.0
+ix3_bc = periodic
+ox3_bc = periodic
+
+<meshblock>
+nx1 = 24
+nx2 = 24
+nx3 = 24
+
+<time>
+evolution = dynamic
+integrator = rk2
+cfl_number = 0.2
+nlim = 0
+tlim = 0.0
+ndiag = 1
+
+<coord>
+general_rel = true
+m = 1.0
+a = 0.0
+excise = false
+
+<mhd>
+eos = ideal
+dyn_eos = ideal
+dyn_error = reset_floor
+reconstruct = plm
+rsolver = hlle
+dfloor = 1.0e-13
+tfloor = 1.0e-11
+dthreshold = 1.02
+# AthenaK's ideal-gas setter maps an input exactly equal to 2 to 2.00001.
+# Stay one ulp-scale step below the endpoint so this reference run represents
+# the intended Gamma=2 TOV EOS used by PANGU rather than that setter guard.
+gamma = 1.999999999999
+dyn_scratch = 1
+fofc = false
+enforce_maximum = false
+
+<adm>
+
+<z4c>
+
+<problem>
+rhoc = 1.28e-3
+kappa = 100.0
+npoints = 20000
+dr = 1.0e-3
+rho_cut = 1.28e-13
+b_norm = 0.0
+pcut = 1.0e-6
+magindex = 1
+isotropic = true
+minkowski = false
+v_pert = 0.0
+p_pert = 0.0
+user_hist = true
+
+<output1>
+file_type = hst
+dt = 0.05
+data_format = %20.15e
+
+<output2>
+file_type = bin
+variable = mhd_w
+dt = 0.05
+
+<output3>
+file_type = bin
+variable = z4c
+dt = 0.05
+
+<output4>
+file_type = bin
+variable = adm
+dt = 0.05
+
+<output5>
+file_type = bin
+variable = mhd_u
+dt = 0.05

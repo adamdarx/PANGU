@@ -1,0 +1,60 @@
+# PANGU stage-2 Rayleigh-Taylor instability with constant acceleration source
+
+<parthenon/job>
+problem_id = rt
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 32
+x1min = -0.25
+x1max = 0.25
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 64
+x2min = -0.75
+x2max = 0.75
+ix2_bc = reflecting
+ox2_bc = reflecting
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 1
+
+<parthenon/time>
+integrator = rk2
+tlim = 0.02
+nlim = 100
+ncycle_out_mesh = 10
+
+<hydro>
+eos = ideal
+gamma = 1.4
+reconstruct = plm
+rsolver = llf
+cfl = 0.25
+fofc = true
+nscalars = 0
+accel2 = -0.1
+
+<problem>
+ambient_pressure = 2.5
+density_inner = 2.0
+density_outer = 1.0
+amplitude = 0.01
+width = 0.05
+interface = 0.0
+
+<parthenon/output1>
+file_type = hst
+dt = 0.01

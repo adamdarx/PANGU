@@ -1,0 +1,71 @@
+# PANGU fixed-background GR Bondi accretion problem at tlim=100M.
+# Scientific outputs are sampled every 10M.
+<parthenon/job>
+problem_id = bondi_cks
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<parthenon/mesh>
+refinement = static
+nghost = 2
+nx1 = 32
+x1min = -10.0
+x1max = 10.0
+ix1_bc = bondi
+ox1_bc = bondi
+nx2 = 32
+x2min = -10.0
+x2max = 10.0
+ix2_bc = bondi
+ox2_bc = bondi
+nx3 = 32
+x3min = -10.0
+x3max = 10.0
+ix3_bc = bondi
+ox3_bc = bondi
+<parthenon/meshblock>
+nx1 = 8
+nx2 = 8
+nx3 = 8
+<parthenon/static_refinement0>
+level = 1
+x1min = -4.0
+x1max = 4.0
+x2min = -4.0
+x2max = 4.0
+x3min = -4.0
+x3max = 4.0
+<parthenon/time>
+integrator = rk2
+tlim = 100.0
+nlim = -1
+<hydro>
+physics = gr
+eos = ideal
+gamma = 1.3333333333333
+gamma_max = 3.4028234663852886e38
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.1754943508222875e-38
+pressure_floor = 1.1754943508222875e-38
+fofc = false
+<geometry>
+background = kerr_schild
+bh_spin = 0.0
+excision = true
+excision_radius = 1.0
+dexcise = 1.0e-8
+pexcise = 3.33e-13
+<problem>
+k_adi = 1.0
+r_crit = 8.0
+write_final_csv = false
+<parthenon/output1>
+file_type = hst
+dt = 10.0
+<parthenon/output2>
+file_type = hdf5
+dt = 10.0
+variables = hydro.cons,hydro.prim,hydro.fofc
+id = prim

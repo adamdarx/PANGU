@@ -1,0 +1,32 @@
+#ifndef PANGU_ESTIMATOR_ESTIMATOR_H_
+#define PANGU_ESTIMATOR_ESTIMATOR_H_
+
+#include <cstddef>
+#include <string_view>
+
+#include "estimator/registry.h"
+
+namespace pangu::estimator {
+
+// ESTIMATOR names a registry entry; an unregistered name has no fallback.
+inline constexpr std::size_t selected_index = Registered::Find("@ESTIMATOR@");
+static_assert(selected_index < Registered::size,
+              "ESTIMATOR=@ESTIMATOR@ is not registered in estimator/registry.h");
+
+using Selected = Registered::At<selected_index>;
+inline constexpr std::string_view estimator_name = Selected::name;
+
+// Cell estimate for a unit signal speed in every active direction.
+template <typename Coordinates>
+KOKKOS_INLINE_FUNCTION parthenon::Real UnitSpeedTimestep(const Coordinates& coords, const int k,
+                                                         const int j, const int i,
+                                                         const int ndim) {
+  parthenon::Real estimate = Selected::Start();
+  for (int direction = 0; direction < ndim; ++direction)
+    estimate = Selected::Add(estimate, 1.0, coords.Dxc(direction + 1, k, j, i));
+  return Selected::Finish(estimate);
+}
+
+} // namespace pangu::estimator
+
+#endif

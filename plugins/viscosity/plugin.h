@@ -1,0 +1,14 @@
+#ifndef PANGU_PLUGINS_VISCOSITY_PLUGIN_H_
+#define PANGU_PLUGINS_VISCOSITY_PLUGIN_H_
+
+#include "pangu/plugin_api/plugin.h"
+
+namespace pangu::plugins::viscosity {
+
+struct Plugin {
+  static std::shared_ptr<parthenon::StateDescriptor> Initialize(plugin::InitContext& context);
+};
+
+} // namespace pangu::plugins::viscosity
+
+#endif

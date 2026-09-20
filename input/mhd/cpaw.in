@@ -1,0 +1,58 @@
+# PANGU stage-3 circularly polarized Alfvén wave
+
+<parthenon/job>
+problem_id = cpaw
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+nghost = 3
+nx1 = 128
+x1min = 0.0
+x1max = 1.0
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 1
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 64
+nx2 = 1
+nx3 = 1
+
+<parthenon/time>
+integrator = rk2
+tlim = 1.0
+nlim = 10000
+ncycle_out_mesh = 20
+
+<mhd>
+eos = ideal
+gamma = 1.6666666666666667
+reconstruct = plm
+rsolver = hlle
+cfl = 0.3
+fofc = true
+nscalars = 0
+
+<problem>
+b_par = 1.0
+b_perp = 0.1
+v_par = 0.0
+pres = 0.1
+right_polar = true
+
+<parthenon/output1>
+file_type = hst
+dt = 0.2

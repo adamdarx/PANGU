@@ -1,0 +1,78 @@
+#ifndef PANGU_GEOMETRY_ASSEMBLY_H_
+#define PANGU_GEOMETRY_ASSEMBLY_H_
+
+#include <cstdint>
+
+#include "@PANGU_METRIC_HEADER@"
+#include "@PANGU_MODE_HEADER@"
+#include "geometry/geometry.h"
+
+namespace pangu::geometry {
+
+inline auto ConstructGeometry(const Background background, const parthenon::Real spin,
+                              parthenon::ParameterInput* pin) {
+  return Geometry<@PANGU_METRIC_TYPE@, @PANGU_MODE_TYPE@>(
+      @PANGU_METRIC_TYPE@::Configure(background, spin, pin));
+}
+
+inline ExcisionParameters ConfigureMetricExcision(parthenon::ParameterInput* pin) {
+  return ConfigureExcision<@PANGU_METRIC_TYPE@>(pin);
+}
+
+inline void AddConfiguredGeometry(parthenon::StateDescriptor& package, const Background background,
+                                  const parthenon::Real spin, parthenon::ParameterInput* pin) {
+  package.AddParam("storage", ConstructGeometry(background, spin, pin),
+                   parthenon::Params::Mutability::Mutable);
+}
+
+inline auto GetGeometry(const parthenon::Packages_t& packages) {
+  return packages.Get("geometry")
+      ->Param<Geometry<@PANGU_METRIC_TYPE@, @PANGU_MODE_TYPE@>>("storage");
+}
+
+inline void InitializeConfiguredGeometry(parthenon::MeshBlock* block,
+                                         parthenon::ParameterInput* pin) {
+  auto package = block->packages.Get("geometry");
+  auto* configured =
+      package->MutableParam<Geometry<@PANGU_METRIC_TYPE@, @PANGU_MODE_TYPE@>>("storage");
+  InitializeGeometryMode(block, pin, *configured);
+  if (block->lid == 0) {
+    package->UpdateParam<std::uint64_t>("storage_bytes",
+                                        static_cast<std::uint64_t>(configured->StorageBytes()));
+    package->UpdateParam<std::uint64_t>("fingerprint", configured->Fingerprint());
+  }
+}
+
+inline constexpr const char* ConfiguredMetricName() { return "@PANGU_METRIC_NAME@"; }
+inline constexpr const char* ConfiguredModeName() { return "@PANGU_MODE_NAME@"; }
+inline constexpr bool ConfiguredMetricSupportsExcision() {
+  return @PANGU_METRIC_TYPE@::supports_excision;
+}
+inline constexpr bool ConfiguredMetricHasUnitLightBound() {
+  return @PANGU_METRIC_TYPE@::unit_coordinate_light_bound;
+}
+inline constexpr Symmetry ConfiguredMetricSymmetry() {
+  return @PANGU_METRIC_TYPE@::symmetry;
+}
+inline constexpr bool ConfiguredModeSupportsRefinement() {
+  return @PANGU_MODE_TYPE@::supports_refinement;
+}
+inline constexpr bool ConfiguredGeometryIsSynchronized() {
+  return @PANGU_MODE_TYPE@::synchronized;
+}
+
+inline void ValidateConfiguredGeometryInput(parthenon::ParameterInput* pin) {
+  const auto expected_metric =
+      pin->GetOrAddString("geometry", "expected_metric", ConfiguredMetricName());
+  const auto expected_mode =
+      pin->GetOrAddString("geometry", "expected_mode", ConfiguredModeName());
+  PARTHENON_REQUIRE(expected_metric == ConfiguredMetricName(),
+                    "input expected_metric does not match the compiled METRIC");
+  PARTHENON_REQUIRE(expected_mode == ConfiguredModeName(),
+                    "input expected_mode does not match the compiled MODE");
+  ValidateGeometryModeInput<@PANGU_METRIC_TYPE@>(pin, @PANGU_MODE_TYPE@{});
+}
+
+} // namespace pangu::geometry
+
+#endif

@@ -1,0 +1,5 @@
+[submodule "parthenon"]
+	path = parthenon
+	url = https://gitee.com/adamdarx/parthenon.git
+	branch = pangu-server
+	shallow = true

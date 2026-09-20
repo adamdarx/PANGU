@@ -1,0 +1,74 @@
+# NR-6 short linear-gravitational-wave diagnostic.  The centered periodic
+# domain keeps both extraction spheres entirely inside the native mesh.
+
+<parthenon/job>
+problem_id = nr_linear_wave
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 32
+x1min = -0.5
+x1max = 0.5
+ix1_bc = periodic
+ox1_bc = periodic
+nx2 = 32
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 32
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 32
+nx2 = 32
+nx3 = 32
+
+<parthenon/time>
+integrator = rk2
+tlim = 0.02
+nlim = 2
+ncycle_out_mesh = 1
+
+<numerical_relativity>
+cfl = 0.2
+finite_difference_order = 2
+dissipation = 0.1
+weyl_enabled = true
+waveform_enabled = true
+waveform_num_radii = 3
+waveform_radius_1 = 0.2
+waveform_radius_2 = 0.25
+waveform_radius_3 = 0.35
+waveform_geodesic_level = 4
+waveform_interpolation_points = 4
+waveform_dt = 0.005
+horizon_enabled = false
+diagnostic_directory = diagnostics
+
+<problem>
+amplitude = 1.0e-5
+kx1 = 1.0
+kx2 = 0.0
+kx3 = 0.0
+
+<parthenon/output1>
+file_type = hdf5
+dt = 0.005
+variables = nr.z4c,nr.adm,nr.weyl
+id = nr6_linear_wave
+single_precision_output = false
+ghost_zones = false

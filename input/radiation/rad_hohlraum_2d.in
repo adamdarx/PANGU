@@ -1,0 +1,80 @@
+# AthenaK-compatible two-dimensional radiation Hohlraum test.
+
+<parthenon/job>
+problem_id = rad_hohlraum
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = none
+nghost = 2
+nx1 = 128
+x1min = 0.0
+x1max = 2.0
+ix1_bc = radiation_hohlraum
+ox1_bc = outflow
+nx2 = 128
+x2min = 0.0
+x2max = 2.0
+ix2_bc = radiation_hohlraum
+ox2_bc = outflow
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+
+<parthenon/meshblock>
+nx1 = 128
+nx2 = 128
+nx3 = 1
+
+<parthenon/time>
+integrator = rk2
+cfl = 0.5
+tlim = 0.75
+nlim = -1
+ncycle_out_mesh = 100
+
+<geometry>
+background = minkowski
+bh_spin = 0.0
+excision = false
+
+<hydro>
+physics = gr
+eos = ideal
+gamma = 1.6666666666666667
+reconstruct = plm
+rsolver = hlle
+cfl = 0.5
+density_floor = 1.0e-12
+pressure_floor = 1.0e-12
+gamma_max = 1000.0
+fofc = false
+nscalars = 0
+
+<radiation>
+nlevel = 1
+rotate_geo = true
+angular_fluxes = false
+reconstruct = plm
+rad_source = false
+fixed_fluid = true
+affect_fluid = false
+arad = 1.0
+kappa_s = 0.0
+kappa_a = 0.0
+kappa_p = 0.0
+beam_source = false
+dii_dt = 0.0
+
+<parthenon/output1>
+file_type = hdf5
+dt = 1.0
+variables = radiation.intensity,radiation.moments
+
+<plugins>
+enabled = radiation_transport

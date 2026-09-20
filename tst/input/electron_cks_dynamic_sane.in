@@ -1,0 +1,160 @@
+# EH-4: short CKS/Dynamic SANE electron-heating test fixture.
+# This keeps the production torus physics and four nested SMR levels while
+# reducing the root grid for a bounded two-cycle GPU gate.
+<parthenon/job>
+problem_id = gr_torus_sane
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<parthenon/mesh>
+refinement = static
+nghost = 4
+nx1 = 32
+x1min = -64.0
+x1max = 64.0
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 32
+x2min = -64.0
+x2max = 64.0
+ix2_bc = outflow
+ox2_bc = outflow
+nx3 = 32
+x3min = -64.0
+x3max = 64.0
+ix3_bc = outflow
+ox3_bc = outflow
+
+<parthenon/meshblock>
+nx1 = 8
+nx2 = 8
+nx3 = 8
+
+<parthenon/static_refinement0>
+level = 1
+x1min = -32.0
+x1max = 32.0
+x2min = -32.0
+x2max = 32.0
+x3min = -32.0
+x3max = 32.0
+
+<parthenon/static_refinement1>
+level = 2
+x1min = -16.0
+x1max = 16.0
+x2min = -16.0
+x2max = 16.0
+x3min = -16.0
+x3max = 16.0
+
+<parthenon/static_refinement2>
+level = 3
+x1min = -8.0
+x1max = 8.0
+x2min = -8.0
+x2max = 8.0
+x3min = -8.0
+x3max = 8.0
+
+<parthenon/static_refinement3>
+level = 4
+x1min = -4.0
+x1max = 4.0
+x2min = -4.0
+x2max = 4.0
+x3min = -4.0
+x3max = 4.0
+
+<parthenon/time>
+integrator = rk2
+tlim = 1.0
+nlim = 2
+ncycle_out_mesh = 1
+
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.3333333333333333
+gamma_max = 20.0
+sigma_max = 3.4028234663852886e38
+reconstruct = ppm4
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-10
+pressure_floor = 0.333e-12
+fofc = true
+
+<electrons>
+enabled = true
+heating = true
+gamma_e = 1.3333333333333333
+gamma_p = 1.6666666666666667
+init_to_fel_0 = true
+fel_0 = 0.01
+fel_constant = 0.1
+constant = false
+howes = true
+kawazura = true
+werner = true
+rowan = true
+sharma = true
+enforce_positive_dissipation = false
+suppress_highb_heat = false
+limit_kel = true
+tp_over_te_min = 1.0e-3
+tp_over_te_max = 1.0e3
+write_diagnostics = true
+
+<geometry>
+background = kerr_schild
+expected_metric = cks
+expected_mode = dynamic
+bh_spin = 0.9375
+excision = true
+excision_radius = 1.0
+dexcise = 1.0e-10
+pexcise = 0.333e-12
+
+<problem>
+fm_torus = true
+prograde = true
+r_edge = 6.0
+r_peak = 12.0
+rho_max = 1.0
+rho_min = 1.0e-5
+rho_pow = -1.5
+pgas_min = 0.333e-7
+pgas_pow = -2.5
+tilt_angle = 0.0
+pert_amp = 2.0e-2
+potential_beta_min = 100.0
+potential_cutoff = 0.2
+potential_falloff = 0.0
+potential_r_pow = 0.0
+potential_rho_pow = 1.0
+vertical_field = false
+write_final_csv = false
+
+<parthenon/output1>
+file_type = hst
+dn = 1
+data_format = %24.16e
+
+<parthenon/output2>
+file_type = hdf5
+dn = 1
+variables = mhd.prim,mhd.cons,mhd.b_cell,mhd.divb,mhd.fofc,electrons.prim,electrons.cons,electrons.diagnostics
+id = prim
+single_precision_output = false
+ghost_zones = false
+
+<parthenon/output3>
+file_type = rst
+dn = 1
+id = restart
+
+<plugins>
+enabled = electron
