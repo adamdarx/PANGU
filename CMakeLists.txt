@@ -443,6 +443,9 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     add_test(NAME pangu.nr7.bowen_york COMMAND $<TARGET_FILE:pangu_nr7_bowen_york>)
     set_tests_properties(pangu.nr7.bowen_york PROPERTIES
       LABELS "numerical-relativity;nr7;unit;gpu;puncture;bowen-york")
+    add_test(NAME pangu.nr7.spectral_grid COMMAND $<TARGET_FILE:pangu_nr7_spectral_grid>)
+    set_tests_properties(pangu.nr7.spectral_grid PROPERTIES
+      LABELS "numerical-relativity;nr7;unit;puncture;spectral;compactification")
     if(PANGU_ENABLE_HDF5)
       add_test(
         NAME pangu.nr6.waveform_multiblock
