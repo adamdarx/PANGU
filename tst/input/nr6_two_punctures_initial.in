@@ -1,6 +1,6 @@
-# NR-6 constraint-satisfying equal-mass binary-black-hole initial data.  The
-# optional TwoPuncturesC spectral solver is selected at configure time; this
-# deck performs a short CUDA initialization/evolution check without AMR.
+# NR-6 constraint-satisfying equal-mass binary-black-hole initial data from
+# PANGU's native puncture solver. This deck performs a short initialization
+# and evolution check without AMR.
 
 <parthenon/job>
 problem_id = nr_two_punctures

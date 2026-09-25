@@ -138,6 +138,8 @@ if(PHYSICS STREQUAL "gr" AND METRIC STREQUAL "z4c" AND MODE STREQUAL "sync")
     z4c/puncture/spectral_solver.cc
     z4c/puncture/interpolation.h
     z4c/puncture/interpolation.cc
+    z4c/puncture/initializer.h
+    z4c/puncture/initializer.cc
     z4c/diagnostics/weyl.h
     z4c/evolution/z4c_rhs.h
     pgen/numerical_relativity.cc
@@ -285,25 +287,6 @@ target_include_directories(pangu PRIVATE
   ${PANGU_PLUGIN_INCLUDE_DIRS})
 target_link_libraries(pangu PRIVATE Parthenon::parthenon)
 target_compile_features(pangu PRIVATE cxx_std_20)
-
-if(PANGU_ENABLE_TWOPUNCTURES)
-  if(NOT (PHYSICS STREQUAL "gr" AND METRIC STREQUAL "z4c" AND MODE STREQUAL "sync"))
-    message(FATAL_ERROR
-      "PANGU_ENABLE_TWOPUNCTURES requires -DPHYSICS=gr -DMETRIC=z4c -DMODE=sync")
-  endif()
-  find_path(PANGU_TWOPUNCTURES_INCLUDE_DIR
-    NAMES TwoPunctures.h
-    HINTS "${PANGU_TWOPUNCTURES_ROOT}/include"
-    REQUIRED)
-  find_library(PANGU_TWOPUNCTURES_LIBRARY
-    NAMES TwoPunctures
-    HINTS "${PANGU_TWOPUNCTURES_ROOT}/lib"
-    REQUIRED)
-  find_package(GSL REQUIRED)
-  target_include_directories(pangu PRIVATE "${PANGU_TWOPUNCTURES_INCLUDE_DIR}")
-  target_link_libraries(pangu PRIVATE
-    "${PANGU_TWOPUNCTURES_LIBRARY}" GSL::gsl GSL::gslcblas)
-endif()
 
 if(PANGU_WARNINGS_AS_ERRORS AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(pangu PRIVATE -Werror=return-type)
@@ -555,6 +538,15 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
       "${CMAKE_CURRENT_SOURCE_DIR}")
     target_link_libraries(pangu_nr7_puncture_interpolation PRIVATE Parthenon::parthenon)
     target_compile_features(pangu_nr7_puncture_interpolation PRIVATE cxx_std_20)
+    add_executable(pangu_nr7_puncture_adm
+      "${CMAKE_SOURCE_DIR}/tst/unit/nr7_puncture_adm.cc"
+      z4c/puncture/spectral_solver.cc
+      z4c/puncture/interpolation.cc
+      z4c/puncture/initializer.cc)
+    target_include_directories(pangu_nr7_puncture_adm PRIVATE
+      "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_link_libraries(pangu_nr7_puncture_adm PRIVATE Parthenon::parthenon)
+    target_compile_features(pangu_nr7_puncture_adm PRIVATE cxx_std_20)
     add_executable(pangu_nr6_amr
       "${CMAKE_SOURCE_DIR}/tst/unit/nr6_amr.cc")
     target_include_directories(pangu_nr6_amr PRIVATE

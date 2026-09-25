@@ -18,7 +18,9 @@ namespace {
 using KeyMap = std::map<std::string, std::string>;
 
 const std::map<std::string, std::pair<std::string, KeyMap>> kLegacyBlocks{
-    {"job", {"parthenon/job", {{"problem_id", "problem_id"}, {"basename", "basename"}}}},
+    {"job",
+     {"parthenon/job",
+      {{"problem_id", "problem_id"}, {"basename", "basename"}}}},
     {"mesh",
      {"parthenon/mesh",
       {{"nx1", "nx1"},
@@ -39,7 +41,8 @@ const std::map<std::string, std::pair<std::string, KeyMap>> kLegacyBlocks{
        {"nghost", "nghost"},
        {"refinement", "refinement"},
        {"numlevel", "numlevel"}}}},
-    {"meshblock", {"parthenon/meshblock", {{"nx1", "nx1"}, {"nx2", "nx2"}, {"nx3", "nx3"}}}},
+    {"meshblock",
+     {"parthenon/meshblock", {{"nx1", "nx1"}, {"nx2", "nx2"}, {"nx3", "nx3"}}}},
     {"time",
      {"parthenon/time",
       {{"integrator", "integrator"},
@@ -55,25 +58,10 @@ const std::map<std::string, std::set<std::string>> kPanguSchema{
     {"pangu", {"strict_parameters", "check_input_only", "compatibility_mode"}},
     {"plugins", {"enabled"}},
     {"hydro",
-     {"physics",
-      "eos",
-      "reconstruct",
-      "rsolver",
-      "gamma",
-      "gamma_max",
-      "iso_sound_speed",
-      "cfl",
-      "density_floor",
-      "pressure_floor",
-      "dfloor",
-      "pfloor",
-      "fofc",
-      "nscalars",
-      "accel1",
-      "accel2",
-      "accel3",
-      "refine_tolerance",
-      "derefine_tolerance"}},
+     {"physics", "eos", "reconstruct", "rsolver", "gamma", "gamma_max",
+      "iso_sound_speed", "cfl", "density_floor", "pressure_floor", "dfloor",
+      "pfloor", "fofc", "nscalars", "accel1", "accel2", "accel3",
+      "refine_tolerance", "derefine_tolerance"}},
     {"mhd",
      {"physics",
       "eos",
@@ -126,14 +114,19 @@ const std::map<std::string, std::set<std::string>> kPanguSchema{
       "reinitialize",
       "write_diagnostics"}},
     {"radiation",
-     {"model",       "h_target",   "beta_cool",    "start_time",    "ramp_time",   "rho_min",
-      "sigma_max",   "bound_only", "track_energy", "nlevel",        "rotate_geo",  "angular_fluxes",
-      "reconstruct", "rad_source", "fixed_fluid",  "affect_fluid",  "kappa_a",     "kappa_s",
-      "kappa_p",     "arad",       "n_0_floor",    "power_opacity", "beam_source", "dii_dt"}},
-    {"units", {"length_cgs", "mass_cgs", "time_cgs", "density_cgs", "bhmass_msun", "mu"}},
+     {"model",        "h_target",      "beta_cool",   "start_time",
+      "ramp_time",    "rho_min",       "sigma_max",   "bound_only",
+      "track_energy", "nlevel",        "rotate_geo",  "angular_fluxes",
+      "reconstruct",  "rad_source",    "fixed_fluid", "affect_fluid",
+      "kappa_a",      "kappa_s",       "kappa_p",     "arad",
+      "n_0_floor",    "power_opacity", "beam_source", "dii_dt"}},
+    {"units",
+     {"length_cgs", "mass_cgs", "time_cgs", "density_cgs", "bhmass_msun",
+      "mu"}},
     {"geometry",
-     {"background", "expected_metric", "expected_mode", "bh_spin", "hslope", "excision",
-      "excision_radius", "flux_excision_radius", "dexcise", "pexcise"}},
+     {"background", "expected_metric", "expected_mode", "bh_spin", "hslope",
+      "excision", "excision_radius", "flux_excision_radius", "dexcise",
+      "pexcise"}},
     {"numerical_relativity",
      {"cfl",
       "finite_difference_order",
@@ -280,8 +273,9 @@ const std::map<std::string, std::set<std::string>> kPanguSchema{
       "diagnostic_directory"}},
     {"source_terms",
      {"cooling_rate", "heating_rate", "energy_floor", "point_mass", "softening",
-      "constant_acceleration", "acceleration_value", "acceleration_direction", "ism_cooling",
-      "ism_heating_rate", "relativistic_cooling", "relativistic_rate", "relativistic_power"}},
+      "constant_acceleration", "acceleration_value", "acceleration_direction",
+      "ism_cooling", "ism_heating_rate", "relativistic_cooling",
+      "relativistic_rate", "relativistic_power"}},
     {"problem",
      {"pgen_name",
       "amplitude",
@@ -331,6 +325,33 @@ const std::map<std::string, std::set<std::string>> kPanguSchema{
       "initial_lapse_psi_exponent",
       "swap_xz",
       "constraint_mask_radius",
+      "puncture_count",
+      "puncture_0_mass",
+      "puncture_0_center_x",
+      "puncture_0_center_y",
+      "puncture_0_center_z",
+      "puncture_0_momentum_x",
+      "puncture_0_momentum_y",
+      "puncture_0_momentum_z",
+      "puncture_0_spin_x",
+      "puncture_0_spin_y",
+      "puncture_0_spin_z",
+      "puncture_1_mass",
+      "puncture_1_center_x",
+      "puncture_1_center_y",
+      "puncture_1_center_z",
+      "puncture_1_momentum_x",
+      "puncture_1_momentum_y",
+      "puncture_1_momentum_z",
+      "puncture_1_spin_x",
+      "puncture_1_spin_y",
+      "puncture_1_spin_z",
+      "puncture_spectral_points",
+      "puncture_spectral_scale",
+      "puncture_nonlinear_tolerance",
+      "puncture_linear_tolerance",
+      "puncture_maximum_newton_iterations",
+      "puncture_maximum_linear_iterations",
       "atmosphere_density",
       "atmosphere_pressure",
       "btilde1",
@@ -525,14 +546,14 @@ const std::map<std::string, std::set<std::string>> kPanguSchema{
       "n_param",
       "l"}}};
 
-bool StartsWith(const std::string& value, const std::string& prefix) {
+bool StartsWith(const std::string &value, const std::string &prefix) {
   return value.rfind(prefix, 0) == 0;
 }
 
-bool IsIntegerParameter(const std::string& block, const std::string& name) {
+bool IsIntegerParameter(const std::string &block, const std::string &name) {
   if (block == "parthenon/mesh") {
-    return name == "nx1" || name == "nx2" || name == "nx3" || name == "nghost" ||
-           name == "numlevel";
+    return name == "nx1" || name == "nx2" || name == "nx3" ||
+           name == "nghost" || name == "numlevel";
   }
   if (block == "parthenon/meshblock") {
     return name == "nx1" || name == "nx2" || name == "nx3";
@@ -543,10 +564,10 @@ bool IsIntegerParameter(const std::string& block, const std::string& name) {
   return false;
 }
 
-bool IsRealParameter(const std::string& block, const std::string& name) {
+bool IsRealParameter(const std::string &block, const std::string &name) {
   if (block == "parthenon/mesh") {
-    return name == "x1min" || name == "x1max" || name == "x2min" || name == "x2max" ||
-           name == "x3min" || name == "x3max";
+    return name == "x1min" || name == "x1max" || name == "x2min" ||
+           name == "x2max" || name == "x3min" || name == "x3max";
   }
   if (block == "parthenon/time") {
     return name == "tlim" || name == "dt" || name == "cfl_number";
@@ -554,28 +575,36 @@ bool IsRealParameter(const std::string& block, const std::string& name) {
   return false;
 }
 
-void CopyLegacyParameter(parthenon::ParameterInput* pin, const std::string& source_block,
-                         const std::string& source_name, const std::string& target_block,
-                         const std::string& target_name) {
+void CopyLegacyParameter(parthenon::ParameterInput *pin,
+                         const std::string &source_block,
+                         const std::string &source_name,
+                         const std::string &target_block,
+                         const std::string &target_name) {
   if (IsIntegerParameter(target_block, target_name)) {
-    pin->SetInteger(target_block, target_name, pin->GetInteger(source_block, source_name));
+    pin->SetInteger(target_block, target_name,
+                    pin->GetInteger(source_block, source_name));
   } else if (IsRealParameter(target_block, target_name)) {
-    pin->SetReal(target_block, target_name, pin->GetReal(source_block, source_name));
+    pin->SetReal(target_block, target_name,
+                 pin->GetReal(source_block, source_name));
   } else {
-    pin->SetString(target_block, target_name, pin->GetString(source_block, source_name));
+    pin->SetString(target_block, target_name,
+                   pin->GetString(source_block, source_name));
   }
 }
 
-void CopyRealIfMissing(parthenon::ParameterInput* pin, const std::string& source_block,
-                       const std::string& source_name, const std::string& target_block,
-                       const std::string& target_name) {
+void CopyRealIfMissing(parthenon::ParameterInput *pin,
+                       const std::string &source_block,
+                       const std::string &source_name,
+                       const std::string &target_block,
+                       const std::string &target_name) {
   if (pin->DoesParameterExist(source_block, source_name) &&
       !pin->DoesParameterExist(target_block, target_name)) {
-    pin->SetReal(target_block, target_name, pin->GetReal(source_block, source_name));
+    pin->SetReal(target_block, target_name,
+                 pin->GetReal(source_block, source_name));
   }
 }
 
-std::string NormalizeProblemName(const std::string& name) {
+std::string NormalizeProblemName(const std::string &name) {
   if (name == "shock_tube" || name == "Sod" || name == "sod")
     return "sod";
   if (name == "linear_wave" || name == "LinWave")
@@ -593,42 +622,46 @@ std::string NormalizeProblemName(const std::string& name) {
 
 } // namespace
 
-void NormalizeParameters(parthenon::ParameterInput* pin) {
+void NormalizeParameters(parthenon::ParameterInput *pin) {
   pin->GetOrAddBoolean("pangu", "strict_parameters", true);
   pin->GetOrAddBoolean("pangu", "check_input_only", false);
   if (pin->DoesParameterExist("radiation", "enabled")) {
-    PARTHENON_REQUIRE(
-        pin->GetBoolean("radiation", "enabled"),
-        "legacy radiation/enabled=false cannot be resumed by a compile-time cooling build");
+    PARTHENON_REQUIRE(pin->GetBoolean("radiation", "enabled"),
+                      "legacy radiation/enabled=false cannot be resumed by a "
+                      "compile-time cooling build");
     // RC-1 and later select the radiation backend at compile time.  Retain
     // restart compatibility with pre-RC-1 cooling trajectories whose embedded
     // parameter database recorded the equivalent enabled=true switch.
     pin->RemoveParameter("radiation", "enabled");
   }
-  const auto mode = pin->GetOrAddString("pangu", "compatibility_mode", "translate");
+  const auto mode =
+      pin->GetOrAddString("pangu", "compatibility_mode", "translate");
   if (mode != "translate" && mode != "native") {
     PARTHENON_FAIL("pangu/compatibility_mode must be 'translate' or 'native'");
   }
   if (mode == "translate") {
-    for (const auto& [legacy_block, target] : kLegacyBlocks) {
+    for (const auto &[legacy_block, target] : kLegacyBlocks) {
       if (!pin->DoesBlockExist(legacy_block))
         continue;
-      const auto& [target_block, keys] = target;
-      for (const auto& name : pin->GetParameterNames(legacy_block)) {
+      const auto &[target_block, keys] = target;
+      for (const auto &name : pin->GetParameterNames(legacy_block)) {
         const auto key = keys.find(name);
         if (key == keys.end()) {
-          PARTHENON_FAIL("Unsupported legacy parameter <" + legacy_block + ">/" + name);
+          PARTHENON_FAIL("Unsupported legacy parameter <" + legacy_block +
+                         ">/" + name);
         }
         if (!pin->DoesParameterExist(target_block, key->second)) {
-          CopyLegacyParameter(pin, legacy_block, name, target_block, key->second);
+          CopyLegacyParameter(pin, legacy_block, name, target_block,
+                              key->second);
         }
       }
     }
 
     if (!pin->DoesParameterExist("parthenon/job", "problem_id")) {
       if (pin->DoesParameterExist("problem", "pgen_name")) {
-        pin->SetString("parthenon/job", "problem_id",
-                       NormalizeProblemName(pin->GetString("problem", "pgen_name")));
+        pin->SetString(
+            "parthenon/job", "problem_id",
+            NormalizeProblemName(pin->GetString("problem", "pgen_name")));
       } else if (pin->DoesParameterExist("job", "basename")) {
         pin->SetString("parthenon/job", "problem_id",
                        NormalizeProblemName(pin->GetString("job", "basename")));
@@ -656,14 +689,16 @@ void NormalizeParameters(parthenon::ParameterInput* pin) {
     CopyRealIfMissing(pin, "problem", "inner_radius", "problem", "radius");
     CopyRealIfMissing(pin, "problem", "pn_amb", "problem", "ambient_pressure");
     if (pin->DoesParameterExist("mesh", "nghost")) {
-      pin->SetInteger("parthenon/mesh", "nghost", pin->GetInteger("mesh", "nghost"));
+      pin->SetInteger("parthenon/mesh", "nghost",
+                      pin->GetInteger("mesh", "nghost"));
     }
 
     if (pin->DoesParameterExist("problem", "pn_amb") &&
         pin->DoesParameterExist("problem", "prat") &&
         !pin->DoesParameterExist("problem", "inner_pressure")) {
       pin->SetReal("problem", "inner_pressure",
-                   pin->GetReal("problem", "pn_amb") * pin->GetReal("problem", "prat"));
+                   pin->GetReal("problem", "pn_amb") *
+                       pin->GetReal("problem", "prat"));
     }
     if (pin->DoesParameterExist("problem", "vshear")) {
       const auto shear = pin->GetReal("problem", "vshear");
@@ -682,22 +717,27 @@ void NormalizeParameters(parthenon::ParameterInput* pin) {
         pin->GetString("hydro", "rsolver") == "advect") {
       pin->SetString("hydro", "rsolver", "llf");
     }
-    const bool kinematic = pin->DoesParameterExist("parthenon/time", "evolution") &&
-                           pin->GetString("parthenon/time", "evolution") == "kinematic";
+    const bool kinematic =
+        pin->DoesParameterExist("parthenon/time", "evolution") &&
+        pin->GetString("parthenon/time", "evolution") == "kinematic";
     if (kinematic && pin->DoesBlockExist("hydro"))
       pin->SetString("hydro", "rsolver", "none");
     if (kinematic && pin->DoesBlockExist("mhd"))
       pin->SetString("mhd", "rsolver", "none");
     if (pin->DoesParameterExist("hydro_srcterms", "const_accel") &&
         pin->GetBoolean("hydro_srcterms", "const_accel")) {
-      const auto direction = pin->GetInteger("hydro_srcterms", "const_accel_dir");
-      const auto acceleration = pin->GetReal("hydro_srcterms", "const_accel_val");
+      const auto direction =
+          pin->GetInteger("hydro_srcterms", "const_accel_dir");
+      const auto acceleration =
+          pin->GetReal("hydro_srcterms", "const_accel_val");
       if (direction >= 1 && direction <= 3) {
-        pin->SetReal("hydro", "accel" + std::to_string(direction), acceleration);
+        pin->SetReal("hydro", "accel" + std::to_string(direction),
+                     acceleration);
       }
     }
 
-    for (const auto& boundary : {"ix1_bc", "ox1_bc", "ix2_bc", "ox2_bc", "ix3_bc", "ox3_bc"}) {
+    for (const auto &boundary :
+         {"ix1_bc", "ox1_bc", "ix2_bc", "ox2_bc", "ix3_bc", "ox3_bc"}) {
       if (pin->DoesParameterExist("parthenon/mesh", boundary) &&
           pin->GetString("parthenon/mesh", boundary) == "reflect") {
         pin->SetString("parthenon/mesh", boundary, "reflecting");
@@ -713,7 +753,8 @@ void NormalizeParameters(parthenon::ParameterInput* pin) {
     pin->SetReal("parthenon/mesh", "x2min", 1.0e-5);
     pin->SetReal("parthenon/mesh", "x2max", 1.0 - 1.0e-5);
     pin->SetReal("parthenon/mesh", "x3min", 0.0);
-    pin->SetReal("parthenon/mesh", "x3max", 2.0 * 3.141592653589793238462643383279502884);
+    pin->SetReal("parthenon/mesh", "x3max",
+                 2.0 * 3.141592653589793238462643383279502884);
     pin->SetString("parthenon/mesh", "ix1_bc", "outflow");
     pin->SetString("parthenon/mesh", "ox1_bc", "outflow");
     pin->SetString("parthenon/mesh", "ix2_bc", "reflecting");
@@ -726,72 +767,86 @@ void NormalizeParameters(parthenon::ParameterInput* pin) {
                     "<parthenon/job>/problem_id is required");
 }
 
-void ValidateParameters(parthenon::ParameterInput* pin) {
+void ValidateParameters(parthenon::ParameterInput *pin) {
   if (!pin->GetOrAddBoolean("pangu", "strict_parameters", true))
     return;
   const auto compatibility_mode = pin->GetString("pangu", "compatibility_mode");
 
-  for (const auto& block : pin->GetBlockNames()) {
+  for (const auto &block : pin->GetBlockNames()) {
     if (StartsWith(block, "parthenon/"))
       continue;
     // Parameters inside a plugin namespace are validated by its initializer,
     // but the namespace itself must name a plugin compiled into this build.
     if (StartsWith(block, "plugin/")) {
-      const auto plugin_name = block.substr(std::char_traits<char>::length("plugin/"));
+      const auto plugin_name =
+          block.substr(std::char_traits<char>::length("plugin/"));
       PARTHENON_REQUIRE(plugin::IsCompiled(plugin_name),
-                        "Input block <" + block + "> belongs to a plugin that is not installed");
+                        "Input block <" + block +
+                            "> belongs to a plugin that is not installed");
       continue;
     }
     if (compatibility_mode == "translate" && kLegacyBlocks.count(block) != 0)
       continue;
     if (compatibility_mode == "translate" &&
-        (block == "comment" || block == "hydro_srcterms" || StartsWith(block, "output")))
+        (block == "comment" || block == "hydro_srcterms" ||
+         StartsWith(block, "output")))
       continue;
     const auto schema = kPanguSchema.find(block);
     if (schema == kPanguSchema.end()) {
       PARTHENON_FAIL("Unknown PANGU input block <" + block + ">");
     }
-    for (const auto& name : pin->GetParameterNames(block)) {
+    for (const auto &name : pin->GetParameterNames(block)) {
       bool indexed_waveform_radius = false;
-      constexpr const char* waveform_radius_prefix = "waveform_radius_";
-      if (block == "numerical_relativity" && StartsWith(name, waveform_radius_prefix)) {
+      constexpr const char *waveform_radius_prefix = "waveform_radius_";
+      if (block == "numerical_relativity" &&
+          StartsWith(name, waveform_radius_prefix)) {
         const std::string suffix =
             name.substr(std::char_traits<char>::length(waveform_radius_prefix));
         indexed_waveform_radius = !suffix.empty();
         for (const char character : suffix)
-          indexed_waveform_radius = indexed_waveform_radius && character >= '0' && character <= '9';
+          indexed_waveform_radius =
+              indexed_waveform_radius && character >= '0' && character <= '9';
       }
       bool indexed_amr_radius = false;
-      constexpr const char* amr_radius_prefix = "amr_radius_";
-      if (block == "numerical_relativity" && StartsWith(name, amr_radius_prefix)) {
-        std::string suffix = name.substr(std::char_traits<char>::length(amr_radius_prefix));
-        constexpr const char* refinement_suffix = "_refinement_level";
+      constexpr const char *amr_radius_prefix = "amr_radius_";
+      if (block == "numerical_relativity" &&
+          StartsWith(name, amr_radius_prefix)) {
+        std::string suffix =
+            name.substr(std::char_traits<char>::length(amr_radius_prefix));
+        constexpr const char *refinement_suffix = "_refinement_level";
         const std::size_t refinement_position = suffix.find(refinement_suffix);
         if (refinement_position != std::string::npos &&
-            refinement_position + std::char_traits<char>::length(refinement_suffix) ==
+            refinement_position +
+                    std::char_traits<char>::length(refinement_suffix) ==
                 suffix.size()) {
           suffix.erase(refinement_position);
         }
         indexed_amr_radius = !suffix.empty();
         for (const char character : suffix)
-          indexed_amr_radius = indexed_amr_radius && character >= '0' && character <= '9';
+          indexed_amr_radius =
+              indexed_amr_radius && character >= '0' && character <= '9';
       }
-      if (schema->second.count(name) == 0 && !indexed_waveform_radius && !indexed_amr_radius) {
+      if (schema->second.count(name) == 0 && !indexed_waveform_radius &&
+          !indexed_amr_radius) {
         PARTHENON_FAIL("Unknown parameter <" + block + ">/" + name);
       }
     }
   }
 }
 
-void PrintConfiguration(parthenon::ParameterInput* pin, std::ostream& os) {
+void PrintConfiguration(parthenon::ParameterInput *pin, std::ostream &os) {
   os << "PANGU " << PANGU_VERSION << "\n"
-     << "  PANGU commit: " << PANGU_GIT_COMMIT << " (" << PANGU_GIT_DIRTY << ")\n"
+     << "  PANGU commit: " << PANGU_GIT_COMMIT << " (" << PANGU_GIT_DIRTY
+     << ")\n"
      << "  Parthenon commit: " << PANGU_PARTHENON_COMMIT << "\n"
      << "  configured: " << PANGU_CONFIGURE_TIME << "\n"
-     << "  problem_id: " << pin->GetString("parthenon/job", "problem_id") << "\n"
-     << "  estimator: " << pangu::estimator::estimator_name << " (compile-time)\n"
+     << "  problem_id: " << pin->GetString("parthenon/job", "problem_id")
+     << "\n"
+     << "  estimator: " << pangu::estimator::estimator_name
+     << " (compile-time)\n"
      << "  backends: MPI=" << PANGU_ENABLE_MPI << " HDF5=" << PANGU_ENABLE_HDF5
-     << " OpenMP=" << PANGU_ENABLE_OPENMP << " CUDA=" << PANGU_ENABLE_CUDA << "\n";
+     << " OpenMP=" << PANGU_ENABLE_OPENMP << " CUDA=" << PANGU_ENABLE_CUDA
+     << "\n";
 }
 
 } // namespace pangu::app

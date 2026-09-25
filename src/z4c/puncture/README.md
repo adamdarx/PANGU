@@ -1,8 +1,8 @@
 # Native puncture initial data
 
-This directory is reserved for PANGU's native, constraint-solving puncture
-initial-data implementation. It must not depend on TwoPuncturesC or another
-evolution framework.
+This directory contains PANGU's native, constraint-solving puncture
+initial-data implementation. It has no dependency on TwoPuncturesC, GSL, or
+another evolution framework.
 
 The intended module boundary is:
 
@@ -13,8 +13,14 @@ The intended module boundary is:
   differential operators, followed by the Hamiltonian nonlinear solve;
 - `interpolation.h/.cc`: interpolation from the spectral representation to
   Parthenon mesh blocks;
-- `initializer.h/.cc`: input parsing, ADM construction, and ADM-to-Z4c setup.
+- `initializer.h/.cc`: physical ADM construction, puncture-end ADM-mass
+  measurement, and target-mass iteration.
 
-The first implementation should support one or two punctures with arbitrary
-linear momentum and spin. The solver must report its Hamiltonian residual and
-must be validated independently before replacing any existing initializer.
+The implementation supports one or two Bowen--York punctures with arbitrary
+linear momentum and spin. It solves the vacuum Hamiltonian constraint for the
+regular conformal-factor correction on a compactified Cartesian
+rational-Chebyshev grid, interpolates the result locally onto Parthenon mesh
+blocks, and constructs maximal conformally flat ADM/Z4c data. Both direct bare
+masses and internal-end target ADM masses are supported. `nr_puncture` is the
+native problem name; `nr_two_punctures` and its historical parameter names are
+accepted as a compatibility interface.
