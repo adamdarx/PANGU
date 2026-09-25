@@ -1051,6 +1051,22 @@ HorizonEvaluation EvaluateStarShapedSurface(Mesh* mesh,
 #else
   global = local;
 #endif
+  for (std::size_t point = 0; point < points.size(); ++point) {
+    const Real owners = global[7 * point + 6];
+    if (fabs(owners - 1.0) >= 0.5) {
+      if (parthenon::Globals::my_rank == 0) {
+        std::cerr << "PANGU apparent-horizon search rejected surface point " << point
+                  << ": owners=" << owners << " x=" << points[point].x
+                  << " y=" << points[point].y << " z=" << points[point].z
+                  << " radius=" << points[point].radius << '\n';
+      }
+      // A fast-flow trial surface can temporarily leave the leaf mesh when
+      // the nonlinear search diverges. This is a failed diagnostic iteration,
+      // not a failure of the spacetime evolution. Return the default NaN
+      // evaluation so AppendHorizon records found=0 and keeps evolving.
+      return HorizonEvaluation{};
+    }
+  }
   HorizonEvaluation result;
   result.expansion.resize(points.size());
   result.flow.resize(points.size());
@@ -1062,8 +1078,6 @@ HorizonEvaluation EvaluateStarShapedSurface(Mesh* mesh,
   result.spin_y = 0.0;
   result.spin_z = 0.0;
   for (std::size_t point = 0; point < points.size(); ++point) {
-    PARTHENON_REQUIRE(fabs(global[7 * point + 6] - 1.0) < 0.5,
-                      "apparent-horizon point has zero or multiple leaf owners");
     result.expansion[point] = global[7 * point];
     result.flow[point] = global[7 * point + 2];
     const Real area = global[7 * point + 1] * points[point].weight;
