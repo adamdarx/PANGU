@@ -136,6 +136,8 @@ if(PHYSICS STREQUAL "gr" AND METRIC STREQUAL "z4c" AND MODE STREQUAL "sync")
     z4c/puncture/bowen_york.h
     z4c/puncture/spectral_solver.h
     z4c/puncture/spectral_solver.cc
+    z4c/puncture/interpolation.h
+    z4c/puncture/interpolation.cc
     z4c/diagnostics/weyl.h
     z4c/evolution/z4c_rhs.h
     pgen/numerical_relativity.cc
@@ -538,6 +540,21 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
       "${CMAKE_CURRENT_SOURCE_DIR}")
     target_link_libraries(pangu_nr7_spectral_grid PRIVATE Parthenon::parthenon)
     target_compile_features(pangu_nr7_spectral_grid PRIVATE cxx_std_20)
+    add_executable(pangu_nr7_hamiltonian_solver
+      "${CMAKE_SOURCE_DIR}/tst/unit/nr7_hamiltonian_solver.cc"
+      z4c/puncture/spectral_solver.cc)
+    target_include_directories(pangu_nr7_hamiltonian_solver PRIVATE
+      "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_link_libraries(pangu_nr7_hamiltonian_solver PRIVATE Parthenon::parthenon)
+    target_compile_features(pangu_nr7_hamiltonian_solver PRIVATE cxx_std_20)
+    add_executable(pangu_nr7_puncture_interpolation
+      "${CMAKE_SOURCE_DIR}/tst/unit/nr7_puncture_interpolation.cc"
+      z4c/puncture/spectral_solver.cc
+      z4c/puncture/interpolation.cc)
+    target_include_directories(pangu_nr7_puncture_interpolation PRIVATE
+      "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_link_libraries(pangu_nr7_puncture_interpolation PRIVATE Parthenon::parthenon)
+    target_compile_features(pangu_nr7_puncture_interpolation PRIVATE cxx_std_20)
     add_executable(pangu_nr6_amr
       "${CMAKE_SOURCE_DIR}/tst/unit/nr6_amr.cc")
     target_include_directories(pangu_nr6_amr PRIVATE
