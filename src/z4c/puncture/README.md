@@ -6,7 +6,9 @@ evolution framework.
 
 The intended module boundary is:
 
-- `puncture_data.h`: puncture parameters, Bowen--York free data, and results;
+- `puncture_data.h`: puncture parameters and pointwise solver results;
+- `bowen_york.h`: arbitrary-momentum/spin Bowen--York free data and the
+  Hamiltonian source;
 - `spectral_solver.h/.cc`: compactified spectral grid, Hamiltonian operator,
   nonlinear solve, and convergence diagnostics;
 - `interpolation.h/.cc`: interpolation from the spectral representation to

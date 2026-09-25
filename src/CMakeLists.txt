@@ -132,6 +132,8 @@ if(PHYSICS STREQUAL "gr" AND METRIC STREQUAL "z4c" AND MODE STREQUAL "sync")
     z4c/evolution/tasks.h
     z4c/initial_data/tov.cc
     z4c/initial_data/tov.h
+    z4c/puncture/puncture_data.h
+    z4c/puncture/bowen_york.h
     z4c/diagnostics/weyl.h
     z4c/evolution/z4c_rhs.h
     pgen/numerical_relativity.cc
@@ -518,6 +520,14 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     target_link_libraries(pangu_nr6_weyl PRIVATE Parthenon::parthenon)
     target_compile_features(pangu_nr6_weyl PRIVATE cxx_std_20)
     target_compile_definitions(pangu_nr6_weyl PRIVATE
+      KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK)
+    add_executable(pangu_nr7_bowen_york
+      "${CMAKE_SOURCE_DIR}/tst/unit/nr7_bowen_york.cc")
+    target_include_directories(pangu_nr7_bowen_york PRIVATE
+      "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_link_libraries(pangu_nr7_bowen_york PRIVATE Parthenon::parthenon)
+    target_compile_features(pangu_nr7_bowen_york PRIVATE cxx_std_20)
+    target_compile_definitions(pangu_nr7_bowen_york PRIVATE
       KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK)
     add_executable(pangu_nr6_amr
       "${CMAKE_SOURCE_DIR}/tst/unit/nr6_amr.cc")
