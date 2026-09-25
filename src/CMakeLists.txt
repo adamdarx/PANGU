@@ -134,6 +134,8 @@ if(PHYSICS STREQUAL "gr" AND METRIC STREQUAL "z4c" AND MODE STREQUAL "sync")
     z4c/initial_data/tov.h
     z4c/puncture/puncture_data.h
     z4c/puncture/bowen_york.h
+    z4c/puncture/spectral_solver.h
+    z4c/puncture/spectral_solver.cc
     z4c/diagnostics/weyl.h
     z4c/evolution/z4c_rhs.h
     pgen/numerical_relativity.cc
@@ -529,6 +531,13 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     target_compile_features(pangu_nr7_bowen_york PRIVATE cxx_std_20)
     target_compile_definitions(pangu_nr7_bowen_york PRIVATE
       KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK)
+    add_executable(pangu_nr7_spectral_grid
+      "${CMAKE_SOURCE_DIR}/tst/unit/nr7_spectral_grid.cc"
+      z4c/puncture/spectral_solver.cc)
+    target_include_directories(pangu_nr7_spectral_grid PRIVATE
+      "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_link_libraries(pangu_nr7_spectral_grid PRIVATE Parthenon::parthenon)
+    target_compile_features(pangu_nr7_spectral_grid PRIVATE cxx_std_20)
     add_executable(pangu_nr6_amr
       "${CMAKE_SOURCE_DIR}/tst/unit/nr6_amr.cc")
     target_include_directories(pangu_nr6_amr PRIVATE
