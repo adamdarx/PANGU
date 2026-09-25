@@ -1,4 +1,4 @@
-#include "z4c/task_contribution.h"
+#include "z4c/evolution/tasks.h"
 
 #include <algorithm>
 #include <memory>
@@ -10,9 +10,9 @@
 #include "driver/task_assembly.h"
 #include "interface/update.hpp"
 #include "mhd/mhd_package.h"
-#include "z4c/nr_package.h"
-#include "z4c/sync_grhd.h"
-#include "z4c/sync_grmhd.h"
+#include "z4c/evolution/package.h"
+#include "z4c/coupling/sync_grhd.h"
+#include "z4c/coupling/sync_grmhd.h"
 
 namespace pangu::nr {
 

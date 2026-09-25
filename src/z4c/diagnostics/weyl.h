@@ -5,9 +5,9 @@
 
 #include <parthenon/parthenon.hpp>
 
-#include "z4c/component_indices.h"
-#include "z4c/finite_difference.h"
-#include "z4c/z4c_rhs.h"
+#include "z4c/core/component_indices.h"
+#include "z4c/core/finite_difference.h"
+#include "z4c/evolution/z4c_rhs.h"
 
 namespace pangu::nr {
 

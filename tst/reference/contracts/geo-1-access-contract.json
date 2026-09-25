@@ -16,11 +16,11 @@
         "MetricAt": 3,
         "DerivativesAt": 0
       },
-      "src/z4c/sync_grhd.cc": {
+      "src/z4c/coupling/sync_grhd.cc": {
         "MetricAt": 6,
         "DerivativesAt": 0
       },
-      "src/z4c/sync_grmhd.cc": {
+      "src/z4c/coupling/sync_grmhd.cc": {
         "MetricAt": 10,
         "DerivativesAt": 0
       },

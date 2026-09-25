@@ -16,7 +16,7 @@
 #include "interface/metadata.hpp"
 #include "interface/variable_pack.hpp"
 #include "kokkos_abstraction.hpp"
-#include "z4c/sync_grhd.h"
+#include "z4c/coupling/sync_grhd.h"
 #include "pangu.h"
 #include "prolong_restrict/prolong_restrict.hpp"
 #include "reconstruct/hydro_reconstruction.h"

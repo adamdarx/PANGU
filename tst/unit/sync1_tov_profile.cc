@@ -5,7 +5,7 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "z4c/tov.h"
+#include "z4c/initial_data/tov.h"
 
 int main(int argc, char** argv) {
   Kokkos::ScopeGuard guard(argc, argv);

@@ -13,7 +13,7 @@ import numpy as np
 
 
 def parity(component: int, direction: int) -> float:
-    # component layout is fixed by z4c/component_indices.h.
+    # component layout is fixed by z4c/core/component_indices.h.
     if 1 <= component <= 6 or 8 <= component <= 13:
         local = component - (1 if component <= 6 else 8)
         pairs = ((0, 0), (0, 1), (0, 2), (1, 1), (1, 2), (2, 2))

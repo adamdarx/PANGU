@@ -5,9 +5,9 @@
 
 #include <parthenon/parthenon.hpp>
 
-#include "z4c/component_indices.h"
-#include "z4c/finite_difference.h"
-#include "z4c/stress_energy.h"
+#include "z4c/core/component_indices.h"
+#include "z4c/core/finite_difference.h"
+#include "z4c/coupling/stress_energy.h"
 
 namespace pangu::nr {
 

@@ -20,7 +20,7 @@
 #include "kokkos_abstraction.hpp"
 #include "mhd/mhd_types.h"
 #include "mhd/task_contribution.h"
-#include "z4c/sync_grmhd.h"
+#include "z4c/coupling/sync_grmhd.h"
 #include "pangu.h"
 #include "prolong_restrict/prolong_restrict.hpp"
 #include "reconstruct/hydro_reconstruction.h"

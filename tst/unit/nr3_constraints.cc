@@ -5,7 +5,7 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "z4c/constraints.h"
+#include "z4c/evolution/constraints.h"
 
 namespace {
 using Real = parthenon::Real;

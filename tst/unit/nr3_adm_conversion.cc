@@ -5,7 +5,7 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "z4c/adm_conversion.h"
+#include "z4c/core/adm_conversion.h"
 
 namespace {
 using Real = parthenon::Real;

@@ -5,7 +5,7 @@
 #include <Kokkos_Core.hpp>
 #include <parthenon/parthenon.hpp>
 
-#include "z4c/nr_amr.h"
+#include "z4c/evolution/amr.h"
 
 using parthenon::Real;
 namespace amr = pangu::nr::amr;

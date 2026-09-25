@@ -8,7 +8,7 @@
 #include "geometry_assembly.h"
 #include "hydro/hydro_package.h"
 #include "mhd/mhd_package.h"
-#include "z4c/nr_package.h"
+#include "z4c/evolution/package.h"
 #include "pangu_config.h"
 #include "pgen/hydro_problems.h"
 #include "pgen/mhd_problems.h"

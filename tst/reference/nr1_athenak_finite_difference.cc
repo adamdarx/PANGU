@@ -13,7 +13,7 @@ using Real = parthenon::Real;
 
 #include "athenak_finite_difference_reference.h"
 
-#include "z4c/finite_difference.h"
+#include "z4c/core/finite_difference.h"
 
 namespace {
 

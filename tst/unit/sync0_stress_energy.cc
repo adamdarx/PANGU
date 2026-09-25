@@ -5,9 +5,9 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "z4c/constraints.h"
-#include "z4c/stress_energy.h"
-#include "z4c/z4c_rhs.h"
+#include "z4c/evolution/constraints.h"
+#include "z4c/coupling/stress_energy.h"
+#include "z4c/evolution/z4c_rhs.h"
 
 namespace {
 using Real = parthenon::Real;

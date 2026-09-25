@@ -5,7 +5,7 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "z4c/sync_grhd.h"
+#include "z4c/coupling/sync_grhd.h"
 
 namespace {
 using Real = parthenon::Real;

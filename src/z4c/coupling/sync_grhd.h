@@ -6,7 +6,7 @@
 #include <parthenon/parthenon.hpp>
 
 #include "geometry/geometry.h"
-#include "z4c/stress_energy.h"
+#include "z4c/coupling/stress_energy.h"
 #include "relativity/relativistic_hydro.h"
 
 namespace pangu::nr {

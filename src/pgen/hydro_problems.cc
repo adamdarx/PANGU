@@ -14,7 +14,7 @@
 #include "globals.hpp"
 #include "hydro/hydro_types.h"
 #include "kokkos_abstraction.hpp"
-#include "z4c/sync_grhd.h"
+#include "z4c/coupling/sync_grhd.h"
 #include "pgen/bondi.h"
 #include "relativity/relativistic_hydro.h"
 #include "utils/error_checking.hpp"

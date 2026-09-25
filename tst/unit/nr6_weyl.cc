@@ -4,9 +4,9 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "z4c/component_indices.h"
-#include "z4c/nr_diagnostics.h"
-#include "z4c/weyl.h"
+#include "z4c/core/component_indices.h"
+#include "z4c/diagnostics/diagnostics.h"
+#include "z4c/diagnostics/weyl.h"
 
 using pangu::nr::ADMComponent;
 using pangu::nr::ComputeWeylScalars;

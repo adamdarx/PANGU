@@ -8,7 +8,7 @@
 #include <Kokkos_Core.hpp>
 #include <parthenon/parthenon.hpp>
 
-#include "z4c/finite_difference.h"
+#include "z4c/core/finite_difference.h"
 
 namespace {
 

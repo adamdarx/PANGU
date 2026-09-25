@@ -1,4 +1,4 @@
-#include "z4c/sync_grmhd.h"
+#include "z4c/coupling/sync_grmhd.h"
 
 #include <limits>
 #include <vector>
@@ -6,7 +6,7 @@
 #include "geometry_assembly.h"
 #include "hydro/hydro_types.h"
 #include "mhd/mhd_types.h"
-#include "z4c/sync_grhd.h"
+#include "z4c/coupling/sync_grhd.h"
 #include "reconstruct/hydro_reconstruction.h"
 #include "riemann/registry.h"
 

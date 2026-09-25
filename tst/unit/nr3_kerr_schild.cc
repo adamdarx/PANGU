@@ -5,7 +5,7 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "z4c/analytic_initial_data.h"
+#include "z4c/initial_data/analytic.h"
 
 namespace {
 using Real = parthenon::Real;

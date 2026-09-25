@@ -113,27 +113,27 @@ endif()
 set(PANGU_NUMERICAL_RELATIVITY_SOURCES)
 if(PHYSICS STREQUAL "gr" AND METRIC STREQUAL "z4c" AND MODE STREQUAL "sync")
   list(APPEND PANGU_NUMERICAL_RELATIVITY_SOURCES
-    z4c/component_indices.h
-    z4c/adm_conversion.h
-    z4c/analytic_initial_data.h
-    z4c/constraints.h
-    z4c/finite_difference.h
-    z4c/nr_amr.h
-    z4c/nr_diagnostics.cc
-    z4c/nr_diagnostics.h
-    z4c/nr_package.cc
-    z4c/nr_package.h
-    z4c/stress_energy.h
-    z4c/sync_grhd.cc
-    z4c/sync_grhd.h
-    z4c/sync_grmhd.cc
-    z4c/sync_grmhd.h
-    z4c/task_contribution.cc
-    z4c/task_contribution.h
-    z4c/tov.cc
-    z4c/tov.h
-    z4c/weyl.h
-    z4c/z4c_rhs.h
+    z4c/core/component_indices.h
+    z4c/core/adm_conversion.h
+    z4c/initial_data/analytic.h
+    z4c/evolution/constraints.h
+    z4c/core/finite_difference.h
+    z4c/evolution/amr.h
+    z4c/diagnostics/diagnostics.cc
+    z4c/diagnostics/diagnostics.h
+    z4c/evolution/package.cc
+    z4c/evolution/package.h
+    z4c/coupling/stress_energy.h
+    z4c/coupling/sync_grhd.cc
+    z4c/coupling/sync_grhd.h
+    z4c/coupling/sync_grmhd.cc
+    z4c/coupling/sync_grmhd.h
+    z4c/evolution/tasks.cc
+    z4c/evolution/tasks.h
+    z4c/initial_data/tov.cc
+    z4c/initial_data/tov.h
+    z4c/diagnostics/weyl.h
+    z4c/evolution/z4c_rhs.h
     pgen/numerical_relativity.cc
     pgen/numerical_relativity.h)
 endif()
@@ -456,7 +456,7 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
       KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK)
     add_executable(pangu_sync1_tov_profile
       "${CMAKE_SOURCE_DIR}/tst/unit/sync1_tov_profile.cc"
-      z4c/tov.cc)
+      z4c/initial_data/tov.cc)
     target_include_directories(pangu_sync1_tov_profile PRIVATE
       "${CMAKE_CURRENT_SOURCE_DIR}")
     target_link_libraries(pangu_sync1_tov_profile PRIVATE Parthenon::parthenon)

@@ -3,8 +3,8 @@
 
 #include <parthenon/parthenon.hpp>
 
-#include "z4c/adm_conversion.h"
-#include "z4c/constraints.h"
+#include "z4c/core/adm_conversion.h"
+#include "z4c/evolution/constraints.h"
 
 namespace pangu::nr {
 

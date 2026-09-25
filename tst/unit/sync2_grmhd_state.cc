@@ -5,8 +5,8 @@
 #include <Kokkos_Core.hpp>
 
 #include "riemann/registry.h"
-#include "z4c/sync_grhd.h"
-#include "z4c/sync_grmhd.h"
+#include "z4c/coupling/sync_grhd.h"
+#include "z4c/coupling/sync_grmhd.h"
 
 namespace {
 

@@ -1,4 +1,4 @@
-#include "z4c/nr_diagnostics.h"
+#include "z4c/diagnostics/diagnostics.h"
 
 #include <algorithm>
 #include <array>
@@ -14,9 +14,9 @@
 #include <vector>
 
 #include "globals.hpp"
-#include "z4c/component_indices.h"
-#include "z4c/finite_difference.h"
-#include "z4c/nr_package.h"
+#include "z4c/core/component_indices.h"
+#include "z4c/core/finite_difference.h"
+#include "z4c/evolution/package.h"
 #include "utils/error_checking.hpp"
 
 namespace pangu::nr {

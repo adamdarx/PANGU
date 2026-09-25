@@ -9,7 +9,7 @@
 
 #include "geometry/metric/z4c.h"
 #include "geometry/mode/sync.h"
-#include "z4c/component_indices.h"
+#include "z4c/core/component_indices.h"
 
 namespace {
 

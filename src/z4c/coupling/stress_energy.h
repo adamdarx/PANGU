@@ -3,7 +3,7 @@
 
 #include <parthenon/parthenon.hpp>
 
-#include "z4c/component_indices.h"
+#include "z4c/core/component_indices.h"
 
 namespace pangu::nr {
 
