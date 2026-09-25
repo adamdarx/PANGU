@@ -1,5 +1,5 @@
 [submodule "parthenon"]
 	path = parthenon
-	url = https://gitee.com/adamdarx/parthenon.git
+	url = https://github.com/parthenon-hpc-lab/parthenon.git
 	branch = develop
 	shallow = true
