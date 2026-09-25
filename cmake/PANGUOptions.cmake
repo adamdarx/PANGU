@@ -7,10 +7,6 @@ option(PANGU_ENABLE_CUDA "Build PANGU with the Kokkos CUDA backend" OFF)
 option(PANGU_SINGLE_PRECISION "Use single precision Parthenon Real" OFF)
 option(PANGU_ENABLE_TESTING "Register PANGU tests" ON)
 option(PANGU_WARNINGS_AS_ERRORS "Treat PANGU warnings as errors" OFF)
-option(PANGU_ENABLE_TWOPUNCTURES
-       "Enable the optional TwoPuncturesC binary-black-hole initial-data generator" OFF)
-set(PANGU_TWOPUNCTURES_ROOT "" CACHE PATH
-    "Root of a prebuilt TwoPuncturesC tree containing include/ and lib/")
 set(PANGU_ATHENAK_REFERENCE_DIR "" CACHE PATH
     "Optional AthenaK source tree used only by cross-code validation targets")
 set(PANGU_ATHENAK_EXECUTABLE "" CACHE FILEPATH

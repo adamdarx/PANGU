@@ -67,10 +67,11 @@ configurations:
 - **NVIDIA GPU:** enabled with `PANGU_ENABLE_CUDA=ON`; this requires a CUDA
   toolkit and a host compiler supported by that toolkit.
 
-The optional TwoPuncturesC initial-data generator is available only for the
-Z4c synchronized-spacetime configuration. It requires a prebuilt
-TwoPuncturesC installation and GSL, supplied through
-`PANGU_TWOPUNCTURES_ROOT` when `PANGU_ENABLE_TWOPUNCTURES=ON`.
+PANGU provides a native, constraint-solving puncture initial-data generator
+for the Z4c synchronized-spacetime configuration. It supports one or two
+Bowen--York punctures without GSL or an external TwoPuncturesC installation.
+Use `problem_id=nr_puncture`; the legacy `nr_two_punctures` name and parameter
+deck remain accepted for migration.
 
 PANGU does not support in-source builds. Configuration and build artifacts
 must be placed in a separate directory such as `build-serial` or

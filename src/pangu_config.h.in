@@ -16,6 +16,5 @@
 #cmakedefine01 PANGU_ENABLE_OPENMP
 #cmakedefine01 PANGU_ENABLE_CUDA
 #cmakedefine01 PANGU_SINGLE_PRECISION
-#cmakedefine01 PANGU_ENABLE_TWOPUNCTURES
 
 #endif

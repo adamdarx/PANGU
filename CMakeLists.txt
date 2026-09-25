@@ -454,6 +454,9 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
       COMMAND $<TARGET_FILE:pangu_nr7_puncture_interpolation>)
     set_tests_properties(pangu.nr7.puncture_interpolation PROPERTIES
       LABELS "numerical-relativity;nr7;unit;puncture;interpolation")
+    add_test(NAME pangu.nr7.puncture_adm COMMAND $<TARGET_FILE:pangu_nr7_puncture_adm>)
+    set_tests_properties(pangu.nr7.puncture_adm PROPERTIES
+      LABELS "numerical-relativity;nr7;unit;puncture;adm")
     if(PANGU_ENABLE_HDF5)
       add_test(
         NAME pangu.nr6.waveform_multiblock
@@ -466,8 +469,7 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
       set_tests_properties(pangu.nr6.waveform_multiblock PROPERTIES
         LABELS "numerical-relativity;nr6;regression;gpu;weyl;waveform;multi-block"
         TIMEOUT 300)
-      if(PANGU_ENABLE_TWOPUNCTURES)
-        add_test(
+      add_test(
           NAME pangu.nr6.two_punctures
           COMMAND "${Python3_EXECUTABLE}"
                   "${CMAKE_CURRENT_SOURCE_DIR}/tst/regression/nr6_two_punctures_regression.py"
@@ -475,10 +477,9 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
                   --input
                     "${CMAKE_CURRENT_SOURCE_DIR}/tst/input/nr6_two_punctures_initial.in"
                   --workdir "${CMAKE_CURRENT_BINARY_DIR}/nr6-two-punctures")
-        set_tests_properties(pangu.nr6.two_punctures PROPERTIES
-          LABELS "numerical-relativity;nr6;regression;gpu;two-punctures;tracker"
-          TIMEOUT 300)
-      endif()
+      set_tests_properties(pangu.nr6.two_punctures PROPERTIES
+        LABELS "numerical-relativity;nr6;regression;gpu;two-punctures;tracker;native"
+        TIMEOUT 300)
       add_test(
         NAME pangu.nr3.physical_boundary_mask
         COMMAND "${Python3_EXECUTABLE}"

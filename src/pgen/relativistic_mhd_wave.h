@@ -7,6 +7,8 @@
 
 #include <parthenon/parthenon.hpp>
 
+#include "eos/ideal_gas.h"
+
 namespace pangu::pgen {
 
 // Relativistic ideal-MHD eigenmode used by the AthenaK dynamic-GRMHD linear-wave

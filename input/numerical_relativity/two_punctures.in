@@ -1,7 +1,6 @@
-# Constraint-satisfying equal-mass binary black holes from the optional
-# TwoPuncturesC spectral solver. Configure PANGU with
-# -DPHYSICS=gr -DMETRIC=z4c -DMODE=sync -DPANGU_ENABLE_TWOPUNCTURES=ON and
-# point PANGU_TWOPUNCTURES_ROOT at a prebuilt TwoPuncturesC tree.
+# Constraint-satisfying equal-mass binary black holes from PANGU's native
+# puncture elliptic solver. This legacy parameter deck remains supported and
+# requires only -DPHYSICS=gr -DMETRIC=z4c -DMODE=sync.
 
 <parthenon/job>
 problem_id = nr_two_punctures
