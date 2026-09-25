@@ -440,6 +440,9 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
       LABELS "unit;gpu;numerical-relativity;nr6;amr;athenak")
     set_tests_properties(pangu.nr5.boosted_puncture PROPERTIES
       LABELS "numerical-relativity;nr5;unit;gpu;analytic;puncture")
+    add_test(NAME pangu.nr7.bowen_york COMMAND $<TARGET_FILE:pangu_nr7_bowen_york>)
+    set_tests_properties(pangu.nr7.bowen_york PROPERTIES
+      LABELS "numerical-relativity;nr7;unit;gpu;puncture;bowen-york")
     if(PANGU_ENABLE_HDF5)
       add_test(
         NAME pangu.nr6.waveform_multiblock
