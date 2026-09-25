@@ -1391,6 +1391,18 @@ NativePunctureData &GetNativePunctureData(ParameterInput *pin) {
     pin->GetOrAddReal("problem", "TP_Tiny", 0.0);
     pin->GetOrAddReal("problem", "TP_Extend_Radius", 0.0);
     pin->GetOrAddBoolean("problem", "do_residuum_debug_output", false);
+    pin->GetOrAddInteger("problem", "grid_setup_method", 0);
+    pin->GetOrAddBoolean("problem", "solve_momentum_constraint", false);
+    if (data.punctures[1].mass == 0.0 && target_masses[1] == 0.0 &&
+        data.punctures[1].momentum[0] == 0.0 &&
+        data.punctures[1].momentum[1] == 0.0 &&
+        data.punctures[1].momentum[2] == 0.0 &&
+        data.punctures[1].spin[0] == 0.0 &&
+        data.punctures[1].spin[1] == 0.0 &&
+        data.punctures[1].spin[2] == 0.0) {
+      data.punctures.resize(1);
+      target_masses.resize(1);
+    }
   } else {
     for (int puncture = 0; puncture < count; ++puncture) {
       auto &value = data.punctures[puncture];
@@ -1439,14 +1451,6 @@ NativePunctureData &GetNativePunctureData(ParameterInput *pin) {
       legacy ? 2000
              : pin->GetOrAddInteger("problem",
                                     "puncture_maximum_linear_iterations", 800);
-  if (legacy) {
-    PARTHENON_REQUIRE(
-        pin->GetOrAddInteger("problem", "grid_setup_method", 0) == 0,
-        "native puncture compatibility supports grid_setup_method=0");
-    PARTHENON_REQUIRE(
-        !pin->GetOrAddBoolean("problem", "solve_momentum_constraint", false),
-        "Bowen--York data require solve_momentum_constraint=false");
-  }
   if (tune_target_masses) {
     data.solution = nr::puncture::SolveTargetADMMasses(
         data.punctures, target_masses, options, legacy_adm_tolerance, 24);
