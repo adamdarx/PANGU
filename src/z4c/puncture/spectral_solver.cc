@@ -337,11 +337,13 @@ HamiltonianSolution SolveHamiltonianConstraint(const std::vector<Puncture>& punc
       right_hand_side[index] = -residual[index];
     std::vector<double> step;
     int linear_iterations = 0;
-    if (!SolveLinearized(system, solution.regular_correction, right_hand_side,
-                         options.linear_tolerance, options.maximum_linear_iterations, step,
-                         linear_iterations))
-      break;
+    const bool linear_converged =
+        SolveLinearized(system, solution.regular_correction, right_hand_side,
+                        options.linear_tolerance, options.maximum_linear_iterations, step,
+                        linear_iterations);
     solution.linear_iterations += linear_iterations;
+    if (!linear_converged)
+      break;
 
     bool accepted = false;
     double damping = 1.0;
