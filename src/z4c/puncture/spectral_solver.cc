@@ -96,6 +96,26 @@ double CompactifiedSpectralGrid::PhysicalCoordinate(const int i) const {
   return physical_.at(i);
 }
 
+void CompactifiedSpectralGrid::LocalLaplacianCoefficients(
+    const int i, double &lower, double &diagonal, double &upper) const {
+  lower = diagonal = upper = 0.0;
+  if (i <= 0 || i >= points_ - 1) return;
+  const double qm = computational_[i - 1];
+  const double q = computational_[i];
+  const double qp = computational_[i + 1];
+  const double first_m = (q - qp) / ((qm - q) * (qm - qp));
+  const double first_0 = (2.0 * q - qm - qp) / ((q - qm) * (q - qp));
+  const double first_p = (q - qm) / ((qp - qm) * (qp - q));
+  const double second_m = 2.0 / ((qm - q) * (qm - qp));
+  const double second_0 = 2.0 / ((q - qm) * (q - qp));
+  const double second_p = 2.0 / ((qp - qm) * (qp - q));
+  const double first_metric = first_metric_[i];
+  const double second_metric = second_metric_[i];
+  lower = first_metric * first_metric * second_m + second_metric * first_m;
+  diagonal = first_metric * first_metric * second_0 + second_metric * first_0;
+  upper = first_metric * first_metric * second_p + second_metric * first_p;
+}
+
 void CompactifiedSpectralGrid::ApplyLaplacian(const std::vector<double>& input,
                                               std::vector<double>& output) const {
   if (input.size() != size()) throw std::invalid_argument("puncture spectral field has wrong size");
@@ -209,6 +229,120 @@ struct HamiltonianSystem {
   }
 };
 
+void SolveTridiagonal(std::vector<double> &lower, std::vector<double> &diagonal,
+                      std::vector<double> &upper, std::vector<double> &right_hand_side,
+                      std::vector<double> &solution) {
+  const int size = static_cast<int>(diagonal.size());
+  for (int row = 1; row < size; ++row) {
+    const double factor = lower[row] / diagonal[row - 1];
+    diagonal[row] -= factor * upper[row - 1];
+    right_hand_side[row] -= factor * right_hand_side[row - 1];
+  }
+  solution[size - 1] = right_hand_side[size - 1] / diagonal[size - 1];
+  for (int row = size - 2; row >= 0; --row)
+    solution[row] =
+        (right_hand_side[row] - upper[row] * solution[row + 1]) / diagonal[row];
+}
+
+void ApplyLinePreconditioner(const HamiltonianSystem &system,
+                             const std::vector<double> &correction,
+                             const std::vector<double> &right_hand_side,
+                             std::vector<double> &solution) {
+  const int n = system.grid.points();
+  solution.assign(right_hand_side.size(), 0.0);
+  std::vector<double> lower(n), diagonal(n), upper(n), rhs(n), line(n);
+  std::vector<double> local_lower(n), local_diagonal(n), local_upper(n);
+  for (int index = 0; index < n; ++index)
+    system.grid.LocalLaplacianCoefficients(
+        index, local_lower[index], local_diagonal[index], local_upper[index]);
+  std::vector<double> local_potential(right_hand_side.size(), 0.0);
+  for (int k = 1; k < n - 1; ++k)
+    for (int j = 1; j < n - 1; ++j)
+      for (int i = 1; i < n - 1; ++i) {
+        const std::size_t index = system.grid.Index(i, j, k);
+        if (!system.puncture_node[index]) {
+          const double psi = system.singular_psi[index] + correction[index];
+          local_potential[index] =
+              -0.875 * system.extrinsic_squared[index] * std::pow(psi, -8.0);
+        }
+      }
+
+  // Alternating line Gauss--Seidel is deliberately much stronger than point
+  // Jacobi on a compactified spectral grid.  TwoPunctures uses the same idea
+  // for its finite-difference Jacobian preconditioner.
+  constexpr int sweeps = 16;
+  for (int sweep = 0; sweep < sweeps; ++sweep) {
+    for (int k = 1; k < n - 1; ++k)
+      for (int j = 1; j < n - 1; ++j) {
+        std::fill(lower.begin(), lower.end(), 0.0);
+        std::fill(diagonal.begin(), diagonal.end(), 1.0);
+        std::fill(upper.begin(), upper.end(), 0.0);
+        rhs[0] = right_hand_side[system.grid.Index(0, j, k)];
+        rhs[n - 1] = right_hand_side[system.grid.Index(n - 1, j, k)];
+        for (int i = 1; i < n - 1; ++i) {
+          const std::size_t index = system.grid.Index(i, j, k);
+          lower[i] = local_lower[i];
+          upper[i] = local_upper[i];
+          diagonal[i] = local_diagonal[i] + local_diagonal[j] + local_diagonal[k] +
+                        local_potential[index];
+          rhs[i] = right_hand_side[index] -
+                   local_lower[j] * solution[system.grid.Index(i, j - 1, k)] -
+                   local_upper[j] * solution[system.grid.Index(i, j + 1, k)] -
+                   local_lower[k] * solution[system.grid.Index(i, j, k - 1)] -
+                   local_upper[k] * solution[system.grid.Index(i, j, k + 1)];
+        }
+        SolveTridiagonal(lower, diagonal, upper, rhs, line);
+        for (int i = 0; i < n; ++i) solution[system.grid.Index(i, j, k)] = line[i];
+      }
+
+    for (int k = 1; k < n - 1; ++k)
+      for (int i = 1; i < n - 1; ++i) {
+        std::fill(lower.begin(), lower.end(), 0.0);
+        std::fill(diagonal.begin(), diagonal.end(), 1.0);
+        std::fill(upper.begin(), upper.end(), 0.0);
+        rhs[0] = right_hand_side[system.grid.Index(i, 0, k)];
+        rhs[n - 1] = right_hand_side[system.grid.Index(i, n - 1, k)];
+        for (int j = 1; j < n - 1; ++j) {
+          const std::size_t index = system.grid.Index(i, j, k);
+          lower[j] = local_lower[j];
+          upper[j] = local_upper[j];
+          diagonal[j] = local_diagonal[i] + local_diagonal[j] + local_diagonal[k] +
+                        local_potential[index];
+          rhs[j] = right_hand_side[index] -
+                   local_lower[i] * solution[system.grid.Index(i - 1, j, k)] -
+                   local_upper[i] * solution[system.grid.Index(i + 1, j, k)] -
+                   local_lower[k] * solution[system.grid.Index(i, j, k - 1)] -
+                   local_upper[k] * solution[system.grid.Index(i, j, k + 1)];
+        }
+        SolveTridiagonal(lower, diagonal, upper, rhs, line);
+        for (int j = 0; j < n; ++j) solution[system.grid.Index(i, j, k)] = line[j];
+      }
+
+    for (int j = 1; j < n - 1; ++j)
+      for (int i = 1; i < n - 1; ++i) {
+        std::fill(lower.begin(), lower.end(), 0.0);
+        std::fill(diagonal.begin(), diagonal.end(), 1.0);
+        std::fill(upper.begin(), upper.end(), 0.0);
+        rhs[0] = right_hand_side[system.grid.Index(i, j, 0)];
+        rhs[n - 1] = right_hand_side[system.grid.Index(i, j, n - 1)];
+        for (int k = 1; k < n - 1; ++k) {
+          const std::size_t index = system.grid.Index(i, j, k);
+          lower[k] = local_lower[k];
+          upper[k] = local_upper[k];
+          diagonal[k] = local_diagonal[i] + local_diagonal[j] + local_diagonal[k] +
+                        local_potential[index];
+          rhs[k] = right_hand_side[index] -
+                   local_lower[i] * solution[system.grid.Index(i - 1, j, k)] -
+                   local_upper[i] * solution[system.grid.Index(i + 1, j, k)] -
+                   local_lower[j] * solution[system.grid.Index(i, j - 1, k)] -
+                   local_upper[j] * solution[system.grid.Index(i, j + 1, k)];
+        }
+        SolveTridiagonal(lower, diagonal, upper, rhs, line);
+        for (int k = 0; k < n; ++k) solution[system.grid.Index(i, j, k)] = line[k];
+      }
+  }
+}
+
 bool SolveLinearized(const HamiltonianSystem& system, const std::vector<double>& correction,
                      const std::vector<double>& right_hand_side, const double tolerance,
                      const int maximum_iterations, std::vector<double>& solution,
@@ -220,19 +354,6 @@ bool SolveLinearized(const HamiltonianSystem& system, const std::vector<double>&
   std::vector<double> direction(size, 0.0), image(size, 0.0), intermediate(size, 0.0);
   std::vector<double> preconditioned(size, 0.0), preconditioned_intermediate(size, 0.0);
   std::vector<double> image_intermediate(size, 0.0);
-  std::vector<double> inverse_diagonal(size, 1.0);
-  const int n = system.grid.points();
-  for (int k = 0; k < n; ++k)
-    for (int j = 0; j < n; ++j)
-      for (int i = 0; i < n; ++i) {
-        const std::size_t index = system.grid.Index(i, j, k);
-        const double diagonal = system.JacobianDiagonal(correction, i, j, k);
-        if (!(std::abs(diagonal) > std::numeric_limits<double>::min()) ||
-            !std::isfinite(diagonal))
-          return false;
-        inverse_diagonal[index] = 1.0 / diagonal;
-      }
-
   const double target = tolerance * std::max(1.0, InfinityNorm(right_hand_side));
   double rho_previous = 1.0;
   double alpha = 1.0;
@@ -243,8 +364,7 @@ bool SolveLinearized(const HamiltonianSystem& system, const std::vector<double>&
     const double beta = (rho / rho_previous) * (alpha / omega);
     for (std::size_t index = 0; index < size; ++index)
       direction[index] = residual[index] + beta * (direction[index] - omega * image[index]);
-    for (std::size_t index = 0; index < size; ++index)
-      preconditioned[index] = inverse_diagonal[index] * direction[index];
+    ApplyLinePreconditioner(system, correction, direction, preconditioned);
     system.Jacobian(correction, preconditioned, image);
     const double denominator = Dot(shadow, image);
     if (!std::isfinite(denominator) ||
@@ -259,8 +379,8 @@ bool SolveLinearized(const HamiltonianSystem& system, const std::vector<double>&
       ++iterations;
       return true;
     }
-    for (std::size_t index = 0; index < size; ++index)
-      preconditioned_intermediate[index] = inverse_diagonal[index] * intermediate[index];
+    ApplyLinePreconditioner(system, correction, intermediate,
+                            preconditioned_intermediate);
     system.Jacobian(correction, preconditioned_intermediate, image_intermediate);
     const double image_norm = Dot(image_intermediate, image_intermediate);
     if (!std::isfinite(image_norm) || image_norm <= std::numeric_limits<double>::min()) return false;
@@ -337,9 +457,15 @@ HamiltonianSolution SolveHamiltonianConstraint(const std::vector<Puncture>& punc
       right_hand_side[index] = -residual[index];
     std::vector<double> step;
     int linear_iterations = 0;
+    // Use an inexact Newton forcing term.  Solving the early Jacobian systems
+    // to the final nonlinear tolerance wastes Krylov iterations and can cause
+    // stagnation on compactified grids.  Tighten the linear solve naturally as
+    // the nonlinear residual falls, while retaining the requested floor.
+    const double linear_tolerance =
+        std::max(options.linear_tolerance, 1.0e-3 * solution.final_residual);
     const bool linear_converged =
         SolveLinearized(system, solution.regular_correction, right_hand_side,
-                        options.linear_tolerance, options.maximum_linear_iterations, step,
+                        linear_tolerance, options.maximum_linear_iterations, step,
                         linear_iterations);
     solution.linear_iterations += linear_iterations;
     if (!linear_converged)

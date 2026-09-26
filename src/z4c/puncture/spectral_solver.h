@@ -49,6 +49,12 @@ class CompactifiedSpectralGrid {
   double ComputationalCoordinate(int i) const;
   double PhysicalCoordinate(int i) const;
 
+  // Three-point approximation to one Cartesian contribution to the physical
+  // Laplacian, formed in the compactified computational coordinate.  It is
+  // used only as a sparse preconditioner for the spectral operator.
+  void LocalLaplacianCoefficients(int i, double &lower, double &diagonal,
+                                  double &upper) const;
+
   // Apply the flat physical-space Laplacian. At compactified infinity the
   // returned value is the input itself, encoding homogeneous Dirichlet data.
   void ApplyLaplacian(const std::vector<double>& input,

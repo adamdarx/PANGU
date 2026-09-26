@@ -8,11 +8,11 @@
 int main() {
   using namespace pangu::nr::puncture;
   HamiltonianSolveOptions options{};
-  options.grid = SpectralGridOptions{50, 2.0};
+  options.grid = SpectralGridOptions{30, 2.0};
   options.nonlinear_tolerance = 1.0e-10;
   options.linear_tolerance = 1.0e-11;
   options.maximum_newton_iterations = 10;
-  options.maximum_linear_iterations = 2000;
+  options.maximum_linear_iterations = 500;
 
   Puncture stationary{};
   stationary.mass = 1.0;
