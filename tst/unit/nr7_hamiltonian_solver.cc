@@ -8,11 +8,11 @@
 int main() {
   using namespace pangu::nr::puncture;
   HamiltonianSolveOptions options{};
-  options.grid = SpectralGridOptions{24, 2.0};
-  options.nonlinear_tolerance = 1.0e-8;
-  options.linear_tolerance = 1.0e-9;
-  options.maximum_newton_iterations = 20;
-  options.maximum_linear_iterations = 800;
+  options.grid = SpectralGridOptions{50, 2.0};
+  options.nonlinear_tolerance = 1.0e-10;
+  options.linear_tolerance = 1.0e-11;
+  options.maximum_newton_iterations = 10;
+  options.maximum_linear_iterations = 2000;
 
   Puncture stationary{};
   stationary.mass = 1.0;
@@ -24,7 +24,7 @@ int main() {
   }
 
   Puncture spinning = stationary;
-  spinning.spin[2] = 0.05;
+  spinning.spin[2] = 0.5;
   const auto solution = SolveHamiltonianConstraint({spinning}, options);
   const double maximum_correction = *std::max_element(
       solution.regular_correction.begin(), solution.regular_correction.end());

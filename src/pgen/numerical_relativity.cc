@@ -1458,9 +1458,14 @@ NativePunctureData &GetNativePunctureData(ParameterInput *pin) {
     data.solution =
         nr::puncture::SolveHamiltonianConstraint(data.punctures, options);
   }
-  PARTHENON_REQUIRE(
-      data.solution.converged,
-      "native puncture Hamiltonian-constraint solve did not converge");
+  if (!data.solution.converged && Globals::my_rank == 0) {
+    std::cerr << "PANGU native puncture solve failed: residual "
+              << data.solution.initial_residual << " -> " << data.solution.final_residual
+              << ", Newton " << data.solution.newton_iterations << ", linear "
+              << data.solution.linear_iterations << ".\n";
+  }
+  PARTHENON_REQUIRE(data.solution.converged,
+                    "native puncture Hamiltonian-constraint solve did not converge");
   data.interpolator =
       std::make_unique<nr::puncture::SpectralInterpolator>(data.solution);
   if (Globals::my_rank == 0) {
