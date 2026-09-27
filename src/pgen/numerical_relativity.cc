@@ -1350,6 +1350,7 @@ NativePunctureData &GetNativePunctureData(ParameterInput *pin) {
       "native puncture initial data currently supports one or two punctures");
   data.punctures.resize(count);
   bool tune_target_masses = false;
+  pin->GetOrAddBoolean("problem", "do_residuum_debug_output", false);
   std::vector<double> target_masses;
   Real legacy_adm_tolerance = 1.0e-10;
   if (legacy) {
@@ -1390,7 +1391,6 @@ NativePunctureData &GetNativePunctureData(ParameterInput *pin) {
     pin->GetOrAddReal("problem", "TP_epsilon", 0.0);
     pin->GetOrAddReal("problem", "TP_Tiny", 0.0);
     pin->GetOrAddReal("problem", "TP_Extend_Radius", 0.0);
-    pin->GetOrAddBoolean("problem", "do_residuum_debug_output", false);
     pin->GetOrAddInteger("problem", "grid_setup_method", 0);
     pin->GetOrAddBoolean("problem", "solve_momentum_constraint", false);
     if (data.punctures[1].mass == 0.0 && target_masses[1] == 0.0 &&
@@ -1458,23 +1458,10 @@ NativePunctureData &GetNativePunctureData(ParameterInput *pin) {
     data.solution =
         nr::puncture::SolveHamiltonianConstraint(data.punctures, options);
   }
-  if (!data.solution.converged && Globals::my_rank == 0) {
-    std::cerr << "PANGU native puncture solve failed: residual "
-              << data.solution.initial_residual << " -> " << data.solution.final_residual
-              << ", Newton " << data.solution.newton_iterations << ", linear "
-              << data.solution.linear_iterations << ".\n";
-  }
   PARTHENON_REQUIRE(data.solution.converged,
                     "native puncture Hamiltonian-constraint solve did not converge");
   data.interpolator =
       std::make_unique<nr::puncture::SpectralInterpolator>(data.solution);
-  if (Globals::my_rank == 0) {
-    std::cout << "PANGU native puncture data ready: residual "
-              << data.solution.initial_residual << " -> "
-              << data.solution.final_residual << ", Newton "
-              << data.solution.newton_iterations << ", linear "
-              << data.solution.linear_iterations << ".\n";
-  }
   return data;
 }
 
