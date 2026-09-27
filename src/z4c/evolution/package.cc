@@ -771,8 +771,12 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   const int required_ghost_zones = fd::RequiredGhostZones(finite_difference_order);
   PARTHENON_REQUIRE(ghost_zones >= required_ghost_zones,
                     "Z4c finite-difference order requires at least order/2+1 mesh ghost zones");
-  PARTHENON_REQUIRE(!horizon_enabled || ghost_zones == required_ghost_zones,
-                    "fast-flow requires nghost=2,3,4 for finite-difference "
+  // Fast-flow dispatches its interpolation stencil from the finite-difference
+  // order, so additional mesh ghost cells are harmless.  In particular,
+  // Parthenon AMR requires an even ghost width: fourth-order Z4c therefore
+  // uses the three cells needed by the stencil inside an nghost=4 mesh.
+  PARTHENON_REQUIRE(!horizon_enabled || ghost_zones >= required_ghost_zones,
+                    "fast-flow requires at least nghost=2,3,4 for finite-difference "
                     "order=2,4,6 respectively");
   PARTHENON_REQUIRE(!waveform_enabled || ghost_zones >= waveform_interpolation_points / 2,
                     "insufficient ghost zones for waveform interpolation");
