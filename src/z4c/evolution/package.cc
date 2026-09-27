@@ -633,6 +633,12 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       pin->GetOrAddReal("numerical_relativity", "horizon_hmean_limit", 100.0);
   const Real horizon_expand_guess =
       pin->GetOrAddReal("numerical_relativity", "horizon_expand_guess", 1.0);
+  const Real horizon_dt =
+      pin->GetOrAddReal("numerical_relativity", "horizon_dt", 1.0);
+  const Real horizon_max_radius_factor =
+      pin->GetOrAddReal("numerical_relativity", "horizon_max_radius_factor", 4.0);
+  const Real horizon_step_limit =
+      pin->GetOrAddReal("numerical_relativity", "horizon_step_limit", 0.25);
   const std::string diagnostic_directory =
       pin->GetOrAddString("numerical_relativity", "diagnostic_directory", "nr_diagnostics");
   const Real tracker_refinement_radius =
@@ -688,6 +694,8 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   }
   std::vector<Real> horizon_radii;
   std::vector<int> horizon_found(horizon_count, 0);
+  std::vector<Real> horizon_last_search_times(
+      horizon_count, -std::numeric_limits<Real>::max());
   std::vector<int> horizon_tracker_indices;
   std::vector<Real> horizon_centers;
   std::vector<Real> horizon_start_times;
@@ -759,6 +767,10 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
                         horizon_mass_tolerance > 0.0 && horizon_hmean_limit > 0.0 &&
                         horizon_expand_guess > 0.0,
                     "invalid numerical-relativity apparent-horizon controls");
+  PARTHENON_REQUIRE(horizon_dt > 0.0 && horizon_max_radius_factor > 1.0 &&
+                        horizon_step_limit > 0.0,
+                    "horizon_dt, horizon_max_radius_factor, and horizon_step_limit must be "
+                    "positive, with horizon_max_radius_factor greater than one");
   for (int horizon = 0; horizon < horizon_count; ++horizon) {
     PARTHENON_REQUIRE(horizon_radii[horizon] > 0.0,
                       "each apparent-horizon initial radius must be positive");
@@ -816,10 +828,15 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   package->AddParam<Real>("horizon_mass_tolerance", horizon_mass_tolerance);
   package->AddParam<Real>("horizon_hmean_limit", horizon_hmean_limit);
   package->AddParam<Real>("horizon_expand_guess", horizon_expand_guess);
+  package->AddParam<Real>("horizon_dt", horizon_dt);
+  package->AddParam<Real>("horizon_max_radius_factor", horizon_max_radius_factor);
+  package->AddParam<Real>("horizon_step_limit", horizon_step_limit);
   package->AddParam<std::vector<Real>>("horizon_radii", horizon_radii,
                                        parthenon::Params::Mutability::Restart);
   package->AddParam<std::vector<int>>("horizon_found", horizon_found,
                                       parthenon::Params::Mutability::Restart);
+  package->AddParam<std::vector<Real>>("horizon_last_search_times", horizon_last_search_times,
+                                       parthenon::Params::Mutability::Restart);
   package->AddParam<std::vector<int>>("horizon_tracker_indices", horizon_tracker_indices,
                                       parthenon::Params::Mutability::Restart);
   package->AddParam<std::vector<Real>>("horizon_centers", horizon_centers,
