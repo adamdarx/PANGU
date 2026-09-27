@@ -1054,12 +1054,6 @@ HorizonEvaluation EvaluateStarShapedSurface(Mesh* mesh,
   for (std::size_t point = 0; point < points.size(); ++point) {
     const Real owners = global[7 * point + 6];
     if (fabs(owners - 1.0) >= 0.5) {
-      if (parthenon::Globals::my_rank == 0) {
-        std::cerr << "PANGU apparent-horizon search rejected surface point " << point
-                  << ": owners=" << owners << " x=" << points[point].x
-                  << " y=" << points[point].y << " z=" << points[point].z
-                  << " radius=" << points[point].radius << '\n';
-      }
       // A fast-flow trial surface can temporarily leave the leaf mesh when
       // the nonlinear search diverges. This is a failed diagnostic iteration,
       // not a failure of the spacetime evolution. Return the default NaN
@@ -1257,17 +1251,26 @@ void AppendHorizon(Mesh* mesh, const std::shared_ptr<StateDescriptor>& package, 
   const auto wait_for_punctures = package->Param<std::vector<int>>("horizon_wait_for_punctures");
   const auto mass_weighted_center =
       package->Param<std::vector<int>>("horizon_mass_weighted_center");
+  auto* last_search_times =
+      package->MutableParam<std::vector<Real>>("horizon_last_search_times");
   const int horizon_count = package->Param<int>("horizon_count");
   PARTHENON_REQUIRE(horizon >= 0 && horizon < horizon_count &&
                         tracker_indices.size() == static_cast<std::size_t>(horizon_count) &&
                         stored_centers.size() == static_cast<std::size_t>(3 * horizon_count) &&
                         start_times.size() == static_cast<std::size_t>(horizon_count) &&
                         stop_times.size() == static_cast<std::size_t>(horizon_count) &&
+                        last_search_times->size() == static_cast<std::size_t>(horizon_count) &&
                         wait_for_punctures.size() == static_cast<std::size_t>(horizon_count) &&
                         mass_weighted_center.size() == static_cast<std::size_t>(horizon_count),
                     "invalid apparent-horizon index or tracker map");
   if (time < start_times[horizon] || time > stop_times[horizon])
     return;
+  const Real cadence_tolerance =
+      64.0 * std::numeric_limits<Real>::epsilon() * fmax(1.0, fabs(time));
+  if (time + cadence_tolerance <
+      (*last_search_times)[horizon] + package->Param<Real>("horizon_dt"))
+    return;
+  (*last_search_times)[horizon] = time;
   if (wait_for_punctures[horizon] != 0) {
     Real maximum_distance = 0.0;
     Real total_mass = 0.0;
@@ -1312,6 +1315,8 @@ void AppendHorizon(Mesh* mesh, const std::shared_ptr<StateDescriptor>& package, 
   const Real mass_tolerance = package->Param<Real>("horizon_mass_tolerance");
   const Real hmean_limit = package->Param<Real>("horizon_hmean_limit");
   const Real expand_guess = package->Param<Real>("horizon_expand_guess");
+  const Real maximum_radius_factor = package->Param<Real>("horizon_max_radius_factor");
+  const Real step_limit = package->Param<Real>("horizon_step_limit");
   const int flow_flag = package->Param<int>("horizon_flow_flag");
   const bool output_grid = package->Param<bool>("horizon_output_grid");
   const int order = package->Param<int>("finite_difference_order");
@@ -1342,6 +1347,26 @@ void AppendHorizon(Mesh* mesh, const std::shared_ptr<StateDescriptor>& package, 
     const Real mass = tracker_mass[tracker_index];
     initial_radius = fmax(0.5 * mass, fmin(mass, 0.5 * maximum_distance));
   }
+  Real mass_scale = 0.0;
+  if (tracker_index >= 0) {
+    mass_scale = tracker_mass[tracker_index];
+  } else {
+    for (const Real tracker_value : tracker_mass)
+      mass_scale += tracker_value;
+  }
+  Real boundary_radius = std::numeric_limits<Real>::max();
+  const Real mesh_lower[3] = {mesh->mesh_size.xmin(X1DIR), mesh->mesh_size.xmin(X2DIR),
+                              mesh->mesh_size.xmin(X3DIR)};
+  const Real mesh_upper[3] = {mesh->mesh_size.xmax(X1DIR), mesh->mesh_size.xmax(X2DIR),
+                              mesh->mesh_size.xmax(X3DIR)};
+  for (int axis = 0; axis < 3; ++axis)
+    boundary_radius = fmin(boundary_radius,
+                           fmin(center[axis] - mesh_lower[axis], mesh_upper[axis] - center[axis]));
+  const Real allowed_radius =
+      fmin(0.95 * boundary_radius, maximum_radius_factor * mass_scale);
+  if (!(allowed_radius > 1.0e-6) || !std::isfinite(allowed_radius))
+    return;
+  initial_radius = fmin(initial_radius, 0.5 * allowed_radius);
   coefficients[0] = initial_radius * sqrt(4.0 * kPi);
   const auto& angular = GetHorizonAngularData(ntheta, lmax);
   const auto& degrees = angular.degrees;
@@ -1364,6 +1389,7 @@ void AppendHorizon(Mesh* mesh, const std::shared_ptr<StateDescriptor>& package, 
                               return left.radius < right.radius;
                             });
     if (radius_range.first == points.end() || !(radius_range.first->radius > 1.0e-6) ||
+        radius_range.second->radius > allowed_radius ||
         !std::isfinite(radius_range.first->radius) || !std::isfinite(radius_range.second->radius)) {
       valid = false;
       break;
@@ -1400,8 +1426,10 @@ void AppendHorizon(Mesh* mesh, const std::shared_ptr<StateDescriptor>& package, 
       for (std::size_t point = 0; point < points.size(); ++point)
         projection +=
             points[point].weight * result.flow[point] * harmonics[point * modes + mode].value;
-      coefficients[mode] -=
+      const Real proposed =
           flow_a / (1.0 + flow_b * degrees[mode] * (degrees[mode] + 1.0)) * projection;
+      const Real maximum_update = step_limit * initial_radius;
+      coefficients[mode] -= fmax(-maximum_update, fmin(maximum_update, proposed));
     }
   }
   if (valid && found) {
@@ -1534,11 +1562,18 @@ void RunPostStepDiagnostics(Mesh* mesh, const Real time, const int cycle) {
   if (horizon_enabled) {
     const auto start_times = package->Param<std::vector<Real>>("horizon_start_times");
     const auto stop_times = package->Param<std::vector<Real>>("horizon_stop_times");
-    PARTHENON_REQUIRE(start_times.size() == stop_times.size(),
+    const auto last_search_times =
+        package->Param<std::vector<Real>>("horizon_last_search_times");
+    const Real horizon_dt = package->Param<Real>("horizon_dt");
+    PARTHENON_REQUIRE(start_times.size() == stop_times.size() &&
+                          start_times.size() == last_search_times.size(),
                       "invalid apparent-horizon time controls");
-    for (std::size_t horizon = 0; horizon < start_times.size(); ++horizon)
-      horizon_due = horizon_due || (time + tolerance >= start_times[horizon] &&
-                                    time - tolerance <= stop_times[horizon]);
+    for (std::size_t horizon = 0; horizon < start_times.size(); ++horizon) {
+      const bool active = time + tolerance >= start_times[horizon] &&
+                          time - tolerance <= stop_times[horizon];
+      horizon_due = horizon_due ||
+                    (active && time + tolerance >= last_search_times[horizon] + horizon_dt);
+    }
   }
   if (!waveform_due && !horizon_due)
     return;
