@@ -9,32 +9,61 @@ namespace pangu::nr::amr {
 // conserved variables, the differentiable geometric fields must not be
 // prolonged with a slope limiter: doing so inserts first-derivative kinks
 // exactly where the Z4c RHS subsequently takes high-order derivatives.
-inline constexpr parthenon::Real kProlong2[3] = {0.15625, 0.9375, -0.09375};
-inline constexpr parthenon::Real kRestrict2[3] = {0.375, 0.75, -0.125};
-inline constexpr parthenon::Real kProlong4[5] = {
-    -0.02197265625, 0.205078125, 0.9228515625, -0.123046875, 0.01708984375};
-inline constexpr parthenon::Real kRestrict4[5] = {-0.0390625, 0.46875, 0.703125,
-                                                  -0.15625, 0.0234375};
-inline constexpr parthenon::Real kRestrict4Edge[5] = {
-    0.2734375, 1.09375, -0.546875, 0.21875, -0.0390625};
+// Return scalar literals rather than indexing namespace-scope constexpr arrays.
+// nvcc otherwise emits host-only symbols when these functions are instantiated
+// inside Parthenon's device refinement kernels.
+KOKKOS_INLINE_FUNCTION constexpr parthenon::Real ProlongBaseWeight(const int ghost,
+                                                                  const int point) {
+  if (ghost == 2)
+    return point == 0 ? 0.15625 : (point == 1 ? 0.9375 : -0.09375);
+  return point == 0   ? -0.02197265625
+         : point == 1 ? 0.205078125
+         : point == 2 ? 0.9228515625
+         : point == 3 ? -0.123046875
+                      : 0.01708984375;
+}
 
-static_assert(kProlong2[0] + kProlong2[1] + kProlong2[2] == 1.0);
-static_assert(kRestrict2[0] + kRestrict2[1] + kRestrict2[2] == 1.0);
-static_assert(kProlong4[0] + kProlong4[1] + kProlong4[2] + kProlong4[3] +
-                  kProlong4[4] ==
+KOKKOS_INLINE_FUNCTION constexpr parthenon::Real RestrictBaseWeight(const int ghost,
+                                                                   const int point) {
+  if (ghost == 2)
+    return point == 0 ? 0.375 : (point == 1 ? 0.75 : -0.125);
+  return point == 0   ? -0.0390625
+         : point == 1 ? 0.46875
+         : point == 2 ? 0.703125
+         : point == 3 ? -0.15625
+                      : 0.0234375;
+}
+
+KOKKOS_INLINE_FUNCTION constexpr parthenon::Real RestrictEdgeWeight(const int point) {
+  return point == 0   ? 0.2734375
+         : point == 1 ? 1.09375
+         : point == 2 ? -0.546875
+         : point == 3 ? 0.21875
+                      : -0.0390625;
+}
+
+static_assert(ProlongBaseWeight(2, 0) + ProlongBaseWeight(2, 1) +
+                  ProlongBaseWeight(2, 2) ==
               1.0);
-static_assert(kRestrict4[0] + kRestrict4[1] + kRestrict4[2] + kRestrict4[3] +
-                  kRestrict4[4] ==
+static_assert(RestrictBaseWeight(2, 0) + RestrictBaseWeight(2, 1) +
+                  RestrictBaseWeight(2, 2) ==
               1.0);
-static_assert(kRestrict4Edge[0] + kRestrict4Edge[1] + kRestrict4Edge[2] +
-                  kRestrict4Edge[3] + kRestrict4Edge[4] ==
+static_assert(ProlongBaseWeight(4, 0) + ProlongBaseWeight(4, 1) +
+                  ProlongBaseWeight(4, 2) + ProlongBaseWeight(4, 3) +
+                  ProlongBaseWeight(4, 4) ==
+              1.0);
+static_assert(RestrictBaseWeight(4, 0) + RestrictBaseWeight(4, 1) +
+                  RestrictBaseWeight(4, 2) + RestrictBaseWeight(4, 3) +
+                  RestrictBaseWeight(4, 4) ==
+              1.0);
+static_assert(RestrictEdgeWeight(0) + RestrictEdgeWeight(1) + RestrictEdgeWeight(2) +
+                  RestrictEdgeWeight(3) + RestrictEdgeWeight(4) ==
               1.0);
 
 KOKKOS_INLINE_FUNCTION constexpr parthenon::Real
 ProlongWeight(const int ghost, const int point, const int child) {
-  if (ghost == 2)
-    return kProlong2[child == 0 ? point : 2 - point];
-  return kProlong4[child == 0 ? point : 4 - point];
+  const int reflected = child == 0 ? point : ghost - point;
+  return ProlongBaseWeight(ghost, reflected);
 }
 
 struct ProlongateZ4cHighOrder {
@@ -114,12 +143,8 @@ struct RestrictZ4cHighOrder {
                                                        const int point,
                                                        const bool lower_half,
                                                        const bool edge) {
-    if (ghost == 2) {
-      const int index = lower_half ? point : 2 - point;
-      return kRestrict2[index];
-    }
-    const int index = lower_half ? point : 4 - point;
-    return edge ? kRestrict4Edge[index] : kRestrict4[index];
+    const int index = lower_half ? point : ghost - point;
+    return edge ? RestrictEdgeWeight(index) : RestrictBaseWeight(ghost, index);
   }
 
   template <int DIM,
