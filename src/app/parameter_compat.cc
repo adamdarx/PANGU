@@ -184,7 +184,6 @@ const std::map<std::string, std::set<std::string>> kPanguSchema{
       "tracker_enabled",
       "tracker_count",
       "tracker_refinement_radius",
-      "tracker_max_speed",
       "tracker_center_x1",
       "tracker_center_x2",
       "tracker_center_x3",

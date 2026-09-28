@@ -643,8 +643,6 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       pin->GetOrAddString("numerical_relativity", "diagnostic_directory", "nr_diagnostics");
   const Real tracker_refinement_radius =
       pin->GetOrAddReal("numerical_relativity", "tracker_refinement_radius", -1.0);
-  const Real tracker_max_speed =
-      pin->GetOrAddReal("numerical_relativity", "tracker_max_speed", 2.0);
   const Real tracker_center_x1 =
       pin->GetOrAddReal("numerical_relativity", "tracker_center_x1", 0.0);
   const Real tracker_center_x2 =
@@ -653,8 +651,6 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       pin->GetOrAddReal("numerical_relativity", "tracker_center_x3", 0.0);
   PARTHENON_REQUIRE(tracker_count >= 1 && tracker_count <= 4,
                     "numerical_relativity/tracker_count must be in [1,4]");
-  PARTHENON_REQUIRE(tracker_max_speed > 0.0,
-                    "numerical_relativity/tracker_max_speed must be positive");
   PARTHENON_REQUIRE((horizon_enabled && horizon_count >= 1 && horizon_count <= 4) ||
                         (!horizon_enabled && horizon_count == 0),
                     "horizon_count must be in [1,4] when enabled and zero when disabled");
@@ -854,7 +850,6 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       pin->GetOrAddReal("numerical_relativity", "horizon_merger_distance", 0.1));
   package->AddParam<std::string>("diagnostic_directory", diagnostic_directory);
   package->AddParam<Real>("tracker_refinement_radius", tracker_refinement_radius);
-  package->AddParam<Real>("tracker_max_speed", tracker_max_speed);
   package->AddParam<Real>("tracker_center_x1", tracker_center_x1);
   package->AddParam<Real>("tracker_center_x2", tracker_center_x2);
   package->AddParam<Real>("tracker_center_x3", tracker_center_x3);
@@ -1031,39 +1026,6 @@ void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
                         velocity->size() == position->size(),
                     "NR puncture tracker state has an invalid size");
 
-  // Once a common horizon has been accepted, separate puncture coordinates
-  // cease to be useful AMR centers and can become ill-conditioned in the
-  // post-merger gauge. Collapse all tracker balls onto their mass-weighted
-  // center and keep them there for the rest of the evolution.
-  if (package->Param<bool>("horizon_enabled")) {
-    const auto& horizon_found = package->Param<std::vector<int>>("horizon_found");
-    const auto& horizon_trackers =
-        package->Param<std::vector<int>>("horizon_tracker_indices");
-    bool common_horizon_found = false;
-    for (std::size_t horizon = 0; horizon < horizon_found.size(); ++horizon)
-      common_horizon_found = common_horizon_found ||
-                             (horizon_found[horizon] != 0 && horizon_trackers[horizon] < 0);
-    if (common_horizon_found) {
-      const auto& masses = package->Param<std::vector<Real>>("tracker_mass");
-      Real total_mass = 0.0;
-      Real center[3]{};
-      for (int tracker = 0; tracker < tracker_count; ++tracker) {
-        total_mass += masses[tracker];
-        for (int axis = 0; axis < 3; ++axis)
-          center[axis] += masses[tracker] * (*position)[3 * tracker + axis];
-      }
-      PARTHENON_REQUIRE(total_mass > 0.0, "cannot merge zero-mass puncture trackers");
-      for (int tracker = 0; tracker < tracker_count; ++tracker) {
-        for (int axis = 0; axis < 3; ++axis) {
-          (*position)[3 * tracker + axis] = center[axis] / total_mass;
-          (*velocity)[3 * tracker + axis] = 0.0;
-        }
-      }
-      return;
-    }
-  }
-  const Real maximum_speed = package->Param<Real>("tracker_max_speed");
-
   // Match AthenaK's ODE tracker: interpolate beta^i with a tensor-product
   // Lagrange stencil containing twice the configured number of ghost cells,
   // then advance dx^i/dt=-beta^i once after the complete RK step. Each compact
@@ -1155,32 +1117,11 @@ void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
     for (int component = 0; component < 4; ++component)
       global_state[component] = local_state[component];
 #endif
-    // A tracker can transiently lose its leaf owner during regridding or when
-    // the two moving-puncture coordinates become singular at merger. Tracker
-    // loss is not a failure of the evolved spacetime: retain the last valid
-    // center so AMR remains anchored and allow the common-horizon finder to
-    // transition the run to the merged state.
-    if (!(global_state[3] > 0.5)) {
-      for (int axis = 0; axis < 3; ++axis)
-        (*velocity)[offset + axis] = 0.0;
-      continue;
-    }
-    Real candidate_velocity[3]{};
-    Real speed_squared = 0.0;
-    bool finite = true;
+    PARTHENON_REQUIRE(global_state[3] > 0.5,
+                      "NR puncture tracker could not find a compact object on the mesh");
     for (int axis = 0; axis < 3; ++axis) {
-      candidate_velocity[axis] = global_state[axis] / global_state[3];
-      finite = finite && std::isfinite(candidate_velocity[axis]);
-      speed_squared += candidate_velocity[axis] * candidate_velocity[axis];
-    }
-    if (!finite || !(speed_squared <= maximum_speed * maximum_speed)) {
-      for (int axis = 0; axis < 3; ++axis)
-        (*velocity)[offset + axis] = 0.0;
-      continue;
-    }
-    for (int axis = 0; axis < 3; ++axis) {
-      (*velocity)[offset + axis] = candidate_velocity[axis];
-      (*position)[offset + axis] += dt * candidate_velocity[axis];
+      (*velocity)[offset + axis] = global_state[axis] / global_state[3];
+      (*position)[offset + axis] += dt * (*velocity)[offset + axis];
     }
   }
 }
