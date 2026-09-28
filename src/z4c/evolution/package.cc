@@ -147,7 +147,7 @@ std::vector<Real> ConstraintMaskHistoryMesh(MeshData<Real>* data) {
   return {counts[0], counts[1]};
 }
 
-// Record every ODE tracker as (x,y,z,vx,vy,vz). Only rank zero contributes to
+// Record every compact-object tracker as (x,y,z,vx,vy,vz). Only rank zero contributes to
 // Parthenon's subsequent history sum reduction, so MPI does not multiply the
 // replicated package parameters.
 std::vector<Real> PunctureTrackerHistoryMesh(MeshData<Real>* data) {
@@ -1016,7 +1016,7 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   return package;
 }
 
-void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
+void AdvancePunctureTracker(Mesh* mesh) {
   const auto package = mesh->packages.Get("numerical_relativity");
   if (!package->Param<bool>("tracker_enabled"))
     return;
@@ -1027,10 +1027,11 @@ void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
                         velocity->size() == position->size(),
                     "NR puncture tracker state has an invalid size");
 
-  // Match AthenaK's ODE tracker: interpolate beta^i with a tensor-product
-  // Lagrange stencil containing twice the configured number of ghost cells,
-  // then advance dx^i/dt=-beta^i once after the complete RK step. Each compact
-  // object is located and reduced independently.
+  // Match AthenaK's walk tracker.  At the end of each complete RK step, move
+  // each compact-object center to the minimum lapse in the 3x3x3 neighborhood
+  // surrounding its nearest cell center.  Unlike the ODE tracker, this remains
+  // well defined when the shift becomes too steep to interpolate reliably at
+  // an under-resolved puncture.
   for (int tracker = 0; tracker < tracker_count; ++tracker) {
     const int offset = 3 * tracker;
     std::shared_ptr<MeshBlock> owner;
@@ -1048,13 +1049,8 @@ void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
       }
     }
 
-    Real local_state[4]{};
+    Real local_state[7]{};
     if (owner) {
-      const int nghost = parthenon::Globals::nghost;
-      const int points = 2 * nghost;
-      constexpr int kMaximumPoints = 16;
-      PARTHENON_REQUIRE(points <= kMaximumPoints,
-                        "NR puncture tracker supports at most eight ghost zones");
       const auto data = owner->meshblock_data.Get();
       const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
       const auto ib = owner->cellbounds.GetBoundsI(IndexDomain::interior);
@@ -1066,6 +1062,11 @@ void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
                           (size.xmax(X3DIR) - size.xmin(X3DIR)) / size.nx(X3DIR)};
       const Real xmin[3] = {size.xmin(X1DIR), size.xmin(X2DIR), size.xmin(X3DIR)};
       const int interior_start[3] = {ib.s, jb.s, kb.s};
+      const int nghost = parthenon::Globals::nghost;
+      const int points = 2 * nghost;
+      constexpr int kMaximumPoints = 16;
+      PARTHENON_REQUIRE(points <= kMaximumPoints,
+                        "NR puncture tracker supports at most eight ghost zones");
       int nearest_left[3]{};
       Kokkos::Array<Real, 3 * kMaximumPoints> weights{};
       for (int direction = 0; direction < 3; ++direction) {
@@ -1092,7 +1093,7 @@ void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
       const int first_k = interior_start[2] + nearest_left[2] - nghost + 1;
       Kokkos::View<Real[3]> interpolated("NR puncture tracker velocity");
       Kokkos::parallel_for(
-          "PANGU NR puncture tracker interpolation",
+          "PANGU NR puncture tracker shift interpolation",
           Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 3), KOKKOS_LAMBDA(const int axis) {
             Real value = 0.0;
             for (int pk = 0; pk < points; ++pk)
@@ -1104,25 +1105,57 @@ void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
                                first_i + pi);
             interpolated(axis) = -value;
           });
-      const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), interpolated);
+      const auto interpolated_host =
+          Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), interpolated);
       for (int axis = 0; axis < 3; ++axis)
-        local_state[axis] = host(axis);
-      local_state[3] = 1.0;
+        local_state[3 + axis] = interpolated_host(axis);
+
+      int nearest[3]{};
+      for (int direction = 0; direction < 3; ++direction) {
+        nearest[direction] = static_cast<int>(
+            round(((*position)[offset + direction] - (xmin[direction] + 0.5 * dx[direction])) /
+                  dx[direction]));
+      }
+      const int center_i = interior_start[0] + nearest[0];
+      const int center_j = interior_start[1] + nearest[1];
+      const int center_k = interior_start[2] + nearest[2];
+      Kokkos::View<Real[27]> lapse("NR puncture tracker lapse neighborhood");
+      Kokkos::parallel_for(
+          "PANGU NR puncture tracker lapse walk",
+          Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 27), KOKKOS_LAMBDA(const int index) {
+            const int dk = index / 9;
+            const int dj = (index - 9 * dk) / 3;
+            const int di = index - 9 * dk - 3 * dj;
+            lapse(index) = z4c(Index(Z4cComponent::alpha), center_k + dk - 1,
+                                center_j + dj - 1, center_i + di - 1);
+          });
+      const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), lapse);
+      int minimum = 0;
+      for (int index = 1; index < 27; ++index)
+        if (host(index) < host(minimum))
+          minimum = index;
+      const int minimum_k = minimum / 9;
+      const int minimum_j = (minimum - 9 * minimum_k) / 3;
+      const int minimum_i = minimum - 9 * minimum_k - 3 * minimum_j;
+      local_state[0] = xmin[0] + (nearest[0] + minimum_i - 1 + 0.5) * dx[0];
+      local_state[1] = xmin[1] + (nearest[1] + minimum_j - 1 + 0.5) * dx[1];
+      local_state[2] = xmin[2] + (nearest[2] + minimum_k - 1 + 0.5) * dx[2];
+      local_state[6] = 1.0;
     }
 
-    Real global_state[4]{};
+    Real global_state[7]{};
 #ifdef MPI_PARALLEL
     PARTHENON_MPI_CHECK(
-        MPI_Allreduce(local_state, global_state, 4, MPI_PARTHENON_REAL, MPI_SUM, MPI_COMM_WORLD));
+        MPI_Allreduce(local_state, global_state, 7, MPI_PARTHENON_REAL, MPI_SUM, MPI_COMM_WORLD));
 #else
-    for (int component = 0; component < 4; ++component)
+    for (int component = 0; component < 7; ++component)
       global_state[component] = local_state[component];
 #endif
-    PARTHENON_REQUIRE(global_state[3] > 0.5,
+    PARTHENON_REQUIRE(global_state[6] > 0.5,
                       "NR puncture tracker could not find a compact object on the mesh");
     for (int axis = 0; axis < 3; ++axis) {
-      (*velocity)[offset + axis] = global_state[axis] / global_state[3];
-      (*position)[offset + axis] += dt * (*velocity)[offset + axis];
+      (*position)[offset + axis] = global_state[axis] / global_state[6];
+      (*velocity)[offset + axis] = global_state[3 + axis] / global_state[6];
     }
   }
 }

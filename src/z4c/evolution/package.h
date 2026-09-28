@@ -55,8 +55,8 @@ parthenon::Real EstimateTimestepMesh(parthenon::MeshData<parthenon::Real>* data)
 parthenon::TaskStatus ApplyPackedSyncOutflowBoundariesMeshTask(
     std::shared_ptr<parthenon::MeshData<parthenon::Real>>& data, bool coarse);
 
-// Advance the compact-object ODE tracker once after a complete RK step.
-void AdvancePunctureTracker(parthenon::Mesh* mesh, parthenon::Real dt);
+// Advance the compact-object lapse-minimum tracker after a complete RK step.
+void AdvancePunctureTracker(parthenon::Mesh* mesh);
 
 // Wave extraction and apparent-horizon diagnostics are evaluated only after a
 // complete RK step, when ADM and Weyl derived fields represent one time level.
