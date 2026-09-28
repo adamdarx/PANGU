@@ -9,63 +9,6 @@ namespace pangu::nr::amr {
 // conserved variables, the differentiable geometric fields must not be
 // prolonged with a slope limiter: doing so inserts first-derivative kinks
 // exactly where the Z4c RHS subsequently takes high-order derivatives.
-// Return scalar literals rather than indexing namespace-scope constexpr arrays.
-// nvcc otherwise emits host-only symbols when these functions are instantiated
-// inside Parthenon's device refinement kernels.
-KOKKOS_INLINE_FUNCTION constexpr parthenon::Real ProlongBaseWeight(const int ghost,
-                                                                  const int point) {
-  if (ghost == 2)
-    return point == 0 ? 0.15625 : (point == 1 ? 0.9375 : -0.09375);
-  return point == 0   ? -0.02197265625
-         : point == 1 ? 0.205078125
-         : point == 2 ? 0.9228515625
-         : point == 3 ? -0.123046875
-                      : 0.01708984375;
-}
-
-KOKKOS_INLINE_FUNCTION constexpr parthenon::Real RestrictBaseWeight(const int ghost,
-                                                                   const int point) {
-  if (ghost == 2)
-    return point == 0 ? 0.375 : (point == 1 ? 0.75 : -0.125);
-  return point == 0   ? -0.0390625
-         : point == 1 ? 0.46875
-         : point == 2 ? 0.703125
-         : point == 3 ? -0.15625
-                      : 0.0234375;
-}
-
-KOKKOS_INLINE_FUNCTION constexpr parthenon::Real RestrictEdgeWeight(const int point) {
-  return point == 0   ? 0.2734375
-         : point == 1 ? 1.09375
-         : point == 2 ? -0.546875
-         : point == 3 ? 0.21875
-                      : -0.0390625;
-}
-
-static_assert(ProlongBaseWeight(2, 0) + ProlongBaseWeight(2, 1) +
-                  ProlongBaseWeight(2, 2) ==
-              1.0);
-static_assert(RestrictBaseWeight(2, 0) + RestrictBaseWeight(2, 1) +
-                  RestrictBaseWeight(2, 2) ==
-              1.0);
-static_assert(ProlongBaseWeight(4, 0) + ProlongBaseWeight(4, 1) +
-                  ProlongBaseWeight(4, 2) + ProlongBaseWeight(4, 3) +
-                  ProlongBaseWeight(4, 4) ==
-              1.0);
-static_assert(RestrictBaseWeight(4, 0) + RestrictBaseWeight(4, 1) +
-                  RestrictBaseWeight(4, 2) + RestrictBaseWeight(4, 3) +
-                  RestrictBaseWeight(4, 4) ==
-              1.0);
-static_assert(RestrictEdgeWeight(0) + RestrictEdgeWeight(1) + RestrictEdgeWeight(2) +
-                  RestrictEdgeWeight(3) + RestrictEdgeWeight(4) ==
-              1.0);
-
-KOKKOS_INLINE_FUNCTION constexpr parthenon::Real
-ProlongWeight(const int ghost, const int point, const int child) {
-  const int reflected = child == 0 ? point : ghost - point;
-  return ProlongBaseWeight(ghost, reflected);
-}
-
 struct ProlongateZ4cHighOrder {
   static constexpr bool
   OperationRequired(parthenon::TopologicalElement fine,
@@ -101,6 +44,18 @@ struct ProlongateZ4cHighOrder {
     const int ghost = ib.s;
     const int points = ghost == 2 ? 3 : 5;
     const int radius = ghost / 2;
+    parthenon::Real weights[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+    if (ghost == 2) {
+      weights[0] = 0.15625;
+      weights[1] = 0.9375;
+      weights[2] = -0.09375;
+    } else {
+      weights[0] = -0.02197265625;
+      weights[1] = 0.205078125;
+      weights[2] = 0.9228515625;
+      weights[3] = -0.123046875;
+      weights[4] = 0.01708984375;
+    }
 
     for (int child_k = 0; child_k < (DIM > 2 ? 2 : 1); ++child_k) {
       for (int child_j = 0; child_j < (DIM > 1 ? 2 : 1); ++child_j) {
@@ -108,13 +63,13 @@ struct ProlongateZ4cHighOrder {
           parthenon::Real value = 0.0;
           for (int pk = 0; pk < (DIM > 2 ? points : 1); ++pk) {
             const parthenon::Real wk =
-                DIM > 2 ? ProlongWeight(ghost, pk, child_k) : 1.0;
+                DIM > 2 ? weights[child_k == 0 ? pk : ghost - pk] : 1.0;
             for (int pj = 0; pj < (DIM > 1 ? points : 1); ++pj) {
               const parthenon::Real wj =
-                  DIM > 1 ? ProlongWeight(ghost, pj, child_j) : 1.0;
+                  DIM > 1 ? weights[child_j == 0 ? pj : ghost - pj] : 1.0;
               for (int pi = 0; pi < (DIM > 0 ? points : 1); ++pi) {
                 const parthenon::Real wi =
-                    DIM > 0 ? ProlongWeight(ghost, pi, child_i) : 1.0;
+                    DIM > 0 ? weights[child_i == 0 ? pi : ghost - pi] : 1.0;
                 value +=
                     wk * wj * wi *
                     coarse(element, l, m, n, k - (DIM > 2 ? radius : 0) + pk,
@@ -139,14 +94,6 @@ struct RestrictZ4cHighOrder {
            coarse == parthenon::TopologicalElement::CC;
   }
 
-  KOKKOS_INLINE_FUNCTION static parthenon::Real Weight(const int ghost,
-                                                       const int point,
-                                                       const bool lower_half,
-                                                       const bool edge) {
-    const int index = lower_half ? point : ghost - point;
-    return edge ? RestrictEdgeWeight(index) : RestrictBaseWeight(ghost, index);
-  }
-
   template <int DIM,
             parthenon::TopologicalElement fine_element =
                 parthenon::TopologicalElement::CC,
@@ -157,8 +104,8 @@ struct RestrictZ4cHighOrder {
      const int ci, const parthenon::IndexRange &ckb,
      const parthenon::IndexRange &cjb, const parthenon::IndexRange &cib,
      const parthenon::IndexRange &kb, const parthenon::IndexRange &jb,
-     const parthenon::IndexRange &ib, const parthenon::Coordinates_t &,
-     const parthenon::Coordinates_t &,
+     const parthenon::IndexRange &ib, const parthenon::Coordinates_t &coords,
+     const parthenon::Coordinates_t &coarse_coords,
      const parthenon::ParArrayND<parthenon::Real, parthenon::VariableState>
          *coarse_ptr,
      const parthenon::ParArrayND<parthenon::Real, parthenon::VariableState>
@@ -173,6 +120,24 @@ struct RestrictZ4cHighOrder {
     const int fk = (DIM > 2) ? (ck - ckb.s) * 2 + kb.s : kb.s;
     const int ghost = ib.s;
     const int points = ghost == 2 ? 3 : 5;
+    parthenon::Real weights[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+    parthenon::Real edge_weights[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+    if (ghost == 2) {
+      weights[0] = 0.375;
+      weights[1] = 0.75;
+      weights[2] = -0.125;
+    } else {
+      weights[0] = -0.0390625;
+      weights[1] = 0.46875;
+      weights[2] = 0.703125;
+      weights[3] = -0.15625;
+      weights[4] = 0.0234375;
+      edge_weights[0] = 0.2734375;
+      edge_weights[1] = 1.09375;
+      edge_weights[2] = -0.546875;
+      edge_weights[3] = 0.21875;
+      edge_weights[4] = -0.0390625;
+    }
     const bool lower_i = fi < ib.s + (ib.e - ib.s + 1) / 2;
     const bool lower_j = fj < jb.s + (jb.e - jb.s + 1) / 2;
     const bool lower_k = fk < kb.s + (kb.e - kb.s + 1) / 2;
@@ -213,16 +178,42 @@ struct RestrictZ4cHighOrder {
       }
     }
 
+    // Parthenon's restriction index space includes the outer half of the coarse
+    // ghost region.  For nghost=4 those points map to fi=0 (or the symmetric
+    // upper point), where AthenaK's five-point stencil would start at -1 (or
+    // finish one past the allocation).  Use the ordinary two-cell restriction
+    // only for such points; all locations with a complete stencil retain the
+    // AthenaK high-order operator.
+    const bool high_i = DIM == 0 || (ref_i >= 0 && ref_i + points <= fine.GetDim(1));
+    const bool high_j = DIM <= 1 || (ref_j >= 0 && ref_j + points <= fine.GetDim(2));
+    const bool high_k = DIM <= 2 || (ref_k >= 0 && ref_k + points <= fine.GetDim(3));
+    if (!(high_i && high_j && high_k)) {
+      parthenon::refinement_ops::RestrictAverage::template Do<
+          DIM, fine_element, parthenon::TopologicalElement::CC>(
+          l, m, n, ck, cj, ci, ckb, cjb, cib, kb, jb, ib, coords,
+          coarse_coords, coarse_ptr, fine_ptr);
+      return;
+    }
+
     parthenon::Real value = 0.0;
     for (int pk = 0; pk < (DIM > 2 ? points : 1); ++pk) {
-      const parthenon::Real wk =
-          DIM > 2 ? Weight(ghost, pk, lower_k, edge_k) : 1.0;
+      const int weight_k = lower_k ? pk : ghost - pk;
+      const parthenon::Real wk = DIM > 2
+                                      ? (edge_k && ghost == 4 ? edge_weights[weight_k]
+                                                               : weights[weight_k])
+                                      : 1.0;
       for (int pj = 0; pj < (DIM > 1 ? points : 1); ++pj) {
-        const parthenon::Real wj =
-            DIM > 1 ? Weight(ghost, pj, lower_j, edge_j) : 1.0;
+        const int weight_j = lower_j ? pj : ghost - pj;
+        const parthenon::Real wj = DIM > 1
+                                        ? (edge_j && ghost == 4 ? edge_weights[weight_j]
+                                                                 : weights[weight_j])
+                                        : 1.0;
         for (int pi = 0; pi < (DIM > 0 ? points : 1); ++pi) {
-          const parthenon::Real wi =
-              DIM > 0 ? Weight(ghost, pi, lower_i, edge_i) : 1.0;
+          const int weight_i = lower_i ? pi : ghost - pi;
+          const parthenon::Real wi = DIM > 0
+                                          ? (edge_i && ghost == 4 ? edge_weights[weight_i]
+                                                                   : weights[weight_i])
+                                          : 1.0;
           value += wk * wj * wi *
                    fine(element, l, m, n, ref_k + pk, ref_j + pj, ref_i + pi);
         }
