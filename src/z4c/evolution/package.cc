@@ -1,4 +1,5 @@
 #include "z4c/evolution/package.h"
+#include "z4c/evolution/amr_refinement.h"
 #include "z4c/evolution/tasks.h"
 
 #include <algorithm>
@@ -920,8 +921,8 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
 
   Metadata evolved({Metadata::Cell, Metadata::Independent, Metadata::FillGhost, Metadata::Restart},
                    std::vector<int>{kZ4cComponents});
-  evolved.RegisterRefinementOps<parthenon::refinement_ops::ProlongateSharedMinMod,
-                                parthenon::refinement_ops::RestrictAverage>();
+  evolved.RegisterRefinementOps<amr::ProlongateZ4cHighOrder,
+                                amr::RestrictZ4cHighOrder>();
   // ADM, matter-source, constraint, and Weyl fields are reconstructed only
   // after all consumers of the preceding RK stage have completed.  AthenaK
   // therefore stores one copy of each; retaining a copy in every Parthenon

@@ -142,6 +142,7 @@ if(PHYSICS STREQUAL "gr" AND METRIC STREQUAL "z4c" AND MODE STREQUAL "sync")
     z4c/puncture/initializer.cc
     z4c/diagnostics/weyl.h
     z4c/evolution/z4c_rhs.h
+    z4c/evolution/amr_refinement.h
     pgen/numerical_relativity.cc
     pgen/numerical_relativity.h)
 endif()
