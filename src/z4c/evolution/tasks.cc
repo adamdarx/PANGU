@@ -244,14 +244,11 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
                   parthenon::BValOnMDFunc_t(ApplyPackedSyncOutflowBoundariesMeshTask))
             : parthenon::AddBoundaryExchangeTasks(boundary_dependency, tasks, next,
                                                   mesh->multilevel);
-    auto projected = boundaries;
-    // AthenaK projects the Z4c algebraic constraints after every RK stage
-    // when dynamical matter is present, because the next-stage C2P and
-    // stress-energy construction immediately consume the reconstructed ADM
-    // fields.  Vacuum Z4c retains its reference behavior of projecting only
-    // after the final stage.
-    if (sync_matter || stage == integrator->nstages)
-      projected = tasks.AddTask(boundaries, EnforceAlgebraicConstraintsMeshTask, next.get());
+    // AthenaK projects det(g_tilde)=1 and tr(A_tilde)=0 after boundary
+    // exchange at every RK stage, before the projected state is consumed by
+    // either the next vacuum RHS or the matter/ADM conversion path.
+    const auto projected =
+        tasks.AddTask(boundaries, EnforceAlgebraicConstraintsMeshTask, next.get());
     const Real next_stage_time =
         stage < integrator->nstages ? tm.time + integrator->c[stage] * dt : tm.time + dt;
     TaskID ready = projected;

@@ -123,14 +123,28 @@ def main() -> int:
     tracker = history[-1, tracker_columns]
     position_0, velocity_0 = tracker[:3], tracker[3:6]
     position_1, velocity_1 = tracker[6:9], tracker[9:12]
+    # AthenaK's walk tracker resolves an exactly cell-face-centered symmetry
+    # plane by taking the first equal-lapse cell in k,j,i order.  Both holes
+    # therefore occupy the same adjacent z cell, while x and y retain their
+    # inversion symmetry.
     symmetry_error = float(
         max(
-            np.max(np.abs(position_0 + position_1)),
+            np.max(np.abs(position_0[:2] + position_1[:2])),
+            abs(position_0[2] - position_1[2]),
             np.max(np.abs(velocity_0 + velocity_1)),
         )
     )
     if symmetry_error > 2.0e-12:
         raise RuntimeError(f"two-tracker inversion symmetry error {symmetry_error:.17g}")
+    with h5py.File(final_paths[0], "r") as stream:
+        centers = np.asarray(stream["VolumeLocations/x"], dtype=np.float64)
+    finest_dx = float(np.min(np.diff(centers, axis=1)))
+    plane_offset = float(max(abs(position_0[2]), abs(position_1[2])))
+    if plane_offset > 0.5 * finest_dx + 2.0e-12:
+        raise RuntimeError(
+            f"walk tracker left the symmetry-plane-adjacent cell: "
+            f"offset={plane_offset:.17g}, dx={finest_dx:.17g}"
+        )
 
     restart_paths = sorted(workdir.glob("*.out3.final.rhdf"))
     if len(restart_paths) != 1:
