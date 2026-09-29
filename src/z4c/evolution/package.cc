@@ -1130,16 +1130,25 @@ void AdvancePunctureTracker(Mesh* mesh) {
                                 center_j + dj - 1, center_i + di - 1);
           });
       const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), lapse);
-      int minimum = 0;
-      for (int index = 1; index < 27; ++index)
-        if (host(index) < host(minimum))
+      int minimum = -1;
+      Real minimum_lapse = std::numeric_limits<Real>::max();
+      for (int index = 0; index < 27; ++index) {
+        if (host(index) < minimum_lapse) {
           minimum = index;
-      const int minimum_k = minimum / 9;
-      const int minimum_j = (minimum - 9 * minimum_k) / 3;
-      const int minimum_i = minimum - 9 * minimum_k - 3 * minimum_j;
-      local_state[0] = xmin[0] + (nearest[0] + minimum_i - 1 + 0.5) * dx[0];
-      local_state[1] = xmin[1] + (nearest[1] + minimum_j - 1 + 0.5) * dx[1];
-      local_state[2] = xmin[2] + (nearest[2] + minimum_k - 1 + 0.5) * dx[2];
+          minimum_lapse = host(index);
+        }
+      }
+      if (minimum >= 0) {
+        const int minimum_k = minimum / 9;
+        const int minimum_j = (minimum - 9 * minimum_k) / 3;
+        const int minimum_i = minimum - 9 * minimum_k - 3 * minimum_j;
+        local_state[0] = xmin[0] + (nearest[0] + minimum_i - 1 + 0.5) * dx[0];
+        local_state[1] = xmin[1] + (nearest[1] + minimum_j - 1 + 0.5) * dx[1];
+        local_state[2] = xmin[2] + (nearest[2] + minimum_k - 1 + 0.5) * dx[2];
+      } else {
+        for (int axis = 0; axis < 3; ++axis)
+          local_state[axis] = (*position)[offset + axis];
+      }
       local_state[6] = 1.0;
     }
 
