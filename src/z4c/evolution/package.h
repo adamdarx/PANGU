@@ -31,9 +31,7 @@ parthenon::TaskStatus BuildStressEnergyMeshTask(parthenon::MeshData<parthenon::R
                                                 parthenon::Real time);
 
 parthenon::TaskStatus CalculateRHSMeshTask(parthenon::MeshData<parthenon::Real>* current,
-                                           parthenon::Real time,
-                                           parthenon::MeshData<parthenon::Real>* accumulator,
-                                           parthenon::Real delta, bool initialize);
+                                           parthenon::Real time);
 parthenon::TaskStatus ApplySommerfeldRHSMeshTask(parthenon::MeshData<parthenon::Real>* current);
 parthenon::TaskStatus RKUpdateMeshTask(parthenon::MeshData<parthenon::Real>* current,
                                       parthenon::MeshData<parthenon::Real>* base,

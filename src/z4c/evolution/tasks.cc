@@ -225,9 +225,15 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     if (sync_matter)
       carried =
           tasks.AddTask(current_ready, CarrySyncStageStateMeshTask, current.get(), next.get());
-    const auto rhs = tasks.AddTask(
-        matter, CalculateRHSMeshTask, current.get(), tm.time,
-        accumulator ? accumulator.get() : current.get(), integrator->delta[stage - 1], stage == 1);
+    // Keep the low-storage accumulation out of the already register-heavy RHS
+    // kernel.  This mirrors AthenaK's CopyU -> CalcRHS graph and avoids extending
+    // the live range of the 22-component accumulator through the RHS evaluation.
+    const auto rk_accumulated =
+        accumulator ? tasks.AddTask(matter, AccumulateRKStateMeshTask, current.get(),
+                                    accumulator.get(), integrator->delta[stage - 1], stage == 1)
+                    : matter;
+    const auto rhs =
+        tasks.AddTask(rk_accumulated, CalculateRHSMeshTask, current.get(), tm.time);
     const auto boundary_rhs =
         tasks.AddTask(rhs, ApplySommerfeldRHSMeshTask, current.get());
     auto update = tasks.AddTask(boundary_rhs | carried, RKUpdateMeshTask, current.get(),
