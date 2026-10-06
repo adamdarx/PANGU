@@ -50,6 +50,18 @@ struct PointState {
   Real beta[3]{};
 };
 
+template <class Pack> struct PointOutput {
+  Pack values;
+  int block;
+  int k;
+  int j;
+  int i;
+
+  KOKKOS_INLINE_FUNCTION decltype(auto) operator[](const int component) const {
+    return values(block, component, k, j, i);
+  }
+};
+
 struct PointDerivatives {
   Real dalpha[3]{};
   Real dchi[3]{};
@@ -260,10 +272,11 @@ KOKKOS_INLINE_FUNCTION void SpatialInverse(const Real inverse_determinant, const
   inverse[5] = (-gxy * gxy + gxx * gyy) * inverse_determinant;
 }
 
+template <class Output>
 KOKKOS_INLINE_FUNCTION void ComputeVacuum(const PointState& state,
                                           const PointDerivatives& derivatives,
                                           const Z4cOptions& options, const Real time,
-                                          Real output[kZ4cComponents]) {
+                                          Output& output) {
   for (int component = 0; component < kZ4cComponents; ++component)
     output[component] = 0.0;
 
@@ -550,10 +563,11 @@ KOKKOS_INLINE_FUNCTION void ComputeVacuum(const PointState& state,
 // vacuum kernel while giving analytic sources and the later GRHD/GRMHD
 // adapters one field-level contract.  The expression order follows AthenaK's
 // z4c_calcrhs.cpp matter branches.
+template <class Output>
 KOKKOS_INLINE_FUNCTION void ApplyMatterSources(const PointState& state,
                                                const Z4cOptions& options,
                                                const StressEnergy& matter,
-                                               Real output[kZ4cComponents]) {
+                                               Output& output) {
   Real inverse_metric[6]{};
   const Real determinant = SpatialDeterminant(state.metric);
   SpatialInverse(1.0 / determinant, state.metric, inverse_metric);
@@ -590,43 +604,27 @@ KOKKOS_INLINE_FUNCTION void ApplyMatterSources(const PointState& state,
   }
 }
 
-template <int Order, class Z4cPack, class StressEnergyPack>
+template <int Order, class Z4cPack, class StressEnergyPack, class Output>
 KOKKOS_INLINE_FUNCTION void EvaluatePointWithMatter(
     const Z4cPack& values, const StressEnergyPack& stress_energy, const int block, const int k,
     const int j, const int i, const Real inverse_spacing[3], const Z4cOptions& options,
-    const Real time, Real output[kZ4cComponents]) {
+    const Real time, Output& output) {
   PointState state{};
   PointDerivatives derivatives{};
   LoadPoint<Order>(values, block, k, j, i, inverse_spacing, state, derivatives);
   ComputeVacuum(state, derivatives, options, time, output);
   ApplyMatterSources(state, options, LoadStressEnergy(stress_energy, block, k, j, i), output);
-  for (int component = 0; component < kZ4cComponents; ++component) {
-    const auto component_values = ComponentAccessor<Z4cPack>{values, block, component, k, j, i};
-    for (int direction = 0; direction < 3; ++direction) {
-      output[component] +=
-          options.dissipation *
-          fd::KreissOliger<Order>(direction, inverse_spacing[direction], component_values);
-    }
-  }
 }
 
-template <int Order, class Pack>
+template <int Order, class Pack, class Output>
 KOKKOS_INLINE_FUNCTION void EvaluatePoint(const Pack& values, const int block, const int k,
                                           const int j, const int i, const Real inverse_spacing[3],
                                           const Z4cOptions& options, const Real time,
-                                          Real output[kZ4cComponents]) {
+                                          Output& output) {
   PointState state{};
   PointDerivatives derivatives{};
   LoadPoint<Order>(values, block, k, j, i, inverse_spacing, state, derivatives);
   ComputeVacuum(state, derivatives, options, time, output);
-  for (int component = 0; component < kZ4cComponents; ++component) {
-    const auto component_values = ComponentAccessor<Pack>{values, block, component, k, j, i};
-    for (int direction = 0; direction < 3; ++direction) {
-      output[component] +=
-          options.dissipation *
-          fd::KreissOliger<Order>(direction, inverse_spacing[direction], component_values);
-    }
-  }
 }
 
 } // namespace rhs

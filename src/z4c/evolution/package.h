@@ -30,11 +30,14 @@ parthenon::TaskStatus BuildStressEnergyBlockTask(
 parthenon::TaskStatus BuildStressEnergyMeshTask(parthenon::MeshData<parthenon::Real>* data,
                                                 parthenon::Real time);
 
-parthenon::TaskStatus StageUpdateMeshTask(parthenon::MeshData<parthenon::Real>* current,
-                                          parthenon::MeshData<parthenon::Real>* base,
-                                          parthenon::Real gamma_current, parthenon::Real gamma_base,
-                                          parthenon::Real beta_dt, parthenon::Real time,
-                                          parthenon::MeshData<parthenon::Real>* next);
+parthenon::TaskStatus CalculateRHSMeshTask(parthenon::MeshData<parthenon::Real>* current,
+                                           parthenon::Real time);
+parthenon::TaskStatus ApplySommerfeldRHSMeshTask(parthenon::MeshData<parthenon::Real>* current);
+parthenon::TaskStatus RKUpdateMeshTask(parthenon::MeshData<parthenon::Real>* current,
+                                      parthenon::MeshData<parthenon::Real>* base,
+                                      parthenon::Real gamma_current,
+                                      parthenon::Real gamma_base, parthenon::Real beta_dt,
+                                      parthenon::MeshData<parthenon::Real>* next);
 
 parthenon::TaskStatus AccumulateRKStateMeshTask(parthenon::MeshData<parthenon::Real>* current,
                                                 parthenon::MeshData<parthenon::Real>* accumulator,

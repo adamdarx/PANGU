@@ -214,8 +214,13 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     if (sync_matter)
       carried =
           tasks.AddTask(current_ready, CarrySyncStageStateMeshTask, current.get(), next.get());
-    const auto update = tasks.AddTask(matter | carried, StageUpdateMeshTask, current.get(),
-                                      rk_reference, gam0, gam1, beta * dt, tm.time, next.get());
+    const auto rhs =
+        tasks.AddTask(matter, CalculateRHSMeshTask, current.get(), tm.time);
+    const auto boundary_rhs =
+        tasks.AddTask(rhs, ApplySommerfeldRHSMeshTask, current.get());
+    auto update = tasks.AddTask(boundary_rhs | carried, RKUpdateMeshTask, current.get(),
+                                rk_reference, gam0, gam1, beta * dt, next.get());
+    update = tasks.AddTask(update, FloorChiMeshTask, next.get());
     TaskID hydro_update = none;
     TaskID magnetic_update = none;
     if (sync_matter) {
@@ -243,7 +248,6 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
             tasks.AddTask(flux_corrections | carried, mhd::UpdateFaceFieldsMeshTask,
                           current.get(), base.get(), gam0, gam1, beta * dt, next.get());
     }
-    // StageUpdate applies the chi floor while writing the new state.
     const auto boundary_dependency = update | hydro_update | magnetic_update | receive;
     const auto boundaries =
         CanUsePackedSyncOutflow(mesh)
