@@ -1523,6 +1523,23 @@ TaskStatus StageUpdateMeshImpl(MeshData<Real>* current, MeshData<Real>* base,
   const auto kb = first->cellbounds.GetBoundsK(IndexDomain::interior);
   const auto options =
       first->packages.Get("numerical_relativity")->Param<Z4cOptions>("z4c_options");
+  const auto* mesh = first->pmy_mesh;
+  const Real mesh_x1min = mesh->mesh_size.xmin(X1DIR);
+  const Real mesh_x1max = mesh->mesh_size.xmax(X1DIR);
+  const Real mesh_x2min = mesh->mesh_size.xmin(X2DIR);
+  const Real mesh_x2max = mesh->mesh_size.xmax(X2DIR);
+  const Real mesh_x3min = mesh->mesh_size.xmin(X3DIR);
+  const Real mesh_x3max = mesh->mesh_size.xmax(X3DIR);
+  const auto is_nr_outflow = [](const std::string& name) {
+    return name == "outflow" || name == "nr_outflow";
+  };
+  const bool outflow_inner_x1 = is_nr_outflow(mesh->mesh_bc_names[0]);
+  const bool outflow_outer_x1 = is_nr_outflow(mesh->mesh_bc_names[1]);
+  const bool outflow_inner_x2 = is_nr_outflow(mesh->mesh_bc_names[2]);
+  const bool outflow_outer_x2 = is_nr_outflow(mesh->mesh_bc_names[3]);
+  const bool outflow_inner_x3 = is_nr_outflow(mesh->mesh_bc_names[4]);
+  const bool outflow_outer_x3 = is_nr_outflow(mesh->mesh_bc_names[5]);
+  const Real boundary_tolerance = 32.0 * std::numeric_limits<Real>::epsilon();
   if constexpr (WithMatter) {
     const auto tmunu = current->PackVariables(std::vector<std::string>{"nr.tmunu"});
     parthenon::par_for(
@@ -1536,10 +1553,49 @@ TaskStatus StageUpdateMeshImpl(MeshData<Real>* current, MeshData<Real>* base,
           Real local_rhs[kZ4cComponents]{};
           rhs::EvaluatePointWithMatter<Order>(input, tmunu, block, k, j, i, inverse_spacing,
                                               options, time, local_rhs);
+          const bool boundary_candidate =
+              (outflow_inner_x1 && i == ib.s) || (outflow_outer_x1 && i == ib.e) ||
+              (outflow_inner_x2 && j == jb.s) || (outflow_outer_x2 && j == jb.e) ||
+              (outflow_inner_x3 && k == kb.s) || (outflow_outer_x3 && k == kb.e);
+          if (boundary_candidate) {
+            const Real x1 = coordinates.Xc<X1DIR>(k, j, i);
+            const Real x2 = coordinates.Xc<X2DIR>(k, j, i);
+            const Real x3 = coordinates.Xc<X3DIR>(k, j, i);
+            const bool global_outflow =
+                (outflow_inner_x1 && i == ib.s &&
+                 x1 - 0.5 / inverse_spacing[0] <=
+                     mesh_x1min + boundary_tolerance * fmax(1.0, fabs(mesh_x1min))) ||
+                (outflow_outer_x1 && i == ib.e &&
+                 x1 + 0.5 / inverse_spacing[0] >=
+                     mesh_x1max - boundary_tolerance * fmax(1.0, fabs(mesh_x1max))) ||
+                (outflow_inner_x2 && j == jb.s &&
+                 x2 - 0.5 / inverse_spacing[1] <=
+                     mesh_x2min + boundary_tolerance * fmax(1.0, fabs(mesh_x2min))) ||
+                (outflow_outer_x2 && j == jb.e &&
+                 x2 + 0.5 / inverse_spacing[1] >=
+                     mesh_x2max - boundary_tolerance * fmax(1.0, fabs(mesh_x2max))) ||
+                (outflow_inner_x3 && k == kb.s &&
+                 x3 - 0.5 / inverse_spacing[2] <=
+                     mesh_x3min + boundary_tolerance * fmax(1.0, fabs(mesh_x3min))) ||
+                (outflow_outer_x3 && k == kb.e &&
+                 x3 + 0.5 / inverse_spacing[2] >=
+                     mesh_x3max - boundary_tolerance * fmax(1.0, fabs(mesh_x3max)));
+            if (global_outflow) {
+              rhs::EvaluatePoint<2>(input, block, k, j, i, inverse_spacing, options, time,
+                                    local_rhs);
+              ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing, x1, x2, x3,
+                                         local_rhs);
+            }
+          }
           for (int component = 0; component < kZ4cComponents; ++component) {
             output(block, component, k, j, i) = gamma_current * input(block, component, k, j, i) +
                                                 gamma_base * initial(block, component, k, j, i) +
                                                 beta_dt * local_rhs[component];
+          }
+          if (options.floor_chi) {
+            auto& chi = output(block, Index(Z4cComponent::chi), k, j, i);
+            if (!Kokkos::isfinite(chi) || chi < options.chi_min_floor)
+              chi = options.chi_min_floor;
           }
         });
   } else {
@@ -1554,86 +1610,54 @@ TaskStatus StageUpdateMeshImpl(MeshData<Real>* current, MeshData<Real>* base,
           Real local_rhs[kZ4cComponents]{};
           rhs::EvaluatePoint<Order>(input, block, k, j, i, inverse_spacing, options, time,
                                     local_rhs);
+          const bool boundary_candidate =
+              (outflow_inner_x1 && i == ib.s) || (outflow_outer_x1 && i == ib.e) ||
+              (outflow_inner_x2 && j == jb.s) || (outflow_outer_x2 && j == jb.e) ||
+              (outflow_inner_x3 && k == kb.s) || (outflow_outer_x3 && k == kb.e);
+          if (boundary_candidate) {
+            const Real x1 = coordinates.Xc<X1DIR>(k, j, i);
+            const Real x2 = coordinates.Xc<X2DIR>(k, j, i);
+            const Real x3 = coordinates.Xc<X3DIR>(k, j, i);
+            const bool global_outflow =
+                (outflow_inner_x1 && i == ib.s &&
+                 x1 - 0.5 / inverse_spacing[0] <=
+                     mesh_x1min + boundary_tolerance * fmax(1.0, fabs(mesh_x1min))) ||
+                (outflow_outer_x1 && i == ib.e &&
+                 x1 + 0.5 / inverse_spacing[0] >=
+                     mesh_x1max - boundary_tolerance * fmax(1.0, fabs(mesh_x1max))) ||
+                (outflow_inner_x2 && j == jb.s &&
+                 x2 - 0.5 / inverse_spacing[1] <=
+                     mesh_x2min + boundary_tolerance * fmax(1.0, fabs(mesh_x2min))) ||
+                (outflow_outer_x2 && j == jb.e &&
+                 x2 + 0.5 / inverse_spacing[1] >=
+                     mesh_x2max - boundary_tolerance * fmax(1.0, fabs(mesh_x2max))) ||
+                (outflow_inner_x3 && k == kb.s &&
+                 x3 - 0.5 / inverse_spacing[2] <=
+                     mesh_x3min + boundary_tolerance * fmax(1.0, fabs(mesh_x3min))) ||
+                (outflow_outer_x3 && k == kb.e &&
+                 x3 + 0.5 / inverse_spacing[2] >=
+                     mesh_x3max - boundary_tolerance * fmax(1.0, fabs(mesh_x3max)));
+            if (global_outflow) {
+              if constexpr (Order != 2)
+                rhs::EvaluatePoint<2>(input, block, k, j, i, inverse_spacing, options, time,
+                                      local_rhs);
+              ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing, x1, x2, x3,
+                                         local_rhs);
+            }
+          }
           for (int component = 0; component < kZ4cComponents; ++component) {
             output(block, component, k, j, i) = gamma_current * input(block, component, k, j, i) +
                                                 gamma_base * initial(block, component, k, j, i) +
                                                 beta_dt * local_rhs[component];
+          }
+          if (options.floor_chi) {
+            auto& chi = output(block, Index(Z4cComponent::chi), k, j, i);
+            if (!Kokkos::isfinite(chi) || chi < options.chi_min_floor)
+              chi = options.chi_min_floor;
           }
         });
   }
 
-  // Replace the volume RHS on active cells touching a global outflow face with
-  // AthenaK's second-order Sommerfeld characteristic approximation. User
-  // boundaries (including nr_reflecting and nr_extrapolate) deliberately do
-  // not enter this path; their registered ghost callbacks remain authoritative.
-  const auto* mesh = first->pmy_mesh;
-  parthenon::ParArray2DRaw<int> boundary_faces("NR Sommerfeld faces", input.GetDim(5), 6);
-  auto host_faces = Kokkos::create_mirror_view(boundary_faces);
-  bool has_boundary = false;
-  for (int block = 0; block < input.GetDim(5); ++block) {
-    const auto block_ptr = current->GetBlockData(block)->GetBlockPointer();
-    const auto is_nr_outflow = [](const std::string& name) {
-      return name == "outflow" || name == "nr_outflow";
-    };
-    const bool inner_x1 = block_ptr->boundary_flag[parthenon::BoundaryFace::inner_x1] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[0]);
-    const bool outer_x1 = block_ptr->boundary_flag[parthenon::BoundaryFace::outer_x1] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[1]);
-    const bool inner_x2 = block_ptr->boundary_flag[parthenon::BoundaryFace::inner_x2] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[2]);
-    const bool outer_x2 = block_ptr->boundary_flag[parthenon::BoundaryFace::outer_x2] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[3]);
-    const bool inner_x3 = block_ptr->boundary_flag[parthenon::BoundaryFace::inner_x3] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[4]);
-    const bool outer_x3 = block_ptr->boundary_flag[parthenon::BoundaryFace::outer_x3] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[5]);
-    host_faces(block, 0) = inner_x1;
-    host_faces(block, 1) = outer_x1;
-    host_faces(block, 2) = inner_x2;
-    host_faces(block, 3) = outer_x2;
-    host_faces(block, 4) = inner_x3;
-    host_faces(block, 5) = outer_x3;
-    has_boundary = has_boundary || inner_x1 || outer_x1 || inner_x2 || outer_x2 ||
-                   inner_x3 || outer_x3;
-  }
-  if (has_boundary) {
-    // Complete the metadata transfer before its temporary host mirror expires.
-    // A single packed launch replaces the per-boundary-block launches.
-    Kokkos::deep_copy(boundary_faces, host_faces);
-    parthenon::par_for(
-        DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld boundary RHS", parthenon::DevExecSpace(),
-        0, input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
-        KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-          const bool on_boundary = (boundary_faces(block, 0) && i == ib.s) ||
-                                   (boundary_faces(block, 1) && i == ib.e) ||
-                                   (boundary_faces(block, 2) && j == jb.s) ||
-                                   (boundary_faces(block, 3) && j == jb.e) ||
-                                   (boundary_faces(block, 4) && k == kb.s) ||
-                                   (boundary_faces(block, 5) && k == kb.e);
-          if (!on_boundary)
-            return;
-          const auto& coordinates = input.GetCoords(block);
-          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
-                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
-                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-          Real local_rhs[kZ4cComponents]{};
-          rhs::EvaluatePoint<2>(input, block, k, j, i, inverse_spacing, options, time, local_rhs);
-          ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing,
-                                     coordinates.Xc<X1DIR>(k, j, i), coordinates.Xc<X2DIR>(k, j, i),
-                                     coordinates.Xc<X3DIR>(k, j, i), local_rhs);
-          for (int component = 0; component < kZ4cComponents; ++component) {
-            output(block, component, k, j, i) = gamma_current * input(block, component, k, j, i) +
-                                                gamma_base * initial(block, component, k, j, i) +
-                                                beta_dt * local_rhs[component];
-          }
-        });
-  }
   return TaskStatus::complete;
 }
 
