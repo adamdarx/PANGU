@@ -154,6 +154,16 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     auto& base = mesh->mesh_data.Add("base", partitions[partition]);
     auto& current = mesh->mesh_data.Add(stage_name[stage - 1], base);
     auto& next = mesh->mesh_data.Add(stage_name[stage], base);
+    std::shared_ptr<MeshData<Real>> current_boundary = current;
+    std::shared_ptr<MeshData<Real>> next_boundary = next;
+    if (!sync_matter) {
+      current_boundary = mesh->mesh_data.AddShallow(
+          "nr_z4c_boundary_current_" + stage_name[stage - 1], current,
+          std::vector<std::string>{"nr.z4c"});
+      next_boundary = mesh->mesh_data.AddShallow(
+          "nr_z4c_boundary_next_" + stage_name[stage], next,
+          std::vector<std::string>{"nr.z4c"});
+    }
     std::shared_ptr<MeshData<Real>> emf_boundary;
     if (sync_grmhd)
       emf_boundary = mesh->mesh_data.AddShallow("sync_mhd_emf_" + stage_name[stage - 1], current,
@@ -166,8 +176,9 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     TaskID current_ready = none;
     if (stage == 1 && mesh->multilevel && mesh->modified) {
       const auto current_receive = tasks.AddTask(
-          none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, current);
-      current_ready = parthenon::AddBoundaryExchangeTasks(current_receive, tasks, current, true);
+          none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, current_boundary);
+      current_ready =
+          parthenon::AddBoundaryExchangeTasks(current_receive, tasks, current_boundary, true);
       // Vacuum evolution consumes only the canonicalized Z4c state. ADM and
       // constraints are derived outputs and are materialized after the final
       // stage, so rebuilding them here is pure memory traffic.
@@ -183,7 +194,8 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       rk_reference = accumulator.get();
     }
     const auto receive =
-        tasks.AddTask(none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, next);
+        tasks.AddTask(none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>,
+                      next_boundary);
     TaskID emf_receive = none;
     if (sync_grmhd)
       emf_receive = tasks.AddTask(
@@ -252,15 +264,16 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     const auto boundaries =
         CanUsePackedSyncOutflow(mesh)
             ? parthenon::AddBoundaryExchangeTasks(
-                  boundary_dependency, tasks, next, false,
+                  boundary_dependency, tasks, next_boundary, false,
                   parthenon::BValOnMDFunc_t(ApplyPackedSyncOutflowBoundariesMeshTask))
-            : parthenon::AddBoundaryExchangeTasks(boundary_dependency, tasks, next,
+            : parthenon::AddBoundaryExchangeTasks(boundary_dependency, tasks, next_boundary,
                                                   mesh->multilevel);
-    // AthenaK projects det(g_tilde)=1 and tr(A_tilde)=0 after boundary
-    // exchange at every RK stage, before the projected state is consumed by
-    // either the next vacuum RHS or the matter/ADM conversion path.
-    const auto projected =
-        tasks.AddTask(boundaries, EnforceAlgebraicConstraintsMeshTask, next.get());
+    // Match AthenaK's EnforceAlgConstr scheduling: vacuum Z4c is projected only
+    // after the completed RK step, while matter-coupled evolution is projected
+    // after every stage before the ADM/C2P chain consumes the state.
+    TaskID projected = boundaries;
+    if (sync_matter || stage == integrator->nstages)
+      projected = tasks.AddTask(boundaries, EnforceAlgebraicConstraintsMeshTask, next.get());
     const Real next_stage_time =
         stage < integrator->nstages ? tm.time + integrator->c[stage] * dt : tm.time + dt;
     TaskID ready = projected;

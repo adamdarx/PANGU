@@ -1610,42 +1610,90 @@ TaskStatus ApplySommerfeldRHSMeshTask(MeshData<Real>* current) {
                            is_outflow(mesh->mesh_bc_names[2]), is_outflow(mesh->mesh_bc_names[3]),
                            is_outflow(mesh->mesh_bc_names[4]), is_outflow(mesh->mesh_bc_names[5])};
   const Real tolerance = 32.0 * std::numeric_limits<Real>::epsilon();
-  parthenon::par_for(
-      DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld boundary RHS", parthenon::DevExecSpace(), 0,
-      input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
-      KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
+  if (outflow[0] || outflow[1]) {
+    parthenon::par_for(
+      DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld x1 RHS", parthenon::DevExecSpace(), 0,
+      input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e,
+      KOKKOS_LAMBDA(const int block, const int k, const int j) {
         const auto& coordinates = input.GetCoords(block);
-        const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
-                                         1.0 / coordinates.Dxc<X2DIR>(k, j, i),
-                                         1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-        const Real position[3] = {coordinates.Xc<X1DIR>(k, j, i),
-                                  coordinates.Xc<X2DIR>(k, j, i),
-                                  coordinates.Xc<X3DIR>(k, j, i)};
-        const bool on_boundary =
-            (outflow[0] && i == ib.s &&
-             position[0] - 0.5 / inverse_spacing[0] <=
-                 mesh_min[0] + tolerance * fmax(1.0, fabs(mesh_min[0]))) ||
-            (outflow[1] && i == ib.e &&
-             position[0] + 0.5 / inverse_spacing[0] >=
-                 mesh_max[0] - tolerance * fmax(1.0, fabs(mesh_max[0]))) ||
-            (outflow[2] && j == jb.s &&
-             position[1] - 0.5 / inverse_spacing[1] <=
-                 mesh_min[1] + tolerance * fmax(1.0, fabs(mesh_min[1]))) ||
-            (outflow[3] && j == jb.e &&
-             position[1] + 0.5 / inverse_spacing[1] >=
-                 mesh_max[1] - tolerance * fmax(1.0, fabs(mesh_max[1]))) ||
-            (outflow[4] && k == kb.s &&
-             position[2] - 0.5 / inverse_spacing[2] <=
-                 mesh_min[2] + tolerance * fmax(1.0, fabs(mesh_min[2]))) ||
-            (outflow[5] && k == kb.e &&
-             position[2] + 0.5 / inverse_spacing[2] >=
-                 mesh_max[2] - tolerance * fmax(1.0, fabs(mesh_max[2])));
-        if (!on_boundary)
-          return;
-        rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
-        ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing, position[0],
-                                   position[1], position[2], local_rhs);
+        for (int side = 0; side < 2; ++side) {
+          const int i = side == 0 ? ib.s : ib.e;
+          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+          const Real position[3] = {coordinates.Xc<X1DIR>(k, j, i),
+                                    coordinates.Xc<X2DIR>(k, j, i),
+                                    coordinates.Xc<X3DIR>(k, j, i)};
+          const bool physical =
+              side == 0
+                  ? outflow[0] && position[0] - 0.5 / inverse_spacing[0] <=
+                                      mesh_min[0] + tolerance * fmax(1.0, fabs(mesh_min[0]))
+                  : outflow[1] && position[0] + 0.5 / inverse_spacing[0] >=
+                                      mesh_max[0] - tolerance * fmax(1.0, fabs(mesh_max[0]));
+          if (physical) {
+            rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
+            ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing, position[0],
+                                       position[1], position[2], local_rhs);
+          }
+        }
       });
+  }
+  if (outflow[2] || outflow[3]) {
+    parthenon::par_for(
+      DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld x2 RHS", parthenon::DevExecSpace(), 0,
+      input.GetDim(5) - 1, kb.s, kb.e, ib.s, ib.e,
+      KOKKOS_LAMBDA(const int block, const int k, const int i) {
+        const auto& coordinates = input.GetCoords(block);
+        for (int side = 0; side < 2; ++side) {
+          const int j = side == 0 ? jb.s : jb.e;
+          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+          const Real position[3] = {coordinates.Xc<X1DIR>(k, j, i),
+                                    coordinates.Xc<X2DIR>(k, j, i),
+                                    coordinates.Xc<X3DIR>(k, j, i)};
+          const bool physical =
+              side == 0
+                  ? outflow[2] && position[1] - 0.5 / inverse_spacing[1] <=
+                                      mesh_min[1] + tolerance * fmax(1.0, fabs(mesh_min[1]))
+                  : outflow[3] && position[1] + 0.5 / inverse_spacing[1] >=
+                                      mesh_max[1] - tolerance * fmax(1.0, fabs(mesh_max[1]));
+          if (physical) {
+            rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
+            ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing, position[0],
+                                       position[1], position[2], local_rhs);
+          }
+        }
+      });
+  }
+  if (outflow[4] || outflow[5]) {
+    parthenon::par_for(
+      DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld x3 RHS", parthenon::DevExecSpace(), 0,
+      input.GetDim(5) - 1, jb.s, jb.e, ib.s, ib.e,
+      KOKKOS_LAMBDA(const int block, const int j, const int i) {
+        const auto& coordinates = input.GetCoords(block);
+        for (int side = 0; side < 2; ++side) {
+          const int k = side == 0 ? kb.s : kb.e;
+          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+          const Real position[3] = {coordinates.Xc<X1DIR>(k, j, i),
+                                    coordinates.Xc<X2DIR>(k, j, i),
+                                    coordinates.Xc<X3DIR>(k, j, i)};
+          const bool physical =
+              side == 0
+                  ? outflow[4] && position[2] - 0.5 / inverse_spacing[2] <=
+                                      mesh_min[2] + tolerance * fmax(1.0, fabs(mesh_min[2]))
+                  : outflow[5] && position[2] + 0.5 / inverse_spacing[2] >=
+                                      mesh_max[2] - tolerance * fmax(1.0, fabs(mesh_max[2]));
+          if (physical) {
+            rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
+            ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing, position[0],
+                                       position[1], position[2], local_rhs);
+          }
+        }
+      });
+  }
   return TaskStatus::complete;
 }
 
