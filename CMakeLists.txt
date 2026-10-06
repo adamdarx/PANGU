@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.20)
 
 project(PANGU VERSION 0.1.0 LANGUAGES CXX)
 
+# Match the optimized configuration used by AthenaK for production runs.
+# Without an explicit build type, Parthenon's configuration can leave a
+# RelWithDebInfo (-O2) cache behind, which is unsuitable for performance
+# comparisons.
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
   message(FATAL_ERROR "PANGU does not support in-source builds. Use cmake -S . -B build-<backend>.")
 endif()
