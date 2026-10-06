@@ -960,19 +960,6 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   package->AddField("nr.weyl", weyl);
   package->AddField("nr.constraint_mask", constraint_mask);
 
-  parthenon::HstVec_list history;
-  history.emplace_back(parthenon::HistoryOutputVec(parthenon::UserHistoryOperation::max,
-                                                   ConstraintMaxHistoryMesh, "nr_constraint_max"));
-  history.emplace_back(parthenon::HistoryOutputVec(
-      parthenon::UserHistoryOperation::max, ConstraintNormHistoryMesh, "nr_constraint_norm"));
-  history.emplace_back(parthenon::HistoryOutputVec(
-      parthenon::UserHistoryOperation::sum, ConstraintMaskHistoryMesh, "nr_constraint_mask_cells"));
-  if (tracker_enabled) {
-    history.emplace_back(parthenon::HistoryOutputVec(
-        parthenon::UserHistoryOperation::sum, PunctureTrackerHistoryMesh, "nr_puncture_tracker"));
-  }
-  package->AddParam<>(parthenon::hist_vec_param_key, history);
-
   if constexpr (geometry::ConfiguredGeometryIsSynchronized()) {
     // Parthenon invokes every package's PreFillDerived callbacks before any
     // package FillDerived callback.  Reconstruct the ADM view in that ordered
@@ -1514,9 +1501,12 @@ TaskStatus ComputeConstraintsBlockTask(MeshBlockData<Real>* data) {
 }
 
 template <int Order, bool WithMatter>
-TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
+TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time,
+                                MeshData<Real>* accumulator, const Real delta,
+                                const bool initialize) {
   const auto input = current->PackVariables(std::vector<std::string>{"nr.z4c"});
   const auto output = current->PackVariables(std::vector<std::string>{"nr.rhs"});
+  const auto accumulated = accumulator->PackVariables(std::vector<std::string>{"nr.z4c"});
   const auto first = current->GetBlockData(0)->GetBlockPointer();
   const auto ib = first->cellbounds.GetBoundsI(IndexDomain::interior);
   const auto jb = first->cellbounds.GetBoundsJ(IndexDomain::interior);
@@ -1536,6 +1526,12 @@ TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
           rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
           rhs::EvaluatePointWithMatter<Order>(input, tmunu, block, k, j, i, inverse_spacing,
                                               options, time, local_rhs);
+          for (int component = 0; component < kZ4cComponents; ++component) {
+            accumulated(block, component, k, j, i) =
+                initialize ? input(block, component, k, j, i)
+                           : accumulated(block, component, k, j, i) +
+                                 delta * input(block, component, k, j, i);
+          }
         });
   } else {
     parthenon::par_for(
@@ -1549,6 +1545,12 @@ TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
           rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
           rhs::EvaluatePoint<Order>(input, block, k, j, i, inverse_spacing, options, time,
                                     local_rhs);
+          for (int component = 0; component < kZ4cComponents; ++component) {
+            accumulated(block, component, k, j, i) =
+                initialize ? input(block, component, k, j, i)
+                           : accumulated(block, component, k, j, i) +
+                                 delta * input(block, component, k, j, i);
+          }
         });
   }
 
@@ -1572,23 +1574,25 @@ TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
   return TaskStatus::complete;
 }
 
-TaskStatus CalculateRHSMeshTask(MeshData<Real>* current, const Real time) {
+TaskStatus CalculateRHSMeshTask(MeshData<Real>* current, const Real time,
+                                MeshData<Real>* accumulator, const Real delta,
+                                const bool initialize) {
   const auto first = current->GetBlockData(0)->GetBlockPointer();
   const int order =
       first->packages.Get("numerical_relativity")->Param<int>("finite_difference_order");
   const bool vacuum = first->packages.Get("numerical_relativity")->Param<bool>("vacuum");
   if (vacuum) {
     if (order == 2)
-      return CalculateRHSMeshImpl<2, false>(current, time);
+      return CalculateRHSMeshImpl<2, false>(current, time, accumulator, delta, initialize);
     if (order == 4)
-      return CalculateRHSMeshImpl<4, false>(current, time);
-    return CalculateRHSMeshImpl<6, false>(current, time);
+      return CalculateRHSMeshImpl<4, false>(current, time, accumulator, delta, initialize);
+    return CalculateRHSMeshImpl<6, false>(current, time, accumulator, delta, initialize);
   }
   if (order == 2)
-    return CalculateRHSMeshImpl<2, true>(current, time);
+    return CalculateRHSMeshImpl<2, true>(current, time, accumulator, delta, initialize);
   if (order == 4)
-    return CalculateRHSMeshImpl<4, true>(current, time);
-  return CalculateRHSMeshImpl<6, true>(current, time);
+    return CalculateRHSMeshImpl<4, true>(current, time, accumulator, delta, initialize);
+  return CalculateRHSMeshImpl<6, true>(current, time, accumulator, delta, initialize);
 }
 
 TaskStatus ApplySommerfeldRHSMeshTask(MeshData<Real>* current) {
