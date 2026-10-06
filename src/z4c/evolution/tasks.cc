@@ -170,8 +170,13 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       const auto current_receive = tasks.AddTask(
           none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, current);
       current_ready = parthenon::AddBoundaryExchangeTasks(current_receive, tasks, current, true);
-      current_ready = tasks.AddTask(current_ready, parthenon::Update::FillDerived<MeshData<Real>>,
-                                    current.get());
+      // Vacuum RHS consumes ADM fields, not constraint diagnostics. Keep the
+      // full-step constraints intact until the final RK stage recomputes them.
+      if (vacuum && !sync_matter)
+        current_ready = tasks.AddTask(current_ready, Z4cToADMFieldsMeshTask, current.get());
+      else
+        current_ready = tasks.AddTask(current_ready, parthenon::Update::FillDerived<MeshData<Real>>,
+                                      current.get());
     }
     TaskID accumulated = current_ready;
     if (low_storage_rk4) {
@@ -275,7 +280,15 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       if (!vacuum)
         next_matter =
             tasks.AddTask(projected, BuildStressEnergyMeshTask, next.get(), next_stage_time);
-      ready = tasks.AddTask(next_matter, Z4cToADMStageMeshTask, next.get());
+      if (vacuum) {
+        // Match AthenaK: constraints diagnose the completed RK state only.
+        const auto adm_fields = tasks.AddTask(next_matter, Z4cToADMFieldsMeshTask, next.get());
+        ready = stage == integrator->nstages
+                    ? tasks.AddTask(adm_fields, ComputeConstraintsMeshTask, next.get())
+                    : adm_fields;
+      } else {
+        ready = tasks.AddTask(next_matter, Z4cToADMStageMeshTask, next.get());
+      }
     }
     if (stage == integrator->nstages) {
       const auto timestep =
