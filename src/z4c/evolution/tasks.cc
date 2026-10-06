@@ -187,10 +187,9 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
                                       current.get());
     }
     TaskID accumulated = current_ready;
+    std::shared_ptr<MeshData<Real>> accumulator;
     if (low_storage_rk4) {
-      auto& accumulator = mesh->mesh_data.Add("nr_rk4_accumulator", base);
-      accumulated = tasks.AddTask(current_ready, AccumulateRKStateMeshTask, current.get(),
-                                  accumulator.get(), integrator->delta[stage - 1], stage == 1);
+      accumulator = mesh->mesh_data.Add("nr_rk4_accumulator", base);
       rk_reference = accumulator.get();
     }
     const auto receive =
@@ -226,8 +225,9 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     if (sync_matter)
       carried =
           tasks.AddTask(current_ready, CarrySyncStageStateMeshTask, current.get(), next.get());
-    const auto rhs =
-        tasks.AddTask(matter, CalculateRHSMeshTask, current.get(), tm.time);
+    const auto rhs = tasks.AddTask(
+        matter, CalculateRHSMeshTask, current.get(), tm.time,
+        accumulator ? accumulator.get() : current.get(), integrator->delta[stage - 1], stage == 1);
     const auto boundary_rhs =
         tasks.AddTask(rhs, ApplySommerfeldRHSMeshTask, current.get());
     auto update = tasks.AddTask(boundary_rhs | carried, RKUpdateMeshTask, current.get(),
