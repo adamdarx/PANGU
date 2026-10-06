@@ -171,11 +171,11 @@ std::vector<Real> PunctureTrackerHistoryMesh(MeshData<Real>* data) {
   return result;
 }
 
-template <class Pack>
+template <class Pack, class Output>
 KOKKOS_INLINE_FUNCTION void
 ApplySommerfeldBoundaryRHS(const Pack& input, const int block, const int k, const int j,
                            const int i, const Real inverse_spacing[3], const Real x, const Real y,
-                           const Real z, Real output[kZ4cComponents]) {
+                           const Real z, Output& output) {
   // AthenaK's Z4c outer boundary condition deliberately uses second-order
   // centered derivatives even when the volume stencil is higher order.
   const Real radius = sqrt(x * x + y * y + z * z);
@@ -929,6 +929,8 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   // stage container needlessly multiplies the dominant SYNC memory cost.
   const Metadata adm({Metadata::Cell, Metadata::Derived, Metadata::OneCopy},
                      std::vector<int>{kADMComponents});
+  const Metadata rhs_field({Metadata::Cell, Metadata::Derived, Metadata::OneCopy},
+                           std::vector<int>{kZ4cComponents});
   const Metadata adm_derivatives({Metadata::Cell, Metadata::Derived, Metadata::OneCopy},
                                  std::vector<int>{kADMMetricDerivativeComponents});
   const Metadata constraints({Metadata::Cell, Metadata::Derived, Metadata::OneCopy},
@@ -948,6 +950,7 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   constraint_mask.RegisterRefinementOps<parthenon::refinement_ops::ProlongatePiecewiseConstant,
                                         parthenon::refinement_ops::RestrictAverage>();
   package->AddField("nr.z4c", evolved);
+  package->AddField("nr.rhs", rhs_field);
   package->AddField("nr.adm", adm);
   if (horizon_enabled)
     package->AddField("nr.adm_derivatives", adm_derivatives);
@@ -1511,12 +1514,9 @@ TaskStatus ComputeConstraintsBlockTask(MeshBlockData<Real>* data) {
 }
 
 template <int Order, bool WithMatter>
-TaskStatus StageUpdateMeshImpl(MeshData<Real>* current, MeshData<Real>* base,
-                               const Real gamma_current, const Real gamma_base, const Real beta_dt,
-                               const Real time, MeshData<Real>* next) {
+TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
   const auto input = current->PackVariables(std::vector<std::string>{"nr.z4c"});
-  const auto initial = base->PackVariables(std::vector<std::string>{"nr.z4c"});
-  const auto output = next->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto output = current->PackVariables(std::vector<std::string>{"nr.rhs"});
   const auto first = current->GetBlockData(0)->GetBlockPointer();
   const auto ib = first->cellbounds.GetBoundsI(IndexDomain::interior);
   const auto jb = first->cellbounds.GetBoundsJ(IndexDomain::interior);
@@ -1526,141 +1526,197 @@ TaskStatus StageUpdateMeshImpl(MeshData<Real>* current, MeshData<Real>* base,
   if constexpr (WithMatter) {
     const auto tmunu = current->PackVariables(std::vector<std::string>{"nr.tmunu"});
     parthenon::par_for(
-        DEFAULT_LOOP_PATTERN, "PANGU fused matter Z4c RHS and stage update",
+        DEFAULT_LOOP_PATTERN, "PANGU matter Z4c RHS",
         parthenon::DevExecSpace(), 0, input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
         KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
           const auto& coordinates = input.GetCoords(block);
           const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
                                            1.0 / coordinates.Dxc<X2DIR>(k, j, i),
                                            1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-          Real local_rhs[kZ4cComponents]{};
+          rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
           rhs::EvaluatePointWithMatter<Order>(input, tmunu, block, k, j, i, inverse_spacing,
                                               options, time, local_rhs);
-          for (int component = 0; component < kZ4cComponents; ++component) {
-            output(block, component, k, j, i) = gamma_current * input(block, component, k, j, i) +
-                                                gamma_base * initial(block, component, k, j, i) +
-                                                beta_dt * local_rhs[component];
-          }
         });
   } else {
     parthenon::par_for(
-        DEFAULT_LOOP_PATTERN, "PANGU fused vacuum Z4c RHS and stage update",
+        DEFAULT_LOOP_PATTERN, "PANGU vacuum Z4c RHS",
         parthenon::DevExecSpace(), 0, input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
         KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
           const auto& coordinates = input.GetCoords(block);
           const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
                                            1.0 / coordinates.Dxc<X2DIR>(k, j, i),
                                            1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-          Real local_rhs[kZ4cComponents]{};
+          rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
           rhs::EvaluatePoint<Order>(input, block, k, j, i, inverse_spacing, options, time,
                                     local_rhs);
-          for (int component = 0; component < kZ4cComponents; ++component) {
-            output(block, component, k, j, i) = gamma_current * input(block, component, k, j, i) +
-                                                gamma_base * initial(block, component, k, j, i) +
-                                                beta_dt * local_rhs[component];
-          }
         });
   }
 
-  // Replace the volume RHS on active cells touching a global outflow face with
-  // AthenaK's second-order Sommerfeld characteristic approximation. User
-  // boundaries (including nr_reflecting and nr_extrapolate) deliberately do
-  // not enter this path; their registered ghost callbacks remain authoritative.
-  const auto* mesh = first->pmy_mesh;
-  parthenon::ParArray2DRaw<int> boundary_faces("NR Sommerfeld faces", input.GetDim(5), 6);
-  auto host_faces = Kokkos::create_mirror_view(boundary_faces);
-  bool has_boundary = false;
-  for (int block = 0; block < input.GetDim(5); ++block) {
-    const auto block_ptr = current->GetBlockData(block)->GetBlockPointer();
-    const auto is_nr_outflow = [](const std::string& name) {
-      return name == "outflow" || name == "nr_outflow";
-    };
-    const bool inner_x1 = block_ptr->boundary_flag[parthenon::BoundaryFace::inner_x1] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[0]);
-    const bool outer_x1 = block_ptr->boundary_flag[parthenon::BoundaryFace::outer_x1] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[1]);
-    const bool inner_x2 = block_ptr->boundary_flag[parthenon::BoundaryFace::inner_x2] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[2]);
-    const bool outer_x2 = block_ptr->boundary_flag[parthenon::BoundaryFace::outer_x2] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[3]);
-    const bool inner_x3 = block_ptr->boundary_flag[parthenon::BoundaryFace::inner_x3] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[4]);
-    const bool outer_x3 = block_ptr->boundary_flag[parthenon::BoundaryFace::outer_x3] ==
-                              parthenon::BoundaryFlag::user &&
-                          is_nr_outflow(mesh->mesh_bc_names[5]);
-    host_faces(block, 0) = inner_x1;
-    host_faces(block, 1) = outer_x1;
-    host_faces(block, 2) = inner_x2;
-    host_faces(block, 3) = outer_x2;
-    host_faces(block, 4) = inner_x3;
-    host_faces(block, 5) = outer_x3;
-    has_boundary = has_boundary || inner_x1 || outer_x1 || inner_x2 || outer_x2 ||
-                   inner_x3 || outer_x3;
-  }
-  if (has_boundary) {
-    // Complete the metadata transfer before its temporary host mirror expires.
-    // A single packed launch replaces the per-boundary-block launches.
-    Kokkos::deep_copy(boundary_faces, host_faces);
-    parthenon::par_for(
-        DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld boundary RHS", parthenon::DevExecSpace(),
-        0, input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
-        KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-          const bool on_boundary = (boundary_faces(block, 0) && i == ib.s) ||
-                                   (boundary_faces(block, 1) && i == ib.e) ||
-                                   (boundary_faces(block, 2) && j == jb.s) ||
-                                   (boundary_faces(block, 3) && j == jb.e) ||
-                                   (boundary_faces(block, 4) && k == kb.s) ||
-                                   (boundary_faces(block, 5) && k == kb.e);
-          if (!on_boundary)
-            return;
-          const auto& coordinates = input.GetCoords(block);
-          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
-                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
-                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-          Real local_rhs[kZ4cComponents]{};
-          rhs::EvaluatePoint<2>(input, block, k, j, i, inverse_spacing, options, time, local_rhs);
-          ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing,
-                                     coordinates.Xc<X1DIR>(k, j, i), coordinates.Xc<X2DIR>(k, j, i),
-                                     coordinates.Xc<X3DIR>(k, j, i), local_rhs);
-          for (int component = 0; component < kZ4cComponents; ++component) {
-            output(block, component, k, j, i) = gamma_current * input(block, component, k, j, i) +
-                                                gamma_base * initial(block, component, k, j, i) +
-                                                beta_dt * local_rhs[component];
-          }
-        });
-  }
+  parthenon::par_for(
+      DEFAULT_LOOP_PATTERN, "PANGU Z4c K-O dissipation", parthenon::DevExecSpace(), 0,
+      input.GetDim(5) - 1, 0, kZ4cComponents - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+      KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
+        const auto& coordinates = input.GetCoords(block);
+        const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                         1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                         1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+        const auto component_values =
+            rhs::ComponentAccessor<decltype(input)>{input, block, component, k, j, i};
+        for (int direction = 0; direction < 3; ++direction) {
+          output(block, component, k, j, i) +=
+              options.dissipation * fd::KreissOliger<Order>(
+                                        direction, inverse_spacing[direction], component_values);
+        }
+      });
+
   return TaskStatus::complete;
 }
 
-TaskStatus StageUpdateMeshTask(MeshData<Real>* current, MeshData<Real>* base,
-                               const Real gamma_current, const Real gamma_base, const Real beta_dt,
-                               const Real time, MeshData<Real>* next) {
+TaskStatus CalculateRHSMeshTask(MeshData<Real>* current, const Real time) {
   const auto first = current->GetBlockData(0)->GetBlockPointer();
   const int order =
       first->packages.Get("numerical_relativity")->Param<int>("finite_difference_order");
   const bool vacuum = first->packages.Get("numerical_relativity")->Param<bool>("vacuum");
   if (vacuum) {
     if (order == 2)
-      return StageUpdateMeshImpl<2, false>(current, base, gamma_current, gamma_base, beta_dt, time,
-                                           next);
+      return CalculateRHSMeshImpl<2, false>(current, time);
     if (order == 4)
-      return StageUpdateMeshImpl<4, false>(current, base, gamma_current, gamma_base, beta_dt, time,
-                                           next);
-    return StageUpdateMeshImpl<6, false>(current, base, gamma_current, gamma_base, beta_dt, time,
-                                         next);
+      return CalculateRHSMeshImpl<4, false>(current, time);
+    return CalculateRHSMeshImpl<6, false>(current, time);
   }
   if (order == 2)
-    return StageUpdateMeshImpl<2, true>(current, base, gamma_current, gamma_base, beta_dt, time,
-                                        next);
+    return CalculateRHSMeshImpl<2, true>(current, time);
   if (order == 4)
-    return StageUpdateMeshImpl<4, true>(current, base, gamma_current, gamma_base, beta_dt, time,
-                                        next);
-  return StageUpdateMeshImpl<6, true>(current, base, gamma_current, gamma_base, beta_dt, time, next);
+    return CalculateRHSMeshImpl<4, true>(current, time);
+  return CalculateRHSMeshImpl<6, true>(current, time);
+}
+
+TaskStatus ApplySommerfeldRHSMeshTask(MeshData<Real>* current) {
+  const auto input = current->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto output = current->PackVariables(std::vector<std::string>{"nr.rhs"});
+  const auto first = current->GetBlockData(0)->GetBlockPointer();
+  const auto ib = first->cellbounds.GetBoundsI(IndexDomain::interior);
+  const auto jb = first->cellbounds.GetBoundsJ(IndexDomain::interior);
+  const auto kb = first->cellbounds.GetBoundsK(IndexDomain::interior);
+  const auto* mesh = first->pmy_mesh;
+  const Real mesh_min[3] = {mesh->mesh_size.xmin(X1DIR), mesh->mesh_size.xmin(X2DIR),
+                            mesh->mesh_size.xmin(X3DIR)};
+  const Real mesh_max[3] = {mesh->mesh_size.xmax(X1DIR), mesh->mesh_size.xmax(X2DIR),
+                            mesh->mesh_size.xmax(X3DIR)};
+  const auto is_outflow = [](const std::string& name) {
+    return name == "outflow" || name == "nr_outflow";
+  };
+  const bool outflow[6] = {is_outflow(mesh->mesh_bc_names[0]), is_outflow(mesh->mesh_bc_names[1]),
+                           is_outflow(mesh->mesh_bc_names[2]), is_outflow(mesh->mesh_bc_names[3]),
+                           is_outflow(mesh->mesh_bc_names[4]), is_outflow(mesh->mesh_bc_names[5])};
+  const Real tolerance = 32.0 * std::numeric_limits<Real>::epsilon();
+  if (outflow[0] || outflow[1]) {
+    parthenon::par_for(
+      DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld x1 RHS", parthenon::DevExecSpace(), 0,
+      input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e,
+      KOKKOS_LAMBDA(const int block, const int k, const int j) {
+        const auto& coordinates = input.GetCoords(block);
+        for (int side = 0; side < 2; ++side) {
+          const int i = side == 0 ? ib.s : ib.e;
+          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+          const Real position[3] = {coordinates.Xc<X1DIR>(k, j, i),
+                                    coordinates.Xc<X2DIR>(k, j, i),
+                                    coordinates.Xc<X3DIR>(k, j, i)};
+          const bool physical =
+              side == 0
+                  ? outflow[0] && position[0] - 0.5 / inverse_spacing[0] <=
+                                      mesh_min[0] + tolerance * fmax(1.0, fabs(mesh_min[0]))
+                  : outflow[1] && position[0] + 0.5 / inverse_spacing[0] >=
+                                      mesh_max[0] - tolerance * fmax(1.0, fabs(mesh_max[0]));
+          if (physical) {
+            rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
+            ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing, position[0],
+                                       position[1], position[2], local_rhs);
+          }
+        }
+      });
+  }
+  if (outflow[2] || outflow[3]) {
+    parthenon::par_for(
+      DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld x2 RHS", parthenon::DevExecSpace(), 0,
+      input.GetDim(5) - 1, kb.s, kb.e, ib.s, ib.e,
+      KOKKOS_LAMBDA(const int block, const int k, const int i) {
+        const auto& coordinates = input.GetCoords(block);
+        for (int side = 0; side < 2; ++side) {
+          const int j = side == 0 ? jb.s : jb.e;
+          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+          const Real position[3] = {coordinates.Xc<X1DIR>(k, j, i),
+                                    coordinates.Xc<X2DIR>(k, j, i),
+                                    coordinates.Xc<X3DIR>(k, j, i)};
+          const bool physical =
+              side == 0
+                  ? outflow[2] && position[1] - 0.5 / inverse_spacing[1] <=
+                                      mesh_min[1] + tolerance * fmax(1.0, fabs(mesh_min[1]))
+                  : outflow[3] && position[1] + 0.5 / inverse_spacing[1] >=
+                                      mesh_max[1] - tolerance * fmax(1.0, fabs(mesh_max[1]));
+          if (physical) {
+            rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
+            ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing, position[0],
+                                       position[1], position[2], local_rhs);
+          }
+        }
+      });
+  }
+  if (outflow[4] || outflow[5]) {
+    parthenon::par_for(
+      DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld x3 RHS", parthenon::DevExecSpace(), 0,
+      input.GetDim(5) - 1, jb.s, jb.e, ib.s, ib.e,
+      KOKKOS_LAMBDA(const int block, const int j, const int i) {
+        const auto& coordinates = input.GetCoords(block);
+        for (int side = 0; side < 2; ++side) {
+          const int k = side == 0 ? kb.s : kb.e;
+          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+          const Real position[3] = {coordinates.Xc<X1DIR>(k, j, i),
+                                    coordinates.Xc<X2DIR>(k, j, i),
+                                    coordinates.Xc<X3DIR>(k, j, i)};
+          const bool physical =
+              side == 0
+                  ? outflow[4] && position[2] - 0.5 / inverse_spacing[2] <=
+                                      mesh_min[2] + tolerance * fmax(1.0, fabs(mesh_min[2]))
+                  : outflow[5] && position[2] + 0.5 / inverse_spacing[2] >=
+                                      mesh_max[2] - tolerance * fmax(1.0, fabs(mesh_max[2]));
+          if (physical) {
+            rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
+            ApplySommerfeldBoundaryRHS(input, block, k, j, i, inverse_spacing, position[0],
+                                       position[1], position[2], local_rhs);
+          }
+        }
+      });
+  }
+  return TaskStatus::complete;
+}
+
+TaskStatus RKUpdateMeshTask(MeshData<Real>* current, MeshData<Real>* base,
+                            const Real gamma_current, const Real gamma_base, const Real beta_dt,
+                            MeshData<Real>* next) {
+  const auto input = current->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto initial = base->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto rhs_values = current->PackVariables(std::vector<std::string>{"nr.rhs"});
+  const auto output = next->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto ib = current->GetBoundsI(IndexDomain::interior);
+  const auto jb = current->GetBoundsJ(IndexDomain::interior);
+  const auto kb = current->GetBoundsK(IndexDomain::interior);
+  parthenon::par_for(
+      DEFAULT_LOOP_PATTERN, "PANGU Z4c RK update", parthenon::DevExecSpace(), 0,
+      input.GetDim(5) - 1, 0, kZ4cComponents - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+      KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
+        output(block, component, k, j, i) =
+            gamma_current * input(block, component, k, j, i) +
+            gamma_base * initial(block, component, k, j, i) +
+            beta_dt * rhs_values(block, component, k, j, i);
+      });
+  return TaskStatus::complete;
 }
 
 TaskStatus AccumulateRKStateMeshTask(MeshData<Real>* current, MeshData<Real>* accumulator,

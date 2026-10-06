@@ -154,27 +154,35 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     auto& base = mesh->mesh_data.Add("base", partitions[partition]);
     auto& current = mesh->mesh_data.Add(stage_name[stage - 1], base);
     auto& next = mesh->mesh_data.Add(stage_name[stage], base);
+    std::shared_ptr<MeshData<Real>> current_boundary = current;
+    std::shared_ptr<MeshData<Real>> next_boundary = next;
+    if (!sync_matter) {
+      current_boundary = mesh->mesh_data.AddShallow(
+          "nr_z4c_boundary_current_" + stage_name[stage - 1], current,
+          std::vector<std::string>{"nr.z4c"});
+      next_boundary = mesh->mesh_data.AddShallow(
+          "nr_z4c_boundary_next_" + stage_name[stage], next,
+          std::vector<std::string>{"nr.z4c"});
+    }
     std::shared_ptr<MeshData<Real>> emf_boundary;
     if (sync_grmhd)
       emf_boundary = mesh->mesh_data.AddShallow("sync_mhd_emf_" + stage_name[stage - 1], current,
                                                 std::vector<std::string>{"mhd.edge_emf"});
     auto* rk_reference = base.get();
-    // A Parthenon restart persists independent cell/face interiors, not the
-    // multilevel ghost representation.  Re-canonicalize the current AMR
-    // state once at the beginning of every complete RK step so a run that
-    // resumes at this step is algebraically identical to an uninterrupted
-    // run.  AthenaK likewise enters every dynamical-GRMHD stage from a
-    // completed restrict/send/receive/prolongate boundary state.
+    // A completed final RK stage has already exchanged the base state's
+    // boundaries. Re-canonicalize only after startup/restart or an AMR/load-
+    // balance topology change; doing it again on every ordinary step was a
+    // redundant fifth multilevel exchange for RK4.
     TaskID current_ready = none;
-    if (stage == 1 && mesh->multilevel) {
+    if (stage == 1 && mesh->multilevel && mesh->modified) {
       const auto current_receive = tasks.AddTask(
-          none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, current);
-      current_ready = parthenon::AddBoundaryExchangeTasks(current_receive, tasks, current, true);
-      // Vacuum RHS consumes ADM fields, not constraint diagnostics. Keep the
-      // full-step constraints intact until the final RK stage recomputes them.
-      if (vacuum && !sync_matter)
-        current_ready = tasks.AddTask(current_ready, Z4cToADMFieldsMeshTask, current.get());
-      else
+          none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, current_boundary);
+      current_ready =
+          parthenon::AddBoundaryExchangeTasks(current_receive, tasks, current_boundary, true);
+      // Vacuum evolution consumes only the canonicalized Z4c state. ADM and
+      // constraints are derived outputs and are materialized after the final
+      // stage, so rebuilding them here is pure memory traffic.
+      if (!vacuum || sync_matter)
         current_ready = tasks.AddTask(current_ready, parthenon::Update::FillDerived<MeshData<Real>>,
                                       current.get());
     }
@@ -186,7 +194,8 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       rk_reference = accumulator.get();
     }
     const auto receive =
-        tasks.AddTask(none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, next);
+        tasks.AddTask(none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>,
+                      next_boundary);
     TaskID emf_receive = none;
     if (sync_grmhd)
       emf_receive = tasks.AddTask(
@@ -209,11 +218,21 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     // the preceding stage's C2P. Rebuilding it here duplicated AthenaK's
     // once-per-stage stress-energy evaluation without changing the state.
     const auto matter = accumulated;
-    const auto carried =
-        tasks.AddTask(current_ready, CarrySyncStageStateMeshTask, current.get(), next.get());
-    const auto update = tasks.AddTask(matter | carried, StageUpdateMeshTask, current.get(),
-                                      rk_reference, gam0, gam1, beta * dt, tm.time, next.get());
-    const auto floor = tasks.AddTask(update, FloorChiMeshTask, next.get());
+    // Vacuum Z4c overwrites every active cell and the following boundary exchange
+    // reconstructs every ghost zone before the next RHS evaluation. Copying the
+    // full extended array here therefore only burns memory bandwidth. Matter
+    // evolution still needs the carry for staggered and codimension-2 state.
+    TaskID carried = none;
+    if (sync_matter)
+      carried =
+          tasks.AddTask(current_ready, CarrySyncStageStateMeshTask, current.get(), next.get());
+    const auto rhs =
+        tasks.AddTask(matter, CalculateRHSMeshTask, current.get(), tm.time);
+    const auto boundary_rhs =
+        tasks.AddTask(rhs, ApplySommerfeldRHSMeshTask, current.get());
+    auto update = tasks.AddTask(boundary_rhs | carried, RKUpdateMeshTask, current.get(),
+                                rk_reference, gam0, gam1, beta * dt, next.get());
+    update = tasks.AddTask(update, FloorChiMeshTask, next.get());
     TaskID hydro_update = none;
     TaskID magnetic_update = none;
     if (sync_matter) {
@@ -241,19 +260,20 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
             tasks.AddTask(flux_corrections | carried, mhd::UpdateFaceFieldsMeshTask,
                           current.get(), base.get(), gam0, gam1, beta * dt, next.get());
     }
-    const auto boundary_dependency = floor | hydro_update | magnetic_update | receive;
+    const auto boundary_dependency = update | hydro_update | magnetic_update | receive;
     const auto boundaries =
         CanUsePackedSyncOutflow(mesh)
             ? parthenon::AddBoundaryExchangeTasks(
-                  boundary_dependency, tasks, next, false,
+                  boundary_dependency, tasks, next_boundary, false,
                   parthenon::BValOnMDFunc_t(ApplyPackedSyncOutflowBoundariesMeshTask))
-            : parthenon::AddBoundaryExchangeTasks(boundary_dependency, tasks, next,
+            : parthenon::AddBoundaryExchangeTasks(boundary_dependency, tasks, next_boundary,
                                                   mesh->multilevel);
-    // AthenaK projects det(g_tilde)=1 and tr(A_tilde)=0 after boundary
-    // exchange at every RK stage, before the projected state is consumed by
-    // either the next vacuum RHS or the matter/ADM conversion path.
-    const auto projected =
-        tasks.AddTask(boundaries, EnforceAlgebraicConstraintsMeshTask, next.get());
+    // Match AthenaK's EnforceAlgConstr scheduling: vacuum Z4c is projected only
+    // after the completed RK step, while matter-coupled evolution is projected
+    // after every stage before the ADM/C2P chain consumes the state.
+    TaskID projected = boundaries;
+    if (sync_matter || stage == integrator->nstages)
+      projected = tasks.AddTask(boundaries, EnforceAlgebraicConstraintsMeshTask, next.get());
     const Real next_stage_time =
         stage < integrator->nstages ? tm.time + integrator->c[stage] * dt : tm.time + dt;
     TaskID ready = projected;
@@ -281,11 +301,15 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
         next_matter =
             tasks.AddTask(projected, BuildStressEnergyMeshTask, next.get(), next_stage_time);
       if (vacuum) {
-        // Match AthenaK: constraints diagnose the completed RK state only.
-        const auto adm_fields = tasks.AddTask(next_matter, Z4cToADMFieldsMeshTask, next.get());
-        ready = stage == integrator->nstages
-                    ? tasks.AddTask(adm_fields, ComputeConstraintsMeshTask, next.get())
-                    : adm_fields;
+        // No vacuum RHS stage consumes ADM fields. Materialize them only for
+        // the completed state, immediately before final diagnostics.
+        if (stage == integrator->nstages) {
+          const auto adm_fields =
+              tasks.AddTask(next_matter, Z4cToADMFieldsMeshTask, next.get());
+          ready = tasks.AddTask(adm_fields, ComputeConstraintsMeshTask, next.get());
+        } else {
+          ready = next_matter;
+        }
       } else {
         ready = tasks.AddTask(next_matter, Z4cToADMStageMeshTask, next.get());
       }
