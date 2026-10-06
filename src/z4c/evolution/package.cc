@@ -1566,8 +1566,10 @@ TaskStatus StageUpdateMeshImpl(MeshData<Real>* current, MeshData<Real>* base,
   // AthenaK's second-order Sommerfeld characteristic approximation. User
   // boundaries (including nr_reflecting and nr_extrapolate) deliberately do
   // not enter this path; their registered ghost callbacks remain authoritative.
-  Kokkos::fence();
   const auto* mesh = first->pmy_mesh;
+  parthenon::ParArray2DRaw<int> boundary_faces("NR Sommerfeld faces", input.GetDim(5), 6);
+  auto host_faces = Kokkos::create_mirror_view(boundary_faces);
+  bool has_boundary = false;
   for (int block = 0; block < input.GetDim(5); ++block) {
     const auto block_ptr = current->GetBlockData(block)->GetBlockPointer();
     const auto is_nr_outflow = [](const std::string& name) {
@@ -1591,18 +1593,29 @@ TaskStatus StageUpdateMeshImpl(MeshData<Real>* current, MeshData<Real>* base,
     const bool outer_x3 = block_ptr->boundary_flag[parthenon::BoundaryFace::outer_x3] ==
                               parthenon::BoundaryFlag::user &&
                           is_nr_outflow(mesh->mesh_bc_names[5]);
-    if (!(inner_x1 || outer_x1 || inner_x2 || outer_x2 || inner_x3 || outer_x3))
-      continue;
-    const auto block_ib = block_ptr->cellbounds.GetBoundsI(IndexDomain::interior);
-    const auto block_jb = block_ptr->cellbounds.GetBoundsJ(IndexDomain::interior);
-    const auto block_kb = block_ptr->cellbounds.GetBoundsK(IndexDomain::interior);
+    host_faces(block, 0) = inner_x1;
+    host_faces(block, 1) = outer_x1;
+    host_faces(block, 2) = inner_x2;
+    host_faces(block, 3) = outer_x2;
+    host_faces(block, 4) = inner_x3;
+    host_faces(block, 5) = outer_x3;
+    has_boundary = has_boundary || inner_x1 || outer_x1 || inner_x2 || outer_x2 ||
+                   inner_x3 || outer_x3;
+  }
+  if (has_boundary) {
+    // Complete the metadata transfer before its temporary host mirror expires.
+    // A single packed launch replaces the per-boundary-block launches.
+    Kokkos::deep_copy(boundary_faces, host_faces);
     parthenon::par_for(
         DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld boundary RHS", parthenon::DevExecSpace(),
-        block_kb.s, block_kb.e, block_jb.s, block_jb.e, block_ib.s, block_ib.e,
-        KOKKOS_LAMBDA(const int k, const int j, const int i) {
-          const bool on_boundary = (inner_x1 && i == block_ib.s) || (outer_x1 && i == block_ib.e) ||
-                                   (inner_x2 && j == block_jb.s) || (outer_x2 && j == block_jb.e) ||
-                                   (inner_x3 && k == block_kb.s) || (outer_x3 && k == block_kb.e);
+        0, input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+        KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
+          const bool on_boundary = (boundary_faces(block, 0) && i == ib.s) ||
+                                   (boundary_faces(block, 1) && i == ib.e) ||
+                                   (boundary_faces(block, 2) && j == jb.s) ||
+                                   (boundary_faces(block, 3) && j == jb.e) ||
+                                   (boundary_faces(block, 4) && k == kb.s) ||
+                                   (boundary_faces(block, 5) && k == kb.e);
           if (!on_boundary)
             return;
           const auto& coordinates = input.GetCoords(block);
