@@ -529,6 +529,7 @@ const std::map<std::string, std::set<std::string>> kPanguSchema{
       "k_adi",
       "r_crit",
       "fm_torus",
+      "magnetic_topology",
       "chakrabarti_torus",
       "prograde",
       "r_edge",

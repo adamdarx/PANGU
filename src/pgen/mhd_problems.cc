@@ -1224,6 +1224,11 @@ void MHDProblem(MeshBlock* block, ParameterInput* pin) {
   const Real bondi_sigma_target = pin->GetOrAddReal("problem", "sigma_target", 1.0e3);
   const Real bondi_sigma_rmin = pin->GetOrAddReal("problem", "sigma_rmin", 1.9);
   const bool torus_fm = pin->GetOrAddBoolean("problem", "fm_torus", true);
+  const std::string magnetic_topology =
+      pin->GetOrAddString("problem", "magnetic_topology", "sane");
+  PARTHENON_REQUIRE(magnetic_topology == "sane" || magnetic_topology == "mad",
+                    "problem/magnetic_topology must be sane or mad");
+  const bool mad_topology = magnetic_topology == "mad";
   const bool torus_chakrabarti = pin->GetOrAddBoolean("problem", "chakrabarti_torus", false);
   const Real torus_n_input = pin->GetOrAddReal("problem", "n_param", 0.0);
   const bool torus_prograde = pin->GetOrAddBoolean("problem", "prograde", true);
@@ -1239,13 +1244,29 @@ void MHDProblem(MeshBlock* block, ParameterInput* pin) {
   const Real torus_perturbation = pin->GetOrAddReal("problem", "pert_amp", 0.0);
   const Real potential_beta_min = pin->GetOrAddReal("problem", "potential_beta_min", 100.0);
   const Real potential_cutoff = pin->GetOrAddReal("problem", "potential_cutoff", 0.2);
-  const Real potential_falloff = pin->GetOrAddReal("problem", "potential_falloff", 0.0);
-  const Real potential_radius_power = pin->GetOrAddReal("problem", "potential_r_pow", 0.0);
+  const Real potential_falloff = pin->GetOrAddReal(
+      "problem", "potential_falloff", mad_topology ? 400.0 : 0.0);
+  const Real potential_radius_power = pin->GetOrAddReal(
+      "problem", "potential_r_pow", mad_topology ? 3.0 : 0.0);
   const Real potential_density_power = pin->GetOrAddReal("problem", "potential_rho_pow", 1.0);
   const bool vertical_field = pin->GetOrAddBoolean("problem", "vertical_field", false);
   const bool magnetized_torus_problem =
       problem == ProblemType::gr_torus_sane || problem == ProblemType::gr_chakrabarti_torus;
   const bool chakrabarti_problem = problem == ProblemType::gr_chakrabarti_torus;
+  PARTHENON_REQUIRE(!mad_topology ||
+                        (problem == ProblemType::gr_torus_sane && torus_fm &&
+                         !torus_chakrabarti && torus_tilt == 0.0 && !vertical_field),
+                    "magnetic_topology=mad requires an untilted magnetized FM torus");
+  // KHARMA seed_a<BSeedType::mad>: large, coherent poloidal flux reservoir.
+  // A_phi=max[(rho/rho_max)(r/r_edge)^3 sin(theta)^3 exp(-r/400)-0.2,0].
+  // This seeds a MAD candidate; magnetic arrest must be measured in evolution.
+  // Reject stale SANE controls instead of silently labeling a SANE seed as MAD.
+  PARTHENON_REQUIRE(!mad_topology ||
+                        (potential_radius_power == 3.0 && potential_falloff == 400.0 &&
+                         potential_density_power == 1.0 && potential_cutoff == 0.2),
+                    "magnetic_topology=mad requires potential_r_pow=3, "
+                    "potential_falloff=400, potential_rho_pow=1, potential_cutoff=0.2; "
+                    "omit these parameters to use the MAD defaults");
   PARTHENON_REQUIRE(!magnetized_torus_problem ||
                         (physics == relativity::HydroMode::gr && eos.HasEnergy()),
                     "PANGU magnetized torus problems require ideal-GR MHD");
@@ -2025,6 +2046,7 @@ void NormalizeMagnetisedBondi(Mesh* mesh, ParameterInput* pin, MeshData<Real>*) 
 }
 
 void NormalizeSaneTorus(Mesh* mesh, ParameterInput* pin, MeshData<Real>*) {
+  const auto magnetic_topology = pin->GetOrAddString("problem", "magnetic_topology", "sane");
   const auto problem_id = pin->GetString("parthenon/job", "problem_id");
   if (problem_id != "gr_torus_sane" && problem_id != "gr_chakrabarti_torus" &&
       problem_id != "gr_chakrabarti_torus_sane")
@@ -2180,9 +2202,10 @@ void NormalizeSaneTorus(Mesh* mesh, ParameterInput* pin, MeshData<Real>*) {
   if (Globals::my_rank == 0) {
     const Real achieved_beta =
         pressure_max / (0.5 * magnetic_squared_max * normalization * normalization);
-    std::printf("PANGU magnetized torus initialization: pmax=%.17e bsqmax(raw)=%.17e "
+    std::printf("PANGU magnetized torus initialization: topology=%s pmax=%.17e bsqmax(raw)=%.17e "
                 "bnorm=%.17e "
                 "beta=%.17e max|divB|=%.17e\n",
+                magnetic_topology.c_str(),
                 static_cast<double>(pressure_max), static_cast<double>(magnetic_squared_max),
                 static_cast<double>(normalization), static_cast<double>(achieved_beta),
                 static_cast<double>(divergence_max));

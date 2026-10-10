@@ -1,0 +1,110 @@
+# Seven-case campaign: SANE seed, six electron models, a*=0.9375.
+# Common FM torus r_edge=20/r_peak=41, r_out=1000; fresh run only.
+# Global 384x192x192, two radial blocks, 2 GPU / 2 MPI ranks.
+<parthenon/job>
+problem_id = gr_torus_sane
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<plugins>
+enabled = electron
+<parthenon/mesh>
+refinement = none
+numlevel = 1
+nghost = 4
+nx1 = 384
+x1min = 0.1823215567939546
+x1max = 6.907755278982137
+nx2 = 192
+x2min = 1.0e-5
+x2max = 0.99999
+nx3 = 192
+<parthenon/meshblock>
+nx1 = 192
+nx2 = 192
+nx3 = 192
+<parthenon/time>
+integrator = rk2
+tlim = 30000.0
+nlim = -1
+ncycle_out_mesh = 100
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.3333333333333333
+gamma_max = 20.0
+sigma_max = 3.4028234663852886e38
+reconstruct = ppm4
+rsolver = hlle
+cfl = 0.3
+density_floor = 1.0e-10
+pressure_floor = 0.333e-12
+fofc = true
+<electrons>
+enabled = true
+heating = true
+gamma_e = 1.3333333333333333
+gamma_p = 1.6666666666666667
+init_to_fel_0 = true
+fel_0 = 0.01
+fel_constant = 0.1
+constant = true
+howes = true
+kawazura = true
+werner = true
+rowan = true
+sharma = true
+enforce_positive_dissipation = false
+suppress_highb_heat = true
+sigma_heat_cutoff = 1.0
+limit_kel = true
+tp_over_te_min = 1.0e-3
+tp_over_te_max = 1.0e3
+reinitialize = false
+write_diagnostics = true
+<geometry>
+background = mks
+expected_metric = mks
+expected_mode = static
+bh_spin = 0.9375
+hslope = 0.3
+<problem>
+fm_torus = true
+prograde = true
+r_edge = 20.0
+r_peak = 41.0
+rho_max = 1.0
+rho_min = 1.0e-5
+rho_pow = -1.5
+pgas_min = 0.333e-7
+pgas_pow = -2.5
+tilt_angle = 0.0
+pert_amp = 2.0e-2
+potential_beta_min = 100.0
+potential_cutoff = 0.2
+potential_falloff = 0.0
+potential_r_pow = 0.0
+potential_rho_pow = 1.0
+vertical_field = false
+magnetic_topology = sane
+write_final_csv = false
+<parthenon/output1>
+file_type = hst
+dt = 100.0
+data_format = %24.16e
+include_in_final = true
+<parthenon/output2>
+file_type = hdf5
+dt = 100.0
+variables = mhd.prim,mhd.b_cell,electrons.prim,electrons.diagnostics
+id = prim
+hdf5_compression_level = 0
+single_precision_output = false
+ghost_zones = false
+include_in_final = true
+<parthenon/output3>
+file_type = rst
+dt = 100.0
+id = restart
+hdf5_compression_level = 0
+include_in_final = true
