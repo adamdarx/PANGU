@@ -20,6 +20,8 @@ include(PANGUProvenance)
 include(PANGUPlugins)
 
 pangu_configure_parthenon()
+include(PANGUParthenonPatch)
+pangu_apply_parthenon_patch()
 add_subdirectory(parthenon EXCLUDE_FROM_ALL)
 
 pangu_discover_plugins()
