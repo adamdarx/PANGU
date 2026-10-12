@@ -43,7 +43,6 @@ parthenon::TaskStatus AccumulateRKStateMeshTask(parthenon::MeshData<parthenon::R
                                                 parthenon::MeshData<parthenon::Real>* accumulator,
                                                 parthenon::Real delta, bool initialize);
 
-parthenon::TaskStatus FloorChiMeshTask(parthenon::MeshData<parthenon::Real>* data);
 parthenon::TaskStatus
 EnforceAlgebraicConstraintsBlockTask(parthenon::MeshBlockData<parthenon::Real>* data);
 parthenon::TaskStatus

@@ -32,6 +32,11 @@ using namespace parthenon::package::prelude;
 
 namespace {
 
+// Bound CUDA thread-local stack reservation for tensor-heavy kernels while
+// retaining enough cells in each launch to saturate the GPU.
+inline constexpr int kHeavyKernelBlockBatch = 32;
+
+
 template <class Z4cPack, class ADMPack>
 KOKKOS_INLINE_FUNCTION void ConvertPoint(const Z4cPack& z4c, const ADMPack& adm, const int block,
                                          const int k, const int j, const int i,
@@ -1361,20 +1366,24 @@ template <int Order> TaskStatus ComputeConstraintsMeshImpl(MeshData<Real>* data)
   const auto kb = first->cellbounds.GetBoundsK(IndexDomain::interior);
   const auto options =
       first->packages.Get("numerical_relativity")->Param<Z4cOptions>("z4c_options");
-  parthenon::par_for(
-      DEFAULT_LOOP_PATTERN, "PANGU NR constraints", parthenon::DevExecSpace(), 0, z4c.GetDim(5) - 1,
-      kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
-      KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-        const auto& coordinates = z4c.GetCoords(block);
-        const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
-                                         1.0 / coordinates.Dxc<X2DIR>(k, j, i),
-                                         1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-        ConstraintValues local{};
-        ComputeZ4cConstraints<Order>(z4c, adm, block, k, j, i, inverse_spacing,
-                                     options.chi_psi_power, local);
-        for (int component = 0; component < kConstraintComponents; ++component)
-          constraints(block, component, k, j, i) = local.values[component];
-      });
+  for (int block_begin = 0; block_begin < z4c.GetDim(5);
+       block_begin += kHeavyKernelBlockBatch) {
+    const int block_end = std::min(block_begin + kHeavyKernelBlockBatch, z4c.GetDim(5)) - 1;
+    parthenon::par_for(
+        DEFAULT_LOOP_PATTERN, "PANGU NR constraints", parthenon::DevExecSpace(), block_begin,
+        block_end, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+        KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
+          const auto& coordinates = z4c.GetCoords(block);
+          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+          ConstraintValues local{};
+          ComputeZ4cConstraints<Order>(z4c, adm, block, k, j, i, inverse_spacing,
+                                       options.chi_psi_power, local);
+          for (int component = 0; component < kConstraintComponents; ++component)
+            constraints(block, component, k, j, i) = local.values[component];
+        });
+  }
   return TaskStatus::complete;
 }
 
@@ -1389,21 +1398,25 @@ template <int Order> TaskStatus ComputeMatterConstraintsMeshImpl(MeshData<Real>*
   const auto kb = first->cellbounds.GetBoundsK(IndexDomain::interior);
   const auto options =
       first->packages.Get("numerical_relativity")->Param<Z4cOptions>("z4c_options");
-  parthenon::par_for(
-      DEFAULT_LOOP_PATTERN, "PANGU NR matter constraints", parthenon::DevExecSpace(), 0,
-      z4c.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
-      KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-        const auto& coordinates = z4c.GetCoords(block);
-        const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
-                                         1.0 / coordinates.Dxc<X2DIR>(k, j, i),
-                                         1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-        ConstraintValues local{};
-        ComputeZ4cConstraints<Order>(z4c, adm, block, k, j, i, inverse_spacing,
-                                     options.chi_psi_power,
-                                     LoadStressEnergy(tmunu, block, k, j, i), local);
-        for (int component = 0; component < kConstraintComponents; ++component)
-          constraints(block, component, k, j, i) = local.values[component];
-      });
+  for (int block_begin = 0; block_begin < z4c.GetDim(5);
+       block_begin += kHeavyKernelBlockBatch) {
+    const int block_end = std::min(block_begin + kHeavyKernelBlockBatch, z4c.GetDim(5)) - 1;
+    parthenon::par_for(
+        DEFAULT_LOOP_PATTERN, "PANGU NR matter constraints", parthenon::DevExecSpace(), block_begin,
+        block_end, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+        KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
+          const auto& coordinates = z4c.GetCoords(block);
+          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+          ConstraintValues local{};
+          ComputeZ4cConstraints<Order>(z4c, adm, block, k, j, i, inverse_spacing,
+                                       options.chi_psi_power,
+                                       LoadStressEnergy(tmunu, block, k, j, i), local);
+          for (int component = 0; component < kConstraintComponents; ++component)
+            constraints(block, component, k, j, i) = local.values[component];
+        });
+  }
   return TaskStatus::complete;
 }
 
@@ -1512,31 +1525,41 @@ TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
       first->packages.Get("numerical_relativity")->Param<Z4cOptions>("z4c_options");
   if constexpr (WithMatter) {
     const auto tmunu = current->PackVariables(std::vector<std::string>{"nr.tmunu"});
-    parthenon::par_for(
-        DEFAULT_LOOP_PATTERN, "PANGU matter Z4c RHS",
-        parthenon::DevExecSpace(), 0, input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
-        KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-          const auto& coordinates = input.GetCoords(block);
-          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
-                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
-                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-          rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
-          rhs::EvaluatePointWithMatter<Order>(input, tmunu, block, k, j, i, inverse_spacing,
-                                              options, time, local_rhs);
-        });
+    for (int block_begin = 0; block_begin < input.GetDim(5);
+         block_begin += kHeavyKernelBlockBatch) {
+      const int block_end =
+          std::min(block_begin + kHeavyKernelBlockBatch, input.GetDim(5)) - 1;
+      parthenon::par_for(
+          DEFAULT_LOOP_PATTERN, "PANGU matter Z4c RHS", parthenon::DevExecSpace(), block_begin,
+          block_end, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+          KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
+            const auto& coordinates = input.GetCoords(block);
+            const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                             1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                             1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+            rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
+            rhs::EvaluatePointWithMatter<Order>(input, tmunu, block, k, j, i, inverse_spacing,
+                                                options, time, local_rhs);
+          });
+    }
   } else {
-    parthenon::par_for(
-        DEFAULT_LOOP_PATTERN, "PANGU vacuum Z4c RHS",
-        parthenon::DevExecSpace(), 0, input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
-        KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-          const auto& coordinates = input.GetCoords(block);
-          const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
-                                           1.0 / coordinates.Dxc<X2DIR>(k, j, i),
-                                           1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-          rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
-          rhs::EvaluatePoint<Order>(input, block, k, j, i, inverse_spacing, options, time,
-                                    local_rhs);
-        });
+    for (int block_begin = 0; block_begin < input.GetDim(5);
+         block_begin += kHeavyKernelBlockBatch) {
+      const int block_end =
+          std::min(block_begin + kHeavyKernelBlockBatch, input.GetDim(5)) - 1;
+      parthenon::par_for(
+          DEFAULT_LOOP_PATTERN, "PANGU vacuum Z4c RHS", parthenon::DevExecSpace(), block_begin,
+          block_end, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+          KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
+            const auto& coordinates = input.GetCoords(block);
+            const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
+                                             1.0 / coordinates.Dxc<X2DIR>(k, j, i),
+                                             1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
+            rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
+            rhs::EvaluatePoint<Order>(input, block, k, j, i, inverse_spacing, options, time,
+                                      local_rhs);
+          });
+    }
   }
 
   parthenon::par_for(
@@ -1694,14 +1717,23 @@ TaskStatus RKUpdateMeshTask(MeshData<Real>* current, MeshData<Real>* base,
   const auto ib = current->GetBoundsI(IndexDomain::interior);
   const auto jb = current->GetBoundsJ(IndexDomain::interior);
   const auto kb = current->GetBoundsK(IndexDomain::interior);
+  const auto first = current->GetBlockData(0)->GetBlockPointer();
+  const auto options =
+      first->packages.Get("numerical_relativity")->Param<Z4cOptions>("z4c_options");
+  const bool floor_chi = options.floor_chi;
+  const Real chi_min_floor = options.chi_min_floor;
   parthenon::par_for(
       DEFAULT_LOOP_PATTERN, "PANGU Z4c RK update", parthenon::DevExecSpace(), 0,
       input.GetDim(5) - 1, 0, kZ4cComponents - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
-        output(block, component, k, j, i) =
+        Real value =
             gamma_current * input(block, component, k, j, i) +
             gamma_base * initial(block, component, k, j, i) +
             beta_dt * rhs_values(block, component, k, j, i);
+        if (floor_chi && component == Index(Z4cComponent::chi) &&
+            (!Kokkos::isfinite(value) || value < chi_min_floor))
+          value = chi_min_floor;
+        output(block, component, k, j, i) = value;
       });
   return TaskStatus::complete;
 }
@@ -1721,27 +1753,6 @@ TaskStatus AccumulateRKStateMeshTask(MeshData<Real>* current, MeshData<Real>* ac
           output(block, component, k, j, i) = input(block, component, k, j, i);
         else
           output(block, component, k, j, i) += delta * input(block, component, k, j, i);
-      });
-  return TaskStatus::complete;
-}
-
-TaskStatus FloorChiMeshTask(MeshData<Real>* data) {
-  const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
-  const auto first = data->GetBlockData(0)->GetBlockPointer();
-  const auto options =
-      first->packages.Get("numerical_relativity")->Param<Z4cOptions>("z4c_options");
-  if (!options.floor_chi)
-    return TaskStatus::complete;
-  const auto ib = first->cellbounds.GetBoundsI(IndexDomain::interior);
-  const auto jb = first->cellbounds.GetBoundsJ(IndexDomain::interior);
-  const auto kb = first->cellbounds.GetBoundsK(IndexDomain::interior);
-  parthenon::par_for(
-      DEFAULT_LOOP_PATTERN, "PANGU NR chi floor", parthenon::DevExecSpace(), 0, z4c.GetDim(5) - 1,
-      kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
-      KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-        const Real value = z4c(block, Index(Z4cComponent::chi), k, j, i);
-        if (!Kokkos::isfinite(value) || value < options.chi_min_floor)
-          z4c(block, Index(Z4cComponent::chi), k, j, i) = options.chi_min_floor;
       });
   return TaskStatus::complete;
 }

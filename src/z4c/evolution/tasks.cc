@@ -116,6 +116,16 @@ void ConfigureSyncIntegrator(Mesh* mesh, parthenon::LowStorageIntegrator& integr
   integrator.c = {0.0, 1.193743905974738, 0.517227474715325, 1.0};
   integrator.buffer_name = {"base", "1", "base"};
   integrator.stage_name = {"base", "1", "2", "3", "base"};
+  // Vacuum RHS is fully materialized before the cell-local RK update, so
+  // current and next may alias. Keep distinct stages for coupled matter,
+  // whose update still needs the original base state.
+  const bool vacuum = mesh->packages.Get("numerical_relativity")->Param<bool>("vacuum");
+  const bool matter = mesh->packages.AllPackages().count("hydro") != 0 ||
+                      mesh->packages.AllPackages().count("mhd") != 0;
+  if (vacuum && !matter) {
+    integrator.buffer_name = {"base", "base", "base"};
+    integrator.stage_name = {"base", "base", "base", "base", "base"};
+  }
 }
 
 void RunPostStep(Mesh* mesh, const parthenon::SimTime& time) {
@@ -238,7 +248,6 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
         tasks.AddTask(rhs, ApplySommerfeldRHSMeshTask, current.get());
     auto update = tasks.AddTask(boundary_rhs | carried, RKUpdateMeshTask, current.get(),
                                 rk_reference, gam0, gam1, beta * dt, next.get());
-    update = tasks.AddTask(update, FloorChiMeshTask, next.get());
     TaskID hydro_update = none;
     TaskID magnetic_update = none;
     if (sync_matter) {

@@ -70,7 +70,6 @@ struct PointDerivatives {
   Real dbeta[3][3]{};
   Real dgamma[3][3]{};
   Real dmetric[3][6]{};
-  Real d_a[3][6]{};
   Real ddalpha[6]{};
   Real ddchi[6]{};
   Real ddbeta[6][3]{};
@@ -161,9 +160,6 @@ KOKKOS_INLINE_FUNCTION void LoadPoint(const Pack& values, const int block, const
         derivatives.dmetric[derivative][symmetric] =
             fd::First<Order>(derivative, inverse_spacing[derivative],
                              accessor(Index(Z4cComponent::gxx) + symmetric));
-        derivatives.d_a[derivative][symmetric] =
-            fd::First<Order>(derivative, inverse_spacing[derivative],
-                             accessor(Index(Z4cComponent::axx) + symmetric));
       }
     }
   }
@@ -277,9 +273,6 @@ KOKKOS_INLINE_FUNCTION void ComputeVacuum(const PointState& state,
                                           const PointDerivatives& derivatives,
                                           const Z4cOptions& options, const Real time,
                                           Output& output) {
-  for (int component = 0; component < kZ4cComponents; ++component)
-    output[component] = 0.0;
-
   Real inverse_metric[6]{};
   const Real determinant = SpatialDeterminant(state.metric);
   SpatialInverse(1.0 / determinant, state.metric, inverse_metric);
