@@ -34,7 +34,10 @@ namespace {
 
 // Bound CUDA thread-local stack reservation for tensor-heavy kernels while
 // retaining enough cells in each launch to saturate the GPU.
-inline constexpr int kHeavyKernelBlockBatch = 32;
+// Keep the full MeshData partition in one launch, matching AthenaK's MeshBlockPack.
+// Splitting every 32 blocks multiplied launch latency by sixteen on the 484-block
+// Stage-02 case and prevented the GPU scheduler from seeing the complete workload.
+inline constexpr int kHeavyKernelBlockBatch = 2048;
 
 
 template <class Z4cPack, class ADMPack>
@@ -235,7 +238,7 @@ ApplySommerfeldBoundaryRHS(const Pack& input, const int block, const int k, cons
 }
 
 template <parthenon::CoordinateDirection Direction, bool Inner>
-void ApplyPackedOutflowFace(MeshData<Real>* data) {
+void ApplyPackedOutflowFace(MeshData<Real>* data, const bool coarse) {
   constexpr IndexDomain domain =
       Inner ? (Direction == X1DIR ? IndexDomain::inner_x1
                                  : (Direction == X2DIR ? IndexDomain::inner_x2
@@ -246,6 +249,10 @@ void ApplyPackedOutflowFace(MeshData<Real>* data) {
   auto* mesh = data->GetMeshPointer();
   const auto package = mesh->packages.Get("numerical_relativity");
   const int extrapolation_order = package->Param<int>("boundary_extrapolation_order");
+  const auto cell_level = coarse ? parthenon::CellLevel::coarse
+                                 : parthenon::CellLevel::same;
+  // Packs retain the block's fine coordinates even for coarse storage. Use
+  // fine bounds only for identifying physical faces, not for coarse indexing.
   const auto cell_ib = data->GetBoundsI(IndexDomain::interior);
   const auto cell_jb = data->GetBoundsJ(IndexDomain::interior);
   const auto cell_kb = data->GetBoundsK(IndexDomain::interior);
@@ -279,14 +286,14 @@ void ApplyPackedOutflowFace(MeshData<Real>* data) {
       continue;
 
     parthenon::PackIndexMap map;
-    const auto fields = data->PackVariables(names, map);
+    const auto fields = data->PackVariables(names, map, coarse);
     const auto z4c_range = map["nr.z4c"];
-    const auto ib = data->GetBoundsI(domain, element);
-    const auto jb = data->GetBoundsJ(domain, element);
-    const auto kb = data->GetBoundsK(domain, element);
-    const auto interior_i = data->GetBoundsI(IndexDomain::interior, element);
-    const auto interior_j = data->GetBoundsJ(IndexDomain::interior, element);
-    const auto interior_k = data->GetBoundsK(IndexDomain::interior, element);
+    const auto ib = data->GetBoundsI(cell_level, domain, element);
+    const auto jb = data->GetBoundsJ(cell_level, domain, element);
+    const auto kb = data->GetBoundsK(cell_level, domain, element);
+    const auto interior_i = data->GetBoundsI(cell_level, IndexDomain::interior, element);
+    const auto interior_j = data->GetBoundsJ(cell_level, IndexDomain::interior, element);
+    const auto interior_k = data->GetBoundsK(cell_level, IndexDomain::interior, element);
     const int reference = Inner ? (Direction == X1DIR   ? interior_i.s
                                    : Direction == X2DIR ? interior_j.s
                                                         : interior_k.s)
@@ -369,14 +376,22 @@ void ApplyPackedOutflowFace(MeshData<Real>* data) {
 
 TaskStatus ApplyPackedSyncOutflowBoundariesMeshTask(std::shared_ptr<MeshData<Real>>& data,
                                                     const bool coarse) {
-  PARTHENON_REQUIRE(!coarse && !data->GetMeshPointer()->multilevel,
-                    "packed SYNC outflow is a uniform fine-grid operation");
-  ApplyPackedOutflowFace<X1DIR, true>(data.get());
-  ApplyPackedOutflowFace<X1DIR, false>(data.get());
-  ApplyPackedOutflowFace<X2DIR, true>(data.get());
-  ApplyPackedOutflowFace<X2DIR, false>(data.get());
-  ApplyPackedOutflowFace<X3DIR, true>(data.get());
-  ApplyPackedOutflowFace<X3DIR, false>(data.get());
+  PARTHENON_REQUIRE(!coarse || data->GetMeshPointer()->multilevel,
+                    "coarse outflow requires a multilevel mesh");
+  // Legacy MeshData variable-pack keys omit the coarse flag. Keep the coarse
+  // cache in a distinct shallow container so it cannot alias a cached fine
+  // pack. Variables and their coarse storage are shared, not copied. The
+  // mesh's data collection handles partition/topology invalidation as usual.
+  std::shared_ptr<MeshData<Real>> target = data;
+  if (coarse)
+    target = data->GetMeshPointer()->mesh_data.AddShallow(
+        "nr_packed_outflow_coarse_" + data->StageName(), data);
+  ApplyPackedOutflowFace<X1DIR, true>(target.get(), coarse);
+  ApplyPackedOutflowFace<X1DIR, false>(target.get(), coarse);
+  ApplyPackedOutflowFace<X2DIR, true>(target.get(), coarse);
+  ApplyPackedOutflowFace<X2DIR, false>(target.get(), coarse);
+  ApplyPackedOutflowFace<X3DIR, true>(target.get(), coarse);
+  ApplyPackedOutflowFace<X3DIR, false>(target.get(), coarse);
   return TaskStatus::complete;
 }
 
@@ -1533,13 +1548,18 @@ TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
           DEFAULT_LOOP_PATTERN, "PANGU matter Z4c RHS", parthenon::DevExecSpace(), block_begin,
           block_end, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
           KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-            const auto& coordinates = input.GetCoords(block);
+            // Cache the per-block packs once per point.  MeshBlockPack access otherwise
+            // repeats the outer block lookup for every stencil load in the RHS.
+            const auto block_input = input(block);
+            const auto block_tmunu = tmunu(block);
+            const auto block_output = output(block);
+            const auto& coordinates = block_input.GetCoords();
             const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
                                              1.0 / coordinates.Dxc<X2DIR>(k, j, i),
                                              1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-            rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
-            rhs::EvaluatePointWithMatter<Order>(input, tmunu, block, k, j, i, inverse_spacing,
-                                                options, time, local_rhs);
+            rhs::PointOutput<decltype(block_output)> local_rhs{block_output, 0, k, j, i};
+            rhs::EvaluatePointWithMatter<Order>(block_input, block_tmunu, 0, k, j, i,
+                                                inverse_spacing, options, time, local_rhs);
           });
     }
   } else {
@@ -1551,12 +1571,16 @@ TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
           DEFAULT_LOOP_PATTERN, "PANGU vacuum Z4c RHS", parthenon::DevExecSpace(), block_begin,
           block_end, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
           KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-            const auto& coordinates = input.GetCoords(block);
+            // Cache the per-block packs once per point.  MeshBlockPack access otherwise
+            // repeats the outer block lookup for every stencil load in the RHS.
+            const auto block_input = input(block);
+            const auto block_output = output(block);
+            const auto& coordinates = block_input.GetCoords();
             const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
                                              1.0 / coordinates.Dxc<X2DIR>(k, j, i),
                                              1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
-            rhs::PointOutput<decltype(output)> local_rhs{output, block, k, j, i};
-            rhs::EvaluatePoint<Order>(input, block, k, j, i, inverse_spacing, options, time,
+            rhs::PointOutput<decltype(block_output)> local_rhs{block_output, 0, k, j, i};
+            rhs::EvaluatePoint<Order>(block_input, 0, k, j, i, inverse_spacing, options, time,
                                       local_rhs);
           });
     }
@@ -1566,14 +1590,16 @@ TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
       DEFAULT_LOOP_PATTERN, "PANGU Z4c K-O dissipation", parthenon::DevExecSpace(), 0,
       input.GetDim(5) - 1, 0, kZ4cComponents - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
-        const auto& coordinates = input.GetCoords(block);
+        const auto block_input = input(block);
+        const auto block_output = output(block);
+        const auto& coordinates = block_input.GetCoords();
         const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
                                          1.0 / coordinates.Dxc<X2DIR>(k, j, i),
                                          1.0 / coordinates.Dxc<X3DIR>(k, j, i)};
         const auto component_values =
-            rhs::ComponentAccessor<decltype(input)>{input, block, component, k, j, i};
+            rhs::ComponentAccessor<decltype(block_input)>{block_input, 0, component, k, j, i};
         for (int direction = 0; direction < 3; ++direction) {
-          output(block, component, k, j, i) +=
+          block_output(component, k, j, i) +=
               options.dissipation * fd::KreissOliger<Order>(
                                         direction, inverse_spacing[direction], component_values);
         }
