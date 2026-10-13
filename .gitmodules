@@ -1,5 +1,5 @@
 [submodule "parthenon"]
 	path = parthenon
 	url = https://github.com/adamdarx/parthenon.git
-	branch = pangu-cuda
+	branch = develop
 	shallow = true
