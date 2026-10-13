@@ -21,6 +21,9 @@ using namespace parthenon::driver::prelude;
 namespace {
 
 bool CanUsePackedSyncOutflow(Mesh* mesh) {
+  // The multilevel packed implementation passes field equivalence tests,
+  // but has not improved uninstrumented step timings. Keep it off the
+  // production graph until a measured end-to-end benefit is established.
   return mesh->ndim == 3 && !mesh->multilevel &&
          std::all_of(mesh->mesh_bc_names.begin(), mesh->mesh_bc_names.end(),
                      [](const std::string& name) { return name == "nr_outflow"; });
@@ -304,12 +307,9 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
               : tasks.AddTask(protected_state, SyncGRMHDConservedToPrimitiveMeshTask, next.get());
       const auto next_matter =
           tasks.AddTask(primitive, BuildStressEnergyMeshTask, next.get(), next_stage_time);
-      // Constraints are diagnostics of the completed RK state and are not
-      // inputs to the following stage's ADM/C2P chain. AthenaK evaluates
-      // them once per full step rather than once per RK stage.
-      ready = stage == integrator->nstages
-                  ? tasks.AddTask(next_matter, ComputeConstraintsMeshTask, next.get())
-                  : next_matter;
+      // Constraints are derived diagnostics. Parthenon's FillDerived callback
+      // reconstructs them when an output actually requests them.
+      ready = next_matter;
     } else {
       auto next_matter = projected;
       if (!vacuum)
@@ -319,9 +319,7 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
         // No vacuum RHS stage consumes ADM fields. Materialize them only for
         // the completed state, immediately before final diagnostics.
         if (stage == integrator->nstages) {
-          const auto adm_fields =
-              tasks.AddTask(next_matter, Z4cToADMFieldsMeshTask, next.get());
-          ready = tasks.AddTask(adm_fields, ComputeConstraintsMeshTask, next.get());
+          ready = tasks.AddTask(next_matter, Z4cToADMFieldsMeshTask, next.get());
         } else {
           ready = next_matter;
         }
