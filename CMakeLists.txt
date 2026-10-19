@@ -446,6 +446,9 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     add_test(NAME pangu.nr6.amr COMMAND $<TARGET_FILE:pangu_nr6_amr>)
     set_tests_properties(pangu.nr6.amr PROPERTIES
       LABELS "unit;gpu;numerical-relativity;nr6;amr;athenak")
+    add_test(NAME pangu.nr6.tracker COMMAND $<TARGET_FILE:pangu_nr6_tracker>)
+    set_tests_properties(pangu.nr6.tracker PROPERTIES
+      LABELS "unit;logic;numerical-relativity;nr6;tracker;athenak")
     set_tests_properties(pangu.nr5.boosted_puncture PROPERTIES
       LABELS "numerical-relativity;nr5;unit;gpu;analytic;puncture")
     add_test(NAME pangu.nr7.bowen_york COMMAND $<TARGET_FILE:pangu_nr7_bowen_york>)

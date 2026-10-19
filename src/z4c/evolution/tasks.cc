@@ -133,7 +133,7 @@ void ConfigureSyncIntegrator(Mesh* mesh, parthenon::LowStorageIntegrator& integr
 }
 
 void RunPostStep(Mesh* mesh, const parthenon::SimTime& time) {
-  AdvancePunctureTracker(mesh);
+  AdvancePunctureTracker(mesh, time.dt);
   WriteAwADiagnostics(mesh, time.time + time.dt, time.ncycle + 1);
   RunPostStepDiagnostics(mesh, time.time + time.dt, time.ncycle + 1);
 }

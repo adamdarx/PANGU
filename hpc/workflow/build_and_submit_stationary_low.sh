@@ -47,7 +47,7 @@ cd "$workflow_dir"
 sha256sum pangu > pangu.sha256
 sha256sum input.in > input.sha256
 date -Is > submission-attempted.txt
-submission=$(sbatch --parsable --chdir="$workflow_dir" --job-name=S02_STAT_LOW_ADAPT \
+submission=$(sbatch --parsable --chdir="$workflow_dir" --job-name=S02_STAT_LOW \
   --comment="${workflow_dir##*/}" \
   --output="$workflow_dir/slurm-%j.out" --error="$workflow_dir/slurm-%j.err" \
   --export="ALL,PANGU_EXECUTABLE=$workflow_dir/pangu,PANGU_OUTPUT_DIR=$workflow_dir/data" \

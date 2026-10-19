@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iostream>
 #include <limits>
 #include <string>
 #include <vector>
@@ -17,6 +18,7 @@
 #include "z4c/evolution/constraints.h"
 #include "z4c/core/finite_difference.h"
 #include "z4c/evolution/amr.h"
+#include "z4c/tracking/position_update.h"
 #include "z4c/coupling/stress_energy.h"
 #include "z4c/coupling/sync_grhd.h"
 #include "z4c/coupling/sync_grmhd.h"
@@ -623,6 +625,9 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   const Real amr_dchi_max = pin->GetOrAddReal("numerical_relativity", "amr_dchi_max", 0.01);
   const bool tracker_enabled =
       pin->GetOrAddBoolean("numerical_relativity", "tracker_enabled", false);
+  const std::string tracker_mode_name =
+      pin->GetOrAddString("numerical_relativity", "tracker_mode", "ode");
+  const auto tracker_mode = tracking::ParseMode(tracker_mode_name);
   const int tracker_count = pin->GetOrAddInteger("numerical_relativity", "tracker_count", 1);
   const bool weyl_enabled = pin->GetOrAddBoolean("numerical_relativity", "weyl_enabled", false);
   const bool waveform_enabled =
@@ -854,7 +859,10 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   package->AddParam<Real>("amr_chi_min", amr_chi_min);
   package->AddParam<Real>("amr_dchi_max", amr_dchi_max);
   package->AddParam<bool>("tracker_enabled", tracker_enabled);
+  package->AddParam<tracking::Mode>("tracker_mode", tracker_mode);
   package->AddParam<int>("tracker_count", tracker_count);
+  if (tracker_enabled && parthenon::Globals::my_rank == 0)
+    std::cout << "Puncture tracker mode = " << tracker_mode_name << '\n';
   package->AddParam<bool>("weyl_enabled", weyl_enabled);
   package->AddParam<bool>("waveform_enabled", waveform_enabled);
   package->AddParam<bool>("horizon_enabled", horizon_enabled);
@@ -1073,10 +1081,13 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   return package;
 }
 
-void AdvancePunctureTracker(Mesh* mesh) {
+void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
   const auto package = mesh->packages.Get("numerical_relativity");
   if (!package->Param<bool>("tracker_enabled"))
     return;
+  PARTHENON_REQUIRE(std::isfinite(dt) && dt >= 0.0,
+                    "NR puncture tracker requires a finite, nonnegative completed-step dt");
+  const auto tracker_mode = package->Param<tracking::Mode>("tracker_mode");
   const int tracker_count = package->Param<int>("tracker_count");
   auto* position = package->MutableParam<std::vector<Real>>("tracker_position");
   auto* velocity = package->MutableParam<std::vector<Real>>("tracker_velocity");
@@ -1084,11 +1095,9 @@ void AdvancePunctureTracker(Mesh* mesh) {
                         velocity->size() == position->size(),
                     "NR puncture tracker state has an invalid size");
 
-  // Match AthenaK's walk tracker.  At the end of each complete RK step, move
-  // each compact-object center to the minimum lapse in the 3x3x3 neighborhood
-  // surrounding its nearest cell center.  Unlike the ODE tracker, this remains
-  // well defined when the shift becomes too steep to interpolate reliably at
-  // an under-resolved puncture.
+  // Match AthenaK's ODE tracker by default. The optional walk tracker locates
+  // the minimum lapse in a 3x3x3 neighborhood instead; using it implicitly
+  // snaps a stationary puncture off the origin and changes tracker AMR.
   for (int tracker = 0; tracker < tracker_count; ++tracker) {
     const int offset = 3 * tracker;
     std::shared_ptr<MeshBlock> owner;
@@ -1153,9 +1162,10 @@ void AdvancePunctureTracker(Mesh* mesh) {
           "PANGU NR puncture tracker shift interpolation",
           Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 3), KOKKOS_LAMBDA(const int axis) {
             Real value = 0.0;
-            for (int pk = 0; pk < points; ++pk)
+            // AthenaK sums its tensor-product interpolation in i,j,k order.
+            for (int pi = 0; pi < points; ++pi)
               for (int pj = 0; pj < points; ++pj)
-                for (int pi = 0; pi < points; ++pi)
+                for (int pk = 0; pk < points; ++pk)
                   value += weights[pi] * weights[kMaximumPoints + pj] *
                            weights[2 * kMaximumPoints + pk] *
                            z4c(Index(Z4cComponent::betax) + axis, first_k + pk, first_j + pj,
@@ -1167,44 +1177,50 @@ void AdvancePunctureTracker(Mesh* mesh) {
       for (int axis = 0; axis < 3; ++axis)
         local_state[3 + axis] = interpolated_host(axis);
 
-      int nearest[3]{};
-      for (int direction = 0; direction < 3; ++direction) {
-        nearest[direction] = static_cast<int>(
-            round(((*position)[offset + direction] - (xmin[direction] + 0.5 * dx[direction])) /
-                  dx[direction]));
-      }
-      const int center_i = interior_start[0] + nearest[0];
-      const int center_j = interior_start[1] + nearest[1];
-      const int center_k = interior_start[2] + nearest[2];
-      Kokkos::View<Real[27]> lapse("NR puncture tracker lapse neighborhood");
-      Kokkos::parallel_for(
-          "PANGU NR puncture tracker lapse walk",
-          Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 27), KOKKOS_LAMBDA(const int index) {
-            const int dk = index / 9;
-            const int dj = (index - 9 * dk) / 3;
-            const int di = index - 9 * dk - 3 * dj;
-            lapse(index) = z4c(Index(Z4cComponent::alpha), center_k + dk - 1,
-                                center_j + dj - 1, center_i + di - 1);
-          });
-      const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), lapse);
-      int minimum = -1;
-      Real minimum_lapse = std::numeric_limits<Real>::max();
-      for (int index = 0; index < 27; ++index) {
-        if (host(index) < minimum_lapse) {
-          minimum = index;
-          minimum_lapse = host(index);
-        }
-      }
-      if (minimum >= 0) {
-        const int minimum_k = minimum / 9;
-        const int minimum_j = (minimum - 9 * minimum_k) / 3;
-        const int minimum_i = minimum - 9 * minimum_k - 3 * minimum_j;
-        local_state[0] = xmin[0] + (nearest[0] + minimum_i - 1 + 0.5) * dx[0];
-        local_state[1] = xmin[1] + (nearest[1] + minimum_j - 1 + 0.5) * dx[1];
-        local_state[2] = xmin[2] + (nearest[2] + minimum_k - 1 + 0.5) * dx[2];
-      } else {
+      if (tracker_mode == tracking::Mode::ode) {
         for (int axis = 0; axis < 3; ++axis)
-          local_state[axis] = (*position)[offset + axis];
+          local_state[axis] = tracking::AdvanceOdePosition(
+              (*position)[offset + axis], local_state[3 + axis], dt);
+      } else {
+        int nearest[3]{};
+        for (int direction = 0; direction < 3; ++direction) {
+          nearest[direction] = static_cast<int>(
+              round(((*position)[offset + direction] - (xmin[direction] + 0.5 * dx[direction])) /
+                    dx[direction]));
+        }
+        const int center_i = interior_start[0] + nearest[0];
+        const int center_j = interior_start[1] + nearest[1];
+        const int center_k = interior_start[2] + nearest[2];
+        Kokkos::View<Real[27]> lapse("NR puncture tracker lapse neighborhood");
+        Kokkos::parallel_for(
+            "PANGU NR puncture tracker lapse walk",
+            Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 27), KOKKOS_LAMBDA(const int index) {
+              const int dk = index / 9;
+              const int dj = (index - 9 * dk) / 3;
+              const int di = index - 9 * dk - 3 * dj;
+              lapse(index) = z4c(Index(Z4cComponent::alpha), center_k + dk - 1,
+                                  center_j + dj - 1, center_i + di - 1);
+            });
+        const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), lapse);
+        int minimum = -1;
+        Real minimum_lapse = std::numeric_limits<Real>::max();
+        for (int index = 0; index < 27; ++index) {
+          if (host(index) < minimum_lapse) {
+            minimum = index;
+            minimum_lapse = host(index);
+          }
+        }
+        if (minimum >= 0) {
+          const int minimum_k = minimum / 9;
+          const int minimum_j = (minimum - 9 * minimum_k) / 3;
+          const int minimum_i = minimum - 9 * minimum_k - 3 * minimum_j;
+          local_state[0] = xmin[0] + (nearest[0] + minimum_i - 1 + 0.5) * dx[0];
+          local_state[1] = xmin[1] + (nearest[1] + minimum_j - 1 + 0.5) * dx[1];
+          local_state[2] = xmin[2] + (nearest[2] + minimum_k - 1 + 0.5) * dx[2];
+        } else {
+          for (int axis = 0; axis < 3; ++axis)
+            local_state[axis] = (*position)[offset + axis];
+        }
       }
       local_state[6] = 1.0;
     }

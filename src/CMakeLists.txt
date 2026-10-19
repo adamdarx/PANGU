@@ -556,6 +556,10 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     target_compile_features(pangu_nr6_amr PRIVATE cxx_std_20)
     target_compile_definitions(pangu_nr6_amr PRIVATE
       KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK)
+    add_executable(pangu_nr6_tracker
+      "${CMAKE_SOURCE_DIR}/tst/unit/nr6_tracker.cc")
+    target_include_directories(pangu_nr6_tracker PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_compile_features(pangu_nr6_tracker PRIVATE cxx_std_20)
     if(PANGU_ATHENAK_REFERENCE_DIR AND
        EXISTS "${PANGU_ATHENAK_REFERENCE_DIR}/src/utils/finite_diff.hpp")
       configure_file(
@@ -608,6 +612,7 @@ if(PANGU_CLANG_FORMAT)
       list(APPEND PANGU_FORMAT_SOURCES "../tst/unit/nr3_constraints.cc")
       list(APPEND PANGU_FORMAT_SOURCES "../tst/unit/nr6_weyl.cc")
       list(APPEND PANGU_FORMAT_SOURCES "../tst/unit/nr6_amr.cc")
+      list(APPEND PANGU_FORMAT_SOURCES "../tst/unit/nr6_tracker.cc")
     endif()
   endif()
   list(TRANSFORM PANGU_FORMAT_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
