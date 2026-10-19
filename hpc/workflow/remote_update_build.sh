@@ -73,8 +73,16 @@ git submodule status --recursive
 cp build/CMakeCache.txt "$workflow_dir/CMakeCache.txt"
 sha256sum build/src/pangu > "$workflow_dir/pangu.sha256"
 ldd build/src/pangu > "$workflow_dir/pangu.ldd.txt"
-if grep -q 'not found' "$workflow_dir/pangu.ldd.txt"; then
-  printf 'Unresolved runtime dependency\n' >&2
-  exit 1
-fi
+while read -r missing_library; do
+  [[ -z "$missing_library" ]] && continue
+  if [[ "$missing_library" == libcuda.so.1 ]]; then
+    # Login nodes do not provide the GPU driver. Validate it in the Slurm
+    # allocation, not by running the CUDA executable on the login node.
+    printf 'GPU driver check deferred to allocated GPU node: %s\n' "$missing_library"
+  else
+    printf 'Unresolved non-driver runtime dependency: %s\n' "$missing_library" >&2
+    exit 1
+  fi
+done < <(awk '$2 == "=>" && $3 == "not" && $4 == "found" {print $1}' \
+            "$workflow_dir/pangu.ldd.txt")
 printf 'UPDATE_BUILD_OK %s %s\n' "$expected_commit" "$(date -Is)"
