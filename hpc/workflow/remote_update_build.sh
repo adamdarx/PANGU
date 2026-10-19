@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Run with bash; preserve the server's local setup and pre-existing results.
 set -euo pipefail
-expected_commit="${1:?expected PANGU commit required}"
-workflow_dir="${2:?absolute workflow directory required}"
+mode="${1:?fetch or build required}"
+expected_commit="${2:?expected PANGU commit required}"
+workflow_dir="${3:?absolute workflow directory required}"
 repo_dir=/lustre/home/2601110206/PANGU
 dependency_prefix=/lustre/home/2601110206
 [[ "$expected_commit" =~ ^[0-9a-f]{40}$ ]]
@@ -11,11 +12,21 @@ mkdir -p "$workflow_dir"
 cd "$repo_dir"
 test -f update.sh
 test -f build.sh
+case "$mode:$(hostname -s)" in
+  fetch:wm2-data*) ;;
+  build:wm2-login*) ;;
+  *) printf 'Use fetch on wm2-data and build on wm2-login\n' >&2; exit 2 ;;
+esac
 git diff --quiet --ignore-submodules=all
 git diff --cached --quiet --ignore-submodules=all
 [[ "$(git remote get-url origin)" == https://gitee.com/adamdarx/PANGU* ]]
-cp --preserve=mode,timestamps update.sh "$workflow_dir/original-update.sh"
-cp --preserve=mode,timestamps build.sh "$workflow_dir/original-build.sh"
+if [[ ! -f "$workflow_dir/original-update.sh" ]]; then
+  cp --preserve=mode,timestamps update.sh "$workflow_dir/original-update.sh"
+fi
+if [[ ! -f "$workflow_dir/original-build.sh" ]]; then
+  cp --preserve=mode,timestamps build.sh "$workflow_dir/original-build.sh"
+fi
+if [[ "$mode" == fetch ]]; then
 git rev-parse HEAD > "$workflow_dir/pangu-before.txt"
 git -c fetch.recurseSubmodules=false fetch --no-recurse-submodules origin main
 test "$(git rev-parse origin/main)" = "$expected_commit"
@@ -37,14 +48,24 @@ if grep -Eq '^[-+U]' "$workflow_dir/submodules.txt"; then
   printf 'Submodule checkout does not match the recorded gitlinks\n' >&2
   exit 1
 fi
+printf 'FETCH_OK %s %s\n' "$expected_commit" "$(date -Is)"
+exit 0
+fi
 
 # Use the user's CUDA-aware MPI and parallel HDF5, not the non-CUDA site MPI.
+test "$(git rev-parse HEAD)" = "$expected_commit"
+git submodule status --recursive > "$workflow_dir/submodules.txt"
+if grep -Eq '^[-+U]' "$workflow_dir/submodules.txt"; then
+  printf 'Run the data-node fetch phase before building\n' >&2
+  exit 1
+fi
+module load gcc/12.2.0 cuda/12.6.0 cmake/3.31.9
 export PATH="$dependency_prefix/openmpi/bin:$dependency_prefix/hdf5/bin:$PATH"
 export LD_LIBRARY_PATH="$dependency_prefix/openmpi/lib:$dependency_prefix/hdf5/lib:${LD_LIBRARY_PATH:-}"
 export HDF5_ROOT="$dependency_prefix/hdf5"
 export CMAKE_PREFIX_PATH="$dependency_prefix/openmpi:$dependency_prefix/hdf5:${CMAKE_PREFIX_PATH:-}"
 printf 'UPDATE_BUILD_BEGIN %s\n' "$(date -Is)"
-bash update.sh
+bash build.sh
 test "$(git rev-parse HEAD)" = "$expected_commit"
 test -x build/src/pangu
 git diff --quiet --ignore-submodules=all
