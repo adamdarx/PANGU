@@ -1670,11 +1670,11 @@ void NumericalRelativityLinearWave(MeshBlock *block, ParameterInput *pin) {
   const Real phi = atan2(kx1, kx2);
   const Real weights[6] = {-cos(theta) * cos(theta) * cos(2.0 * phi) -
                                cos(phi) * cos(phi) * sin(theta) * sin(theta),
-                           -0.25 * (3.0 + cos(2.0 * theta)) * sin(2.0 * phi),
+                           0.25 * (3.0 + cos(2.0 * theta)) * sin(2.0 * phi),
                            -cos(theta) * sin(theta) * sin(phi),
                            cos(theta) * cos(theta) * cos(2.0 * phi) -
                                sin(theta) * sin(theta) * sin(phi) * sin(phi),
-                           cos(theta) * sin(theta) * cos(phi),
+                           -cos(theta) * sin(theta) * cos(phi),
                            sin(theta) * sin(theta)};
   const auto coordinates = block->coords;
   block->par_for(
@@ -1750,8 +1750,140 @@ void NumericalRelativityGaugeWave(MeshBlock *block, ParameterInput *pin) {
         z4c(nr::Index(nr::Z4cComponent::azz), k, j, i) =
             -khat * conformal_scale / 3.0;
         z4c(nr::Index(nr::Z4cComponent::alpha), k, j, i) = alpha;
+        z4c(nr::Index(nr::Z4cComponent::gamx), k, j, i) =
+            (2.0 / 3.0) * dh_dt * pow(physical_gxx, -5.0 / 3.0);
       });
+  nr::EnforceAlgebraicConstraintsBlockTask(data.get());
+  FinalizeNumericalRelativityInitialData(data.get());
+}
 
+void NumericalRelativityShiftedGaugeWave(MeshBlock *block, ParameterInput *pin) {
+  InitializeConstraintMask(block);
+  auto data = block->meshblock_data.Get();
+  const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto ib = block->cellbounds.GetBoundsI(IndexDomain::entire);
+  const auto jb = block->cellbounds.GetBoundsJ(IndexDomain::entire);
+  const auto kb = block->cellbounds.GetBoundsK(IndexDomain::entire);
+  const auto coordinates = block->coords;
+  const auto &mesh_size = block->pmy_mesh->mesh_size;
+  const Real x1_min = mesh_size.xmin(X1DIR);
+  const Real wavelength = mesh_size.xmax(X1DIR) - x1_min;
+  const Real amplitude = pin->GetOrAddReal("problem", "amplitude", 1.0e-2);
+  const auto options = block->packages.Get("numerical_relativity")
+                           ->Param<nr::Z4cOptions>("z4c_options");
+  PARTHENON_REQUIRE(amplitude > 0.0 && amplitude < 1.0,
+                    "NR shifted gauge-wave amplitude must be in (0,1)");
+  block->par_for(
+      "PANGU NR shifted gauge-wave initial data", kb.s, kb.e, jb.s, jb.e,
+      ib.s, ib.e, KOKKOS_LAMBDA(const int k, const int j, const int i) {
+        for (int component = 0; component < nr::kZ4cComponents; ++component)
+          z4c(component, k, j, i) = 0.0;
+        const Real phase =
+            2.0 * M_PI * (coordinates.Xc<X1DIR>(k, j, i) - x1_min) / wavelength;
+        const Real b = amplitude * sin(phase);
+        const Real physical_gxx = 1.0 + b;
+        const Real alpha = 1.0 / sqrt(physical_gxx);
+        const Real db_dt = -amplitude * (2.0 * M_PI / wavelength) * cos(phase);
+        const Real physical_kxx = 0.5 * db_dt / sqrt(physical_gxx);
+        const Real conformal_scale = pow(physical_gxx, -1.0 / 3.0);
+        const Real trace_k = physical_kxx / physical_gxx;
+
+        z4c(nr::Index(nr::Z4cComponent::chi), k, j, i) =
+            pow(physical_gxx, options.chi_psi_power / 12.0);
+        z4c(nr::Index(nr::Z4cComponent::gxx), k, j, i) =
+            conformal_scale * physical_gxx;
+        z4c(nr::Index(nr::Z4cComponent::gyy), k, j, i) = conformal_scale;
+        z4c(nr::Index(nr::Z4cComponent::gzz), k, j, i) = conformal_scale;
+        z4c(nr::Index(nr::Z4cComponent::khat), k, j, i) = trace_k;
+        z4c(nr::Index(nr::Z4cComponent::axx), k, j, i) =
+            conformal_scale * physical_kxx -
+            trace_k * conformal_scale * physical_gxx / 3.0;
+        z4c(nr::Index(nr::Z4cComponent::ayy), k, j, i) =
+            -trace_k * conformal_scale / 3.0;
+        z4c(nr::Index(nr::Z4cComponent::azz), k, j, i) =
+            -trace_k * conformal_scale / 3.0;
+        z4c(nr::Index(nr::Z4cComponent::alpha), k, j, i) = alpha;
+        z4c(nr::Index(nr::Z4cComponent::betax), k, j, i) = -b / physical_gxx;
+        z4c(nr::Index(nr::Z4cComponent::gamx), k, j, i) =
+            -(2.0 / 3.0) * db_dt * pow(physical_gxx, -5.0 / 3.0);
+      });
+  nr::EnforceAlgebraicConstraintsBlockTask(data.get());
+  FinalizeNumericalRelativityInitialData(data.get());
+}
+
+void NumericalRelativityPolarizedGowdy(MeshBlock *block, ParameterInput *pin) {
+  InitializeConstraintMask(block);
+  auto data = block->meshblock_data.Get();
+  const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto ib = block->cellbounds.GetBoundsI(IndexDomain::entire);
+  const auto jb = block->cellbounds.GetBoundsJ(IndexDomain::entire);
+  const auto kb = block->cellbounds.GetBoundsK(IndexDomain::entire);
+  const auto coordinates = block->coords;
+  const Real t = pin->GetOrAddReal("problem", "gowdy_t0", 9.8753205829098);
+  const Real direction = pin->GetOrAddReal("problem", "gowdy_time_direction", 1.0);
+  PARTHENON_REQUIRE(t > 0.0, "NR polarized Gowdy requires gowdy_t0 > 0");
+  PARTHENON_REQUIRE(direction == 1.0 || direction == -1.0,
+                    "gowdy_time_direction must be +1 or -1");
+  const auto options = block->packages.Get("numerical_relativity")
+                           ->Param<nr::Z4cOptions>("z4c_options");
+  const Real j0_one = std::cyl_bessel_j(0, 2.0 * M_PI);
+  const Real j1_one = std::cyl_bessel_j(1, 2.0 * M_PI);
+  const Real j0 = std::cyl_bessel_j(0, 2.0 * M_PI * t);
+  const Real j1 = std::cyl_bessel_j(1, 2.0 * M_PI * t);
+  const Real constant =
+      0.5 * (4.0 * M_PI * M_PI * (j0_one * j0_one + j1_one * j1_one) -
+             2.0 * M_PI * j0_one * j1_one);
+  block->par_for(
+      "PANGU NR polarized-Gowdy initial data", kb.s, kb.e, jb.s, jb.e,
+      ib.s, ib.e, KOKKOS_LAMBDA(const int k, const int j, const int i) {
+        for (int component = 0; component < nr::kZ4cComponents; ++component)
+          z4c(component, k, j, i) = 0.0;
+        const Real x = coordinates.Xc<X1DIR>(k, j, i);
+        const Real cosine = cos(2.0 * M_PI * x);
+        const Real sine = sin(2.0 * M_PI * x);
+        const Real p = j0 * cosine;
+        const Real lambda =
+            -2.0 * M_PI * t * j0 * j1 * cosine * cosine +
+            2.0 * M_PI * M_PI * t * t * (j0 * j0 + j1 * j1) - constant;
+        const Real dp_dt = -2.0 * M_PI * j1 * cosine;
+        const Real dlambda_dt = 4.0 * M_PI * M_PI * t *
+                                (j1 * j1 * cosine * cosine +
+                                 j0 * j0 * sine * sine);
+        Real metric[6]{};
+        Real extrinsic[6]{};
+        metric[nr::SpatialSymmetricComponent(0, 0)] =
+            pow(t, -0.5) * exp(0.5 * lambda);
+        metric[nr::SpatialSymmetricComponent(1, 1)] = t * exp(p);
+        metric[nr::SpatialSymmetricComponent(2, 2)] = t * exp(-p);
+        const Real lapse = pow(t, -0.25) * exp(0.25 * lambda);
+        extrinsic[nr::SpatialSymmetricComponent(0, 0)] =
+            direction * 0.25 * pow(t, -0.25) * exp(0.25 * lambda) *
+            (1.0 / t - dlambda_dt);
+        extrinsic[nr::SpatialSymmetricComponent(1, 1)] =
+            direction * 0.5 * pow(t, 0.25) * exp(-0.25 * lambda) * exp(p) *
+            (-1.0 - t * dp_dt);
+        extrinsic[nr::SpatialSymmetricComponent(2, 2)] =
+            direction * 0.5 * pow(t, 0.25) * exp(-0.25 * lambda) * exp(-p) *
+            (-1.0 + t * dp_dt);
+        const Real determinant = nr::rhs::SpatialDeterminant(metric);
+        const Real chi = pow(determinant, options.chi_psi_power / 12.0);
+        Real inverse[6]{};
+        nr::rhs::SpatialInverse(1.0 / determinant, metric, inverse);
+        Real trace_k = 0.0;
+        for (int first = 0; first < 3; ++first)
+          for (int second = 0; second < 3; ++second)
+            trace_k += nr::rhs::SymmetricValue(inverse, first, second) *
+                       nr::rhs::SymmetricValue(extrinsic, first, second);
+        z4c(nr::Index(nr::Z4cComponent::chi), k, j, i) = chi;
+        z4c(nr::Index(nr::Z4cComponent::khat), k, j, i) = trace_k;
+        z4c(nr::Index(nr::Z4cComponent::alpha), k, j, i) = lapse;
+        for (int component = 0; component < 6; ++component) {
+          z4c(nr::Index(nr::Z4cComponent::gxx) + component, k, j, i) =
+              chi * metric[component];
+          z4c(nr::Index(nr::Z4cComponent::axx) + component, k, j, i) =
+              chi * (extrinsic[component] - metric[component] * trace_k / 3.0);
+        }
+      });
   const int order = block->packages.Get("numerical_relativity")
                         ->Param<int>("finite_difference_order");
   if (order == 2)
@@ -1768,79 +1900,47 @@ void NumericalRelativityRobustStability(MeshBlock *block, ParameterInput *pin) {
   InitializeConstraintMask(block);
   auto data = block->meshblock_data.Get();
   const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
-  const auto interior_k = block->cellbounds.GetBoundsK(IndexDomain::interior);
   const auto ib = block->cellbounds.GetBoundsI(IndexDomain::entire);
   const auto jb = block->cellbounds.GetBoundsJ(IndexDomain::entire);
   const auto kb = block->cellbounds.GetBoundsK(IndexDomain::entire);
-  const int global_nx3 = block->pmy_mesh->mesh_size.nx(X3DIR);
+  const auto coordinates = block->coords;
+  const auto mesh_size = block->pmy_mesh->mesh_size;
+  const int global_nx1 = mesh_size.nx(X1DIR);
+  const int global_nx2 = mesh_size.nx(X2DIR);
+  const int global_nx3 = mesh_size.nx(X3DIR);
+  const Real global_xmin = mesh_size.xmin(X1DIR);
+  const Real global_ymin = mesh_size.xmin(X2DIR);
+  const Real global_zmin = mesh_size.xmin(X3DIR);
   const Real rho = pin->GetOrAddReal("problem", "rho", 1.0);
   const Real amplitude = 1.0e-10 / (rho * rho);
-  const auto options = block->packages.Get("numerical_relativity")
-                           ->Param<nr::Z4cOptions>("z4c_options");
   PARTHENON_REQUIRE(rho > 0.0, "NR robust-stability rho must be positive");
   block->par_for(
       "PANGU NR deterministic robust-stability initial data", kb.s, kb.e, jb.s,
       jb.e, ib.s, ib.e, KOKKOS_LAMBDA(const int k, const int j, const int i) {
+        int gi = static_cast<int>(floor((coordinates.Xc<X1DIR>(k, j, i) -
+                     global_xmin) / coordinates.Dxc<X1DIR>(k, j, i)));
+        int gj = static_cast<int>(floor((coordinates.Xc<X2DIR>(k, j, i) -
+                     global_ymin) / coordinates.Dxc<X2DIR>(k, j, i)));
+        int gk = static_cast<int>(floor((coordinates.Xc<X3DIR>(k, j, i) -
+                     global_zmin) / coordinates.Dxc<X3DIR>(k, j, i)));
+        gi = (gi % global_nx1 + global_nx1) % global_nx1;
+        gj = (gj % global_nx2 + global_nx2) % global_nx2;
+        gk = (gk % global_nx3 + global_nx3) % global_nx3;
+        const std::uint64_t point =
+            (static_cast<std::uint64_t>(gk) * global_nx2 + gj) * global_nx1 + gi;
+        // Equation (37) of arXiv:1810.12346 perturbs every evolved field
+        // independently.  Do not construct constraint-satisfying ADM data or
+        // overwrite Gammahat with a numerical metric derivative here: doing
+        // either changes the robust-stability problem being tested.
         for (int component = 0; component < nr::kZ4cComponents; ++component)
-          z4c(component, k, j, i) = 0.0;
-        int wrapped_plane = (k - interior_k.s) % global_nx3;
-        if (wrapped_plane < 0)
-          wrapped_plane += global_nx3;
-        Real physical_metric[6]{};
-        Real physical_k[6]{};
-        for (int component = 0; component < 6; ++component) {
-          const bool diagonal =
-              component == nr::SpatialSymmetricComponent(0, 0) ||
-              component == nr::SpatialSymmetricComponent(1, 1) ||
-              component == nr::SpatialSymmetricComponent(2, 2);
-          physical_metric[component] =
-              (diagonal ? 1.0 : 0.0) +
-              amplitude * DeterministicNoise(wrapped_plane, component);
-          physical_k[component] =
-              amplitude * DeterministicNoise(wrapped_plane, component + 6);
-        }
-        const Real determinant = nr::rhs::SpatialDeterminant(physical_metric);
-        const Real conformal_scale = pow(determinant, -1.0 / 3.0);
-        Real conformal_metric[6]{};
-        Real conformal_k[6]{};
-        for (int component = 0; component < 6; ++component) {
-          conformal_metric[component] =
-              conformal_scale * physical_metric[component];
-          conformal_k[component] = conformal_scale * physical_k[component];
-        }
-        Real inverse[6]{};
-        const Real conformal_determinant =
-            nr::rhs::SpatialDeterminant(conformal_metric);
-        nr::rhs::SpatialInverse(1.0 / conformal_determinant, conformal_metric,
-                                inverse);
-        Real khat = 0.0;
-        for (int first = 0; first < 3; ++first) {
-          for (int second = 0; second < 3; ++second) {
-            const int component = nr::SpatialSymmetricComponent(first, second);
-            khat += inverse[component] * conformal_k[component];
-          }
-        }
-        z4c(nr::Index(nr::Z4cComponent::chi), k, j, i) =
-            pow(determinant, options.chi_psi_power / 12.0);
-        z4c(nr::Index(nr::Z4cComponent::khat), k, j, i) = khat;
-        z4c(nr::Index(nr::Z4cComponent::alpha), k, j, i) = 1.0;
-        for (int component = 0; component < 6; ++component) {
-          z4c(nr::Index(nr::Z4cComponent::gxx) + component, k, j, i) =
-              conformal_metric[component];
-          z4c(nr::Index(nr::Z4cComponent::axx) + component, k, j, i) =
-              conformal_k[component] - khat * conformal_metric[component] / 3.0;
-        }
+          z4c(component, k, j, i) =
+              amplitude * DeterministicNoise(point, component);
+        z4c(nr::Index(nr::Z4cComponent::chi), k, j, i) += 1.0;
+        z4c(nr::Index(nr::Z4cComponent::gxx), k, j, i) += 1.0;
+        z4c(nr::Index(nr::Z4cComponent::gyy), k, j, i) += 1.0;
+        z4c(nr::Index(nr::Z4cComponent::gzz), k, j, i) += 1.0;
+        z4c(nr::Index(nr::Z4cComponent::alpha), k, j, i) += 1.0;
       });
-
-  const int order = block->packages.Get("numerical_relativity")
-                        ->Param<int>("finite_difference_order");
-  if (order == 2)
-    InitializeGaugeWaveGamma<2>(block, z4c);
-  else if (order == 4)
-    InitializeGaugeWaveGamma<4>(block, z4c);
-  else
-    InitializeGaugeWaveGamma<6>(block, z4c);
-  nr::EnforceAlgebraicConstraintsBlockTask(data.get());
   FinalizeNumericalRelativityInitialData(data.get());
 }
 
@@ -1991,11 +2091,11 @@ void NumericalRelativityLinearWaveAfterLoop(Mesh *mesh, ParameterInput *pin,
   const Real phi = atan2(kx1, kx2);
   const Real weights[6] = {-cos(theta) * cos(theta) * cos(2.0 * phi) -
                                cos(phi) * cos(phi) * sin(theta) * sin(theta),
-                           -0.25 * (3.0 + cos(2.0 * theta)) * sin(2.0 * phi),
+                           0.25 * (3.0 + cos(2.0 * theta)) * sin(2.0 * phi),
                            -cos(theta) * sin(theta) * sin(phi),
                            cos(theta) * cos(theta) * cos(2.0 * phi) -
                                sin(theta) * sin(theta) * sin(phi) * sin(phi),
-                           cos(theta) * sin(theta) * cos(phi),
+                           -cos(theta) * sin(theta) * cos(phi),
                            sin(theta) * sin(theta)};
   Real error_sum[6]{};
   Real maximum = 0.0;
@@ -2125,6 +2225,170 @@ void NumericalRelativityGaugeWaveAfterLoop(Mesh *mesh, ParameterInput *pin,
   if (Globals::my_rank == 0)
     std::cout << "NR-2 gauge wave: cycles=" << time.ncycle << " L1=" << l1
               << " Linf=" << maximum << '\n';
+}
+
+void NumericalRelativityShiftedGaugeWaveAfterLoop(Mesh *mesh,
+                                                   ParameterInput *pin,
+                                                   SimTime &time) {
+  const Real amplitude = pin->GetReal("problem", "amplitude");
+  const Real x1_min = mesh->mesh_size.xmin(X1DIR);
+  const Real wavelength = mesh->mesh_size.xmax(X1DIR) - x1_min;
+  Real error_sum = 0.0;
+  Real maximum = 0.0;
+  std::uint64_t values = 0;
+  for (const auto &block : mesh->block_list) {
+    const auto data = block->meshblock_data.Get();
+    const auto z4c = data->Get("nr.z4c").data.GetHostMirrorAndCopy();
+    const auto adm = data->Get("nr.adm").data.GetHostMirrorAndCopy();
+    const auto ib = block->cellbounds.GetBoundsI(IndexDomain::interior);
+    const auto jb = block->cellbounds.GetBoundsJ(IndexDomain::interior);
+    const auto kb = block->cellbounds.GetBoundsK(IndexDomain::interior);
+    for (int k = kb.s; k <= kb.e; ++k) {
+      for (int j = jb.s; j <= jb.e; ++j) {
+        for (int i = ib.s; i <= ib.e; ++i) {
+          const Real x = block->coords.Xc<X1DIR>(k, j, i);
+          const Real phase = 2.0 * M_PI *
+                             ((x - x1_min) / wavelength -
+                              time.time / wavelength);
+          const Real b = amplitude * sin(phase);
+          const Real physical_gxx = 1.0 + b;
+          const Real expected_alpha = 1.0 / sqrt(physical_gxx);
+          const Real expected_betax = -b / physical_gxx;
+          const Real db_dt =
+              -amplitude * (2.0 * M_PI / wavelength) * cos(phase);
+          const Real expected_kxx = 0.5 * db_dt / sqrt(physical_gxx);
+          const Real errors[4] = {
+              std::abs(adm(nr::Index(nr::ADMComponent::gxx), k, j, i) -
+                       physical_gxx),
+              std::abs(adm(nr::Index(nr::ADMComponent::kxx), k, j, i) -
+                       expected_kxx),
+              std::abs(z4c(nr::Index(nr::Z4cComponent::alpha), k, j, i) -
+                       expected_alpha),
+              std::abs(z4c(nr::Index(nr::Z4cComponent::betax), k, j, i) -
+                       expected_betax)};
+          for (const Real error : errors) {
+            error_sum += error;
+            maximum = std::max(maximum, error);
+            ++values;
+          }
+        }
+      }
+    }
+  }
+#ifdef MPI_PARALLEL
+  Real global_sum = error_sum;
+  Real global_maximum = maximum;
+  std::uint64_t global_values = values;
+  PARTHENON_MPI_CHECK(MPI_Allreduce(
+      &error_sum, &global_sum, 1, MPI_PARTHENON_REAL, MPI_SUM, MPI_COMM_WORLD));
+  PARTHENON_MPI_CHECK(MPI_Allreduce(&maximum, &global_maximum, 1,
+                                    MPI_PARTHENON_REAL, MPI_MAX,
+                                    MPI_COMM_WORLD));
+  PARTHENON_MPI_CHECK(MPI_Allreduce(&values, &global_values, 1, MPI_UINT64_T,
+                                    MPI_SUM, MPI_COMM_WORLD));
+  error_sum = global_sum;
+  maximum = global_maximum;
+  values = global_values;
+#endif
+  const Real l1 = error_sum / static_cast<Real>(values);
+  PARTHENON_REQUIRE(
+      std::isfinite(l1) && std::isfinite(maximum),
+      "NR shifted gauge-wave evolution produced a non-finite error");
+  if (Globals::my_rank == 0)
+    std::cout << "NR-2 shifted gauge wave: cycles=" << time.ncycle
+              << " L1=" << l1 << " Linf=" << maximum << '\n';
+}
+
+void NumericalRelativityPolarizedGowdyAfterLoop(Mesh *mesh,
+                                                ParameterInput *pin,
+                                                SimTime &time) {
+  const Real t0 = pin->GetReal("problem", "gowdy_t0");
+  const Real direction = pin->GetReal("problem", "gowdy_time_direction");
+  // The standard AwA test evolves in harmonic time tau.  Gowdy's areal time
+  // is t=t0*exp(+-tau/t0), with dt/dtau=+-t/t0.  The ADM lapse in tau is
+  // therefore the areal-coordinate lapse multiplied by t/t0.
+  const Real t = t0 * exp(direction * time.time / t0);
+  PARTHENON_REQUIRE(t > 0.0, "polarized Gowdy analytic time must stay positive");
+  const Real j0_one = std::cyl_bessel_j(0, 2.0 * M_PI);
+  const Real j1_one = std::cyl_bessel_j(1, 2.0 * M_PI);
+  const Real j0 = std::cyl_bessel_j(0, 2.0 * M_PI * t);
+  const Real j1 = std::cyl_bessel_j(1, 2.0 * M_PI * t);
+  const Real constant =
+      0.5 * (4.0 * M_PI * M_PI * (j0_one * j0_one + j1_one * j1_one) -
+             2.0 * M_PI * j0_one * j1_one);
+  Real error_sum = 0.0;
+  Real maximum = 0.0;
+  std::uint64_t values = 0;
+  for (const auto &block : mesh->block_list) {
+    const auto data = block->meshblock_data.Get();
+    const auto z4c = data->Get("nr.z4c").data.GetHostMirrorAndCopy();
+    const auto adm = data->Get("nr.adm").data.GetHostMirrorAndCopy();
+    const auto ib = block->cellbounds.GetBoundsI(IndexDomain::interior);
+    const auto jb = block->cellbounds.GetBoundsJ(IndexDomain::interior);
+    const auto kb = block->cellbounds.GetBoundsK(IndexDomain::interior);
+    for (int k = kb.s; k <= kb.e; ++k) {
+      for (int j = jb.s; j <= jb.e; ++j) {
+        for (int i = ib.s; i <= ib.e; ++i) {
+          const Real x = block->coords.Xc<X1DIR>(k, j, i);
+          const Real cosine = cos(2.0 * M_PI * x);
+          const Real sine = sin(2.0 * M_PI * x);
+          const Real p = j0 * cosine;
+          const Real lambda =
+              -2.0 * M_PI * t * j0 * j1 * cosine * cosine +
+              2.0 * M_PI * M_PI * t * t * (j0 * j0 + j1 * j1) - constant;
+          const Real dp_dt = -2.0 * M_PI * j1 * cosine;
+          const Real dlambda_dt = 4.0 * M_PI * M_PI * t *
+                                  (j1 * j1 * cosine * cosine +
+                                   j0 * j0 * sine * sine);
+          const Real lapse = (t / t0) * pow(t, -0.25) * exp(0.25 * lambda);
+          const Real gxx = pow(t, -0.5) * exp(0.5 * lambda);
+          const Real gyy = t * exp(p);
+          const Real gzz = t * exp(-p);
+          const Real kxx = direction * 0.25 * pow(t, -0.25) *
+                           exp(0.25 * lambda) * (1.0 / t - dlambda_dt);
+          const Real kyy = direction * 0.5 * pow(t, 0.25) *
+                           exp(-0.25 * lambda) * exp(p) * (-1.0 - t * dp_dt);
+          const Real kzz = direction * 0.5 * pow(t, 0.25) *
+                           exp(-0.25 * lambda) * exp(-p) * (-1.0 + t * dp_dt);
+          const Real errors[7] = {
+              std::abs(adm(nr::Index(nr::ADMComponent::gxx), k, j, i) - gxx),
+              std::abs(adm(nr::Index(nr::ADMComponent::gyy), k, j, i) - gyy),
+              std::abs(adm(nr::Index(nr::ADMComponent::gzz), k, j, i) - gzz),
+              std::abs(adm(nr::Index(nr::ADMComponent::kxx), k, j, i) - kxx),
+              std::abs(adm(nr::Index(nr::ADMComponent::kyy), k, j, i) - kyy),
+              std::abs(adm(nr::Index(nr::ADMComponent::kzz), k, j, i) - kzz),
+              std::abs(z4c(nr::Index(nr::Z4cComponent::alpha), k, j, i) -
+                       lapse)};
+          for (const Real error : errors) {
+            error_sum += error;
+            maximum = std::max(maximum, error);
+            ++values;
+          }
+        }
+      }
+    }
+  }
+#ifdef MPI_PARALLEL
+  Real global_sum = error_sum;
+  Real global_maximum = maximum;
+  std::uint64_t global_values = values;
+  PARTHENON_MPI_CHECK(MPI_Allreduce(
+      &error_sum, &global_sum, 1, MPI_PARTHENON_REAL, MPI_SUM, MPI_COMM_WORLD));
+  PARTHENON_MPI_CHECK(MPI_Allreduce(&maximum, &global_maximum, 1,
+                                    MPI_PARTHENON_REAL, MPI_MAX,
+                                    MPI_COMM_WORLD));
+  PARTHENON_MPI_CHECK(MPI_Allreduce(&values, &global_values, 1, MPI_UINT64_T,
+                                    MPI_SUM, MPI_COMM_WORLD));
+  error_sum = global_sum;
+  maximum = global_maximum;
+  values = global_values;
+#endif
+  const Real l1 = error_sum / static_cast<Real>(values);
+  PARTHENON_REQUIRE(std::isfinite(l1) && std::isfinite(maximum),
+                    "NR polarized-Gowdy evolution produced a non-finite error");
+  if (Globals::my_rank == 0)
+    std::cout << "NR-2 polarized Gowdy: cycles=" << time.ncycle
+              << " L1=" << l1 << " Linf=" << maximum << '\n';
 }
 
 void NumericalRelativityRobustStabilityAfterLoop(Mesh *mesh, ParameterInput *,

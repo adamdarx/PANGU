@@ -1,0 +1,65 @@
+### PARTHENON WARNING
+  Message:     In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'variables' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/parameter_input.cpp
+  Line number: 375
+Blocks assigned to rank 0: 0:231
+Var: nr.constraint_mask:1
+Var: nr.z4c:22
+### PARTHENON WARNING
+  Message:     Failed to load parameter numerical_relativity/horizon_found from the restart file! Using default value.
+
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/interface/params.cpp
+  Line number: 74
+### PARTHENON WARNING
+  Message:     Failed to load parameter numerical_relativity/horizon_tracker_indices from the restart file! Using default value.
+
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/interface/params.cpp
+  Line number: 74
+### PARTHENON WARNING
+  Message:     Failed to load parameter numerical_relativity/horizon_centers from the restart file! Using default value.
+
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/interface/params.cpp
+  Line number: 74
+### PARTHENON WARNING
+  Message:     Failed to load parameter numerical_relativity/horizon_last_search_times from the restart file! Using default value.
+
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/interface/params.cpp
+  Line number: 74
+### PARTHENON WARNING
+  Message:     Failed to load parameter numerical_relativity/horizon_radii from the restart file! Using default value.
+
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/interface/params.cpp
+  Line number: 74
+# Variables in use:
+# Package: parthenon::resolved_state
+# ---------------------------------------------------
+# Variables:
+# Name	Metadata flags
+# ---------------------------------------------------
+nr.constraint_mask        Cell,Provides,Real,Independent,Restart,FillGhost,numerical_relativity,parthenon::resolved_state
+nr.weyl                   Cell,Provides,Real,Derived,OneCopy,FillGhost,numerical_relativity,parthenon::resolved_state
+nr.constraints            Cell,Provides,Real,Derived,OneCopy,numerical_relativity,parthenon::resolved_state
+nr.adm                    Cell,Provides,Real,Derived,OneCopy,numerical_relativity,parthenon::resolved_state
+nr.rhs                    Cell,Provides,Real,Derived,OneCopy,numerical_relativity,parthenon::resolved_state
+nr.z4c                    Cell,Provides,Real,Independent,Restart,FillGhost,numerical_relativity,parthenon::resolved_state
+# ---------------------------------------------------
+# Sparse Variables:
+# Name	sparse id	Metadata flags
+# ---------------------------------------------------
+# ---------------------------------------------------
+# Swarms:
+# Swarm	Value	metadata
+# ---------------------------------------------------
+
+
+Setup complete, executing driver...
+
+cycle=40 time=1.0000000000000004e+00 dt=2.5000000000000001e-02 zone-cycles/wsec_step=0.00e+00 wsec_total=6.15e+00 wsec_step=8.82e+00
+
+Driver completed.
+time=1.00e+00 cycle=40
+tlim=2.00e+00 nlim=40
+
+walltime used = 6.15e+00
+zone-cycles/wallsecond = 0.00e+00

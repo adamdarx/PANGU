@@ -1,0 +1,82 @@
+### PARTHENON WARNING
+  Message:     In function [ParameterInput::ModifyFromCmdline]:
+               Block name 'parthenon/output1' on command line not found in input/restart file. Block will be added.
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/parameter_input.cpp
+  Line number: 367
+### PARTHENON WARNING
+  Message:     In function [ParameterInput::ModifyFromCmdline]:
+               Block name 'parthenon/output1' on command line not found in input/restart file. Block will be added.In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'dt' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/parameter_input.cpp
+  Line number: 375
+### PARTHENON WARNING
+  Message:     In function [ParameterInput::ModifyFromCmdline]:
+               Block name 'parthenon/output1' on command line not found in input/restart file. Block will be added.In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'dt' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'id' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/parameter_input.cpp
+  Line number: 375
+### PARTHENON WARNING
+  Message:     In function [ParameterInput::ModifyFromCmdline]:
+               Block name 'parthenon/output1' on command line not found in input/restart file. Block will be added.In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'dt' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'id' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'variables' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/parameter_input.cpp
+  Line number: 375
+### PARTHENON WARNING
+  Message:     In function [ParameterInput::ModifyFromCmdline]:
+               Block name 'parthenon/output1' on command line not found in input/restart file. Block will be added.In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'dt' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'id' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'variables' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.In function [ParameterInput::ModifyFromCmdline]:
+               Parameter 'single_precision_output' in block 'parthenon/output1' on command line not found in input/restart file. Parameter will be added.
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/parameter_input.cpp
+  Line number: 375
+### PARTHENON WARNING
+  Message:     The following input parameters are set but unused:
+parthenon/mesh/numlevel
+
+
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/parameter_input.cpp
+  Line number: 688
+# Variables in use:
+# Package: parthenon::resolved_state
+# ---------------------------------------------------
+# Variables:
+# Name	Metadata flags
+# ---------------------------------------------------
+nr.constraint_mask        Cell,Provides,Real,Independent,Restart,FillGhost,numerical_relativity,parthenon::resolved_state
+nr.weyl                   Cell,Provides,Real,Derived,OneCopy,FillGhost,numerical_relativity,parthenon::resolved_state
+nr.constraints            Cell,Provides,Real,Derived,OneCopy,numerical_relativity,parthenon::resolved_state
+nr.adm                    Cell,Provides,Real,Derived,OneCopy,numerical_relativity,parthenon::resolved_state
+nr.rhs                    Cell,Provides,Real,Derived,OneCopy,numerical_relativity,parthenon::resolved_state
+nr.z4c                    Cell,Provides,Real,Independent,Restart,FillGhost,numerical_relativity,parthenon::resolved_state
+# ---------------------------------------------------
+# Sparse Variables:
+# Name	sparse id	Metadata flags
+# ---------------------------------------------------
+# ---------------------------------------------------
+# Swarms:
+# Swarm	Value	metadata
+# ---------------------------------------------------
+
+
+Setup complete, executing driver...
+
+cycle=0 time=0.0000000000000000e+00 dt=2.5000000000000001e-02 zone-cycles/wsec_step=0.00e+00 wsec_total=1.14e+00 wsec_step=4.06e+00
+cycle=1 time=2.5000000000000001e-02 dt=2.5000000000000001e-02 zone-cycles/wsec_step=1.04e+06 wsec_total=2.06e+00 wsec_step=9.17e-01
+cycle=2 time=5.0000000000000003e-02 dt=2.5000000000000001e-02 zone-cycles/wsec_step=2.29e+06 wsec_total=2.47e+00 wsec_step=4.14e-01
+cycle=3 time=7.5000000000000011e-02 dt=2.5000000000000001e-02 zone-cycles/wsec_step=2.25e+06 wsec_total=2.89e+00 wsec_step=4.23e-01
+cycle=4 time=1.0000000000000001e-01 dt=2.5000000000000001e-02 zone-cycles/wsec_step=2.28e+06 wsec_total=3.31e+00 wsec_step=4.16e-01
+cycle=5 time=1.2500000000000000e-01 dt=2.5000000000000001e-02 zone-cycles/wsec_step=2.26e+06 wsec_total=3.73e+00 wsec_step=4.21e-01
+cycle=6 time=1.4999999999999999e-01 dt=2.5000000000000001e-02 zone-cycles/wsec_step=2.27e+06 wsec_total=4.15e+00 wsec_step=4.18e-01
+cycle=7 time=1.7499999999999999e-01 dt=2.5000000000000001e-02 zone-cycles/wsec_step=2.27e+06 wsec_total=4.57e+00 wsec_step=4.18e-01
+cycle=8 time=1.9999999999999998e-01 dt=2.5000000000000001e-02 zone-cycles/wsec_step=2.03e+05 wsec_total=9.25e+00 wsec_step=4.68e+00
+
+Driver completed.
+time=2.00e-01 cycle=8
+tlim=2.00e+00 nlim=8
+
+walltime used = 9.25e+00
+zone-cycles/wallsecond = 8.22e+05

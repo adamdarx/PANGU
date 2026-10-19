@@ -1,0 +1,47 @@
+==PROF== Connected to process 72399 (/tmp/pangu-gpu-profile-WxCADg/pangu-before-launch-bounds)
+### PARTHENON WARNING
+  Message:     The following input parameters are set but unused:
+parthenon/mesh/numlevel
+
+
+  File:        /home/adamdarx/PANGU_NR/PANGU/parthenon/src/parameter_input.cpp
+  Line number: 688
+# Variables in use:
+# Package: parthenon::resolved_state
+# ---------------------------------------------------
+# Variables:
+# Name	Metadata flags
+# ---------------------------------------------------
+nr.constraint_mask        Cell,Provides,Real,Independent,Restart,FillGhost,numerical_relativity,parthenon::resolved_state
+nr.weyl                   Cell,Provides,Real,Derived,OneCopy,FillGhost,numerical_relativity,parthenon::resolved_state
+nr.constraints            Cell,Provides,Real,Derived,OneCopy,numerical_relativity,parthenon::resolved_state
+nr.adm                    Cell,Provides,Real,Derived,OneCopy,numerical_relativity,parthenon::resolved_state
+nr.rhs                    Cell,Provides,Real,Derived,OneCopy,numerical_relativity,parthenon::resolved_state
+nr.z4c                    Cell,Provides,Real,Independent,Restart,FillGhost,numerical_relativity,parthenon::resolved_state
+# ---------------------------------------------------
+# Sparse Variables:
+# Name	sparse id	Metadata flags
+# ---------------------------------------------------
+# ---------------------------------------------------
+# Swarms:
+# Swarm	Value	metadata
+# ---------------------------------------------------
+
+
+Setup complete, executing driver...
+
+cycle=0 time=0.0000000000000000e+00 dt=2.5000000000000001e-02 zone-cycles/wsec_step=0.00e+00 wsec_total=2.25e-02 wsec_step=3.28e+00
+cycle=1 time=2.5000000000000001e-02 dt=2.5000000000000001e-02 zone-cycles/wsec_step=2.39e+05 wsec_total=4.00e+00 wsec_step=3.97e+00
+cycle=2 time=5.0000000000000003e-02 dt=2.5000000000000001e-02 zone-cycles/wsec_step=2.03e+06 wsec_total=4.46e+00 wsec_step=4.67e-01
+
+Driver completed.
+time=5.00e-02 cycle=2
+tlim=2.00e+00 nlim=2
+
+walltime used = 4.46e+00
+zone-cycles/wallsecond = 4.26e+05
+==PROF== Disconnected from process 72399
+"ID","Process ID","Process Name","Host Name","Kernel Name","Context","Stream","Block Size","Grid Size","Device","CC","Section Name","Metric Name","Metric Unit","Metric Value"
+"0","72399","pangu-before-launch-bounds","127.0.0.1","void cuda_parallel_launch_local_memory<ParallelFor<void par_dispatch_impl<ParallelForDispatch, LoopPatternFlatRange, TaskStatus CalculateRHSMeshImpl<2, 0>(MeshData<double> *, double)::[lambda(int, int, int, int) (instance 1)], TypeList<int &, const int &, const int &, const int &, const int &, const int &, const int &, const int &>, TypeList<>, TypeList<>>::dispatch_impl<Cuda, 0, 1, 2, 3, >(LoopPatternTag<0>, integer_sequence<unsigned long, T2>, integer_sequence<unsigned long, T3>, basic_string<char, char_traits<char>, allocator<char>>, T1, Array<IndexRange, 4>, TaskStatus CalculateRHSMeshImpl<2, 0>(MeshData<double> *, double)::[lambda(int, int, int, int) (instance 1)], int, unsigned long)::[lambda(int) (instance 1)], RangePolicy<>, Cuda>>(T1)","1","13","(1, 128, 1)","(7424, 1, 1)","0","8.6","Command line profiler metrics","gpu__time_duration.sum","ns","75854432"
+"0","72399","pangu-before-launch-bounds","127.0.0.1","void cuda_parallel_launch_local_memory<ParallelFor<void par_dispatch_impl<ParallelForDispatch, LoopPatternFlatRange, TaskStatus CalculateRHSMeshImpl<2, 0>(MeshData<double> *, double)::[lambda(int, int, int, int) (instance 1)], TypeList<int &, const int &, const int &, const int &, const int &, const int &, const int &, const int &>, TypeList<>, TypeList<>>::dispatch_impl<Cuda, 0, 1, 2, 3, >(LoopPatternTag<0>, integer_sequence<unsigned long, T2>, integer_sequence<unsigned long, T3>, basic_string<char, char_traits<char>, allocator<char>>, T1, Array<IndexRange, 4>, TaskStatus CalculateRHSMeshImpl<2, 0>(MeshData<double> *, double)::[lambda(int, int, int, int) (instance 1)], int, unsigned long)::[lambda(int) (instance 1)], RangePolicy<>, Cuda>>(T1)","1","13","(1, 128, 1)","(7424, 1, 1)","0","8.6","Command line profiler metrics","l1tex__t_sectors_pipe_lsu_mem_local_op_ld.sum","sector","107380736"
+"0","72399","pangu-before-launch-bounds","127.0.0.1","void cuda_parallel_launch_local_memory<ParallelFor<void par_dispatch_impl<ParallelForDispatch, LoopPatternFlatRange, TaskStatus CalculateRHSMeshImpl<2, 0>(MeshData<double> *, double)::[lambda(int, int, int, int) (instance 1)], TypeList<int &, const int &, const int &, const int &, const int &, const int &, const int &, const int &>, TypeList<>, TypeList<>>::dispatch_impl<Cuda, 0, 1, 2, 3, >(LoopPatternTag<0>, integer_sequence<unsigned long, T2>, integer_sequence<unsigned long, T3>, basic_string<char, char_traits<char>, allocator<char>>, T1, Array<IndexRange, 4>, TaskStatus CalculateRHSMeshImpl<2, 0>(MeshData<double> *, double)::[lambda(int, int, int, int) (instance 1)], int, unsigned long)::[lambda(int) (instance 1)], RangePolicy<>, Cuda>>(T1)","1","13","(1, 128, 1)","(7424, 1, 1)","0","8.6","Command line profiler metrics","l1tex__t_sectors_pipe_lsu_mem_local_op_st.sum","sector","91938816"

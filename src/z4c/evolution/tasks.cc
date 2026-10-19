@@ -1,4 +1,5 @@
 #include "z4c/evolution/tasks.h"
+#include "z4c/diagnostics/awa.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -133,6 +134,7 @@ void ConfigureSyncIntegrator(Mesh* mesh, parthenon::LowStorageIntegrator& integr
 
 void RunPostStep(Mesh* mesh, const parthenon::SimTime& time) {
   AdvancePunctureTracker(mesh);
+  WriteAwADiagnostics(mesh, time.time + time.dt, time.ncycle + 1);
   RunPostStepDiagnostics(mesh, time.time + time.dt, time.ncycle + 1);
 }
 
@@ -290,7 +292,8 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     // after the completed RK step, while matter-coupled evolution is projected
     // after every stage before the ADM/C2P chain consumes the state.
     TaskID projected = boundaries;
-    if (sync_matter || stage == integrator->nstages)
+    if (sync_matter || stage == integrator->nstages ||
+        mesh->packages.Get("numerical_relativity")->Param<bool>("awa_strict"))
       projected = tasks.AddTask(boundaries, EnforceAlgebraicConstraintsMeshTask, next.get());
     const Real next_stage_time =
         stage < integrator->nstages ? tm.time + integrator->c[stage] * dt : tm.time + dt;
@@ -307,8 +310,8 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
               : tasks.AddTask(protected_state, SyncGRMHDConservedToPrimitiveMeshTask, next.get());
       const auto next_matter =
           tasks.AddTask(primitive, BuildStressEnergyMeshTask, next.get(), next_stage_time);
-      // Constraints are derived diagnostics. Parthenon's FillDerived callback
-      // reconstructs them when an output actually requests them.
+      // Constraints are derived diagnostics. The package's explicit
+      // UserWorkBeforeOutput hook refreshes them at field-output time.
       ready = next_matter;
     } else {
       auto next_matter = projected;

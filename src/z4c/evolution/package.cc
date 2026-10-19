@@ -39,6 +39,29 @@ namespace {
 // Stage-02 case and prevented the GPU scheduler from seeing the complete workload.
 inline constexpr int kHeavyKernelBlockBatch = 2048;
 
+gauge::Lapse ParseLapseGauge(const std::string& name) {
+  if (name == "legacy") return gauge::Lapse::legacy;
+  if (name == "frozen" || name == "geodesic") return gauge::Lapse::frozen;
+  if (name == "harmonic") return gauge::Lapse::harmonic;
+  if (name == "one_plus_log" || name == "1+log" || name == "moving_puncture")
+    return gauge::Lapse::one_plus_log;
+  if (name == "shifted_gauge_wave" || name == "awa_shifted_gauge_wave")
+    return gauge::Lapse::shifted_gauge_wave;
+  PARTHENON_FAIL("Unknown numerical_relativity/lapse_gauge='" + name +
+                 "' (expected legacy, frozen, harmonic, one_plus_log, or shifted_gauge_wave)");
+}
+
+gauge::Shift ParseShiftGauge(const std::string& name) {
+  if (name == "legacy") return gauge::Shift::legacy;
+  if (name == "frozen" || name == "zero") return gauge::Shift::frozen;
+  if (name == "gamma_driver" || name == "moving_puncture") return gauge::Shift::gamma_driver;
+  if (name == "harmonic") return gauge::Shift::harmonic;
+  if (name == "shifted_gauge_wave" || name == "awa_shifted_gauge_wave")
+    return gauge::Shift::shifted_gauge_wave;
+  PARTHENON_FAIL("Unknown numerical_relativity/shift_gauge='" + name +
+                 "' (expected legacy, frozen, gamma_driver, harmonic, or shifted_gauge_wave)");
+}
+
 
 template <class Z4cPack, class ADMPack>
 KOKKOS_INLINE_FUNCTION void ConvertPoint(const Z4cPack& z4c, const ADMPack& adm, const int block,
@@ -569,6 +592,8 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   const Real cfl = pin->GetOrAddReal("numerical_relativity", "cfl", 0.4);
   const int finite_difference_order =
       pin->GetOrAddInteger("numerical_relativity", "finite_difference_order", 2);
+  package->AddParam<bool>("awa_strict", pin->GetOrAddBoolean(
+      "numerical_relativity", "awa_strict", false));
   const int ghost_zones = pin->GetOrAddInteger("parthenon/mesh", "nghost", 2);
   const int requested_boundary_extrapolation_order =
       pin->GetOrAddInteger("numerical_relativity", "boundary_extrapolation_order", 2);
@@ -905,37 +930,42 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       pin->GetOrAddReal("numerical_relativity", "damp_kappa1", options.damp_kappa1);
   options.damp_kappa2 =
       pin->GetOrAddReal("numerical_relativity", "damp_kappa2", options.damp_kappa2);
-  options.lapse_oplog =
-      pin->GetOrAddReal("numerical_relativity", "lapse_oplog", options.lapse_oplog);
-  options.lapse_harmonic_factor = pin->GetOrAddReal("numerical_relativity", "lapse_harmonic_factor",
-                                                    options.lapse_harmonic_factor);
-  options.lapse_harmonic =
-      pin->GetOrAddReal("numerical_relativity", "lapse_harmonic", options.lapse_harmonic);
-  options.lapse_advect =
-      pin->GetOrAddReal("numerical_relativity", "lapse_advect", options.lapse_advect);
-  options.slow_start_lapse =
-      pin->GetOrAddBoolean("numerical_relativity", "slow_start_lapse", options.slow_start_lapse);
-  options.slow_start_amplitude = pin->GetOrAddReal("numerical_relativity", "slow_start_amplitude",
-                                                   options.slow_start_amplitude);
-  options.slow_start_time =
-      pin->GetOrAddReal("numerical_relativity", "slow_start_time", options.slow_start_time);
-  options.slow_start_index =
-      pin->GetOrAddReal("numerical_relativity", "slow_start_index", options.slow_start_index);
-  options.shift_gamma =
-      pin->GetOrAddReal("numerical_relativity", "shift_gamma", options.shift_gamma);
-  options.shift_alpha2_gamma =
-      pin->GetOrAddReal("numerical_relativity", "shift_alpha2_gamma", options.shift_alpha2_gamma);
-  options.shift_harmonic =
-      pin->GetOrAddReal("numerical_relativity", "shift_harmonic", options.shift_harmonic);
-  options.shift_advect =
-      pin->GetOrAddReal("numerical_relativity", "shift_advect", options.shift_advect);
-  options.shift_eta = pin->GetOrAddReal("numerical_relativity", "shift_eta", options.shift_eta);
+  options.gauge.lapse = ParseLapseGauge(
+      pin->GetOrAddString("numerical_relativity", "lapse_gauge", "legacy"));
+  options.gauge.lapse_oplog = pin->GetOrAddReal(
+      "numerical_relativity", "lapse_oplog", options.gauge.lapse_oplog);
+  options.gauge.lapse_harmonic_factor = pin->GetOrAddReal(
+      "numerical_relativity", "lapse_harmonic_factor", options.gauge.lapse_harmonic_factor);
+  options.gauge.lapse_harmonic = pin->GetOrAddReal(
+      "numerical_relativity", "lapse_harmonic", options.gauge.lapse_harmonic);
+  options.gauge.lapse_advect = pin->GetOrAddReal(
+      "numerical_relativity", "lapse_advect", options.gauge.lapse_advect);
+  options.gauge.slow_start_lapse = pin->GetOrAddBoolean(
+      "numerical_relativity", "slow_start_lapse", options.gauge.slow_start_lapse);
+  options.gauge.slow_start_amplitude = pin->GetOrAddReal(
+      "numerical_relativity", "slow_start_amplitude", options.gauge.slow_start_amplitude);
+  options.gauge.slow_start_time = pin->GetOrAddReal(
+      "numerical_relativity", "slow_start_time", options.gauge.slow_start_time);
+  options.gauge.slow_start_index = pin->GetOrAddReal(
+      "numerical_relativity", "slow_start_index", options.gauge.slow_start_index);
+  options.gauge.shift = ParseShiftGauge(
+      pin->GetOrAddString("numerical_relativity", "shift_gauge", "legacy"));
+  options.gauge.shift_gamma = pin->GetOrAddReal(
+      "numerical_relativity", "shift_gamma", options.gauge.shift_gamma);
+  options.gauge.shift_alpha2_gamma = pin->GetOrAddReal(
+      "numerical_relativity", "shift_alpha2_gamma", options.gauge.shift_alpha2_gamma);
+  options.gauge.shift_harmonic = pin->GetOrAddReal(
+      "numerical_relativity", "shift_harmonic", options.gauge.shift_harmonic);
+  options.gauge.shift_advect = pin->GetOrAddReal(
+      "numerical_relativity", "shift_advect", options.gauge.shift_advect);
+  options.gauge.shift_eta = pin->GetOrAddReal(
+      "numerical_relativity", "shift_eta", options.gauge.shift_eta);
   options.use_z4c = pin->GetOrAddBoolean("numerical_relativity", "use_z4c", options.use_z4c);
   PARTHENON_REQUIRE(options.chi_psi_power != 0.0,
                     "numerical_relativity/chi_psi_power must be nonzero");
   PARTHENON_REQUIRE(options.chi_min_floor > 0.0,
                     "numerical_relativity/chi_min_floor must be positive");
-  PARTHENON_REQUIRE(!options.slow_start_lapse || options.slow_start_time > 0.0,
+  PARTHENON_REQUIRE(!options.gauge.slow_start_lapse || options.gauge.slow_start_time > 0.0,
                     "slow_start_time must be positive when slow_start_lapse is enabled");
   package->AddParam<Z4cOptions>("z4c_options", options);
 
@@ -1020,6 +1050,23 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   }
   package->FillDerivedBlock = Z4cToADMBlockTask;
   package->FillDerivedMesh = Z4cToADMMeshTask;
+  // Outputs::MakeOutputs invokes this hook, not FillDerived. With constraints
+  // omitted from the vacuum evolution graph, field dumps otherwise retain
+  // the initialization/remesh diagnostics despite an evolved Z4c state.
+  // ADM and matter fields are already current after the completed RK stage.
+  package->UserWorkBeforeOutputMesh = [](Mesh* mesh, parthenon::ParameterInput*,
+                                         parthenon::SimTime&) {
+    const auto package = mesh->packages.Get("numerical_relativity");
+    for (const auto& partition : mesh->GetDefaultBlockPartitions()) {
+      auto& data = mesh->mesh_data.Add("base", partition);
+      if (data->NumBlocks() == 0)
+        continue;
+      ComputeConstraintsMeshTask(data.get());
+      if (package->Param<bool>("weyl_enabled"))
+        ComputeWeylMeshTask(data.get());
+    }
+    Kokkos::fence("PANGU NR output diagnostics");
+  };
   package->EstimateTimestepBlock = EstimateTimestepBlock;
   package->EstimateTimestepMesh = EstimateTimestepMesh;
   package->CheckRefinementMesh = CheckRefinementMesh;
@@ -1786,6 +1833,7 @@ TaskStatus AccumulateRKStateMeshTask(MeshData<Real>* current, MeshData<Real>* ac
 TaskStatus EnforceAlgebraicConstraintsBlockTask(MeshBlockData<Real>* data) {
   const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
   auto block = data->GetBlockPointer();
+  const bool awa = block->packages.Get("numerical_relativity")->Param<bool>("awa_strict");
   const auto ib = block->cellbounds.GetBoundsI(IndexDomain::entire);
   const auto jb = block->cellbounds.GetBoundsJ(IndexDomain::entire);
   const auto kb = block->cellbounds.GetBoundsK(IndexDomain::entire);
@@ -1797,13 +1845,13 @@ TaskStatus EnforceAlgebraicConstraintsBlockTask(MeshBlockData<Real>* data) {
           metric[component] = z4c(Index(Z4cComponent::gxx) + component, k, j, i);
         Real determinant = rhs::SpatialDeterminant(metric);
         determinant = determinant > 0.0 ? determinant : 1.0;
-        const Real normalization = cbrt(1.0 / determinant);
+        const Real normalization = awa ? 1.0 : cbrt(1.0 / determinant);
         for (int component = 0; component < 6; ++component) {
           metric[component] *= normalization;
           z4c(Index(Z4cComponent::gxx) + component, k, j, i) = metric[component];
         }
         Real inverse[6]{};
-        rhs::SpatialInverse(1.0, metric, inverse);
+        rhs::SpatialInverse(awa ? 1.0 / determinant : 1.0, metric, inverse);
         Real trace_a = 0.0;
         for (int first = 0; first < 3; ++first) {
           for (int second = 0; second < 3; ++second) {
@@ -1822,6 +1870,7 @@ TaskStatus EnforceAlgebraicConstraintsBlockTask(MeshBlockData<Real>* data) {
 TaskStatus EnforceAlgebraicConstraintsMeshTask(MeshData<Real>* data) {
   const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
   const auto first = data->GetBlockData(0)->GetBlockPointer();
+  const bool awa = first->packages.Get("numerical_relativity")->Param<bool>("awa_strict");
   const auto ib = first->cellbounds.GetBoundsI(IndexDomain::entire);
   const auto jb = first->cellbounds.GetBoundsJ(IndexDomain::entire);
   const auto kb = first->cellbounds.GetBoundsK(IndexDomain::entire);
@@ -1834,13 +1883,13 @@ TaskStatus EnforceAlgebraicConstraintsMeshTask(MeshData<Real>* data) {
           metric[component] = z4c(block, Index(Z4cComponent::gxx) + component, k, j, i);
         Real determinant = rhs::SpatialDeterminant(metric);
         determinant = determinant > 0.0 ? determinant : 1.0;
-        const Real normalization = cbrt(1.0 / determinant);
+        const Real normalization = awa ? 1.0 : cbrt(1.0 / determinant);
         for (int component = 0; component < 6; ++component) {
           metric[component] *= normalization;
           z4c(block, Index(Z4cComponent::gxx) + component, k, j, i) = metric[component];
         }
         Real inverse[6]{};
-        rhs::SpatialInverse(1.0, metric, inverse);
+        rhs::SpatialInverse(awa ? 1.0 / determinant : 1.0, metric, inverse);
         Real trace_a = 0.0;
         for (int first_axis = 0; first_axis < 3; ++first_axis) {
           for (int second_axis = 0; second_axis < 3; ++second_axis) {
