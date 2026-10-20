@@ -1,4 +1,5 @@
 #include "z4c/evolution/package.h"
+#include "z4c/evolution/classical_rk4.h"
 #include "z4c/evolution/amr_refinement.h"
 #include "z4c/evolution/tasks.h"
 
@@ -612,6 +613,11 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       pin->GetOrAddInteger("numerical_relativity", "finite_difference_order", 2);
   package->AddParam<bool>("awa_strict", pin->GetOrAddBoolean(
       "numerical_relativity", "awa_strict", false));
+  const auto rk4_variant =
+      pin->GetOrAddString("numerical_relativity", "rk4_variant", "athenak");
+  PARTHENON_REQUIRE(rk4_variant == "athenak" || rk4_variant == "classical",
+                    "numerical_relativity/rk4_variant must be athenak or classical");
+  package->AddParam<std::string>("rk4_variant", rk4_variant);
   const int ghost_zones = pin->GetOrAddInteger("parthenon/mesh", "nghost", 2);
   const int requested_boundary_extrapolation_order =
       pin->GetOrAddInteger("numerical_relativity", "boundary_extrapolation_order", 2);
@@ -1858,6 +1864,38 @@ TaskStatus RKUpdateMeshTask(MeshData<Real>* current, MeshData<Real>* base,
   return TaskStatus::complete;
 }
 
+TaskStatus ClassicalRK4UpdateMeshTask(MeshData<Real>* current, MeshData<Real>* initial,
+                                      MeshData<Real>* rhs_sum, const int stage, const Real dt,
+                                      MeshData<Real>* next) {
+  const auto original = initial->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto sum = rhs_sum->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto rhs_values = current->PackVariables(std::vector<std::string>{"nr.rhs"});
+  const auto output = next->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto ib = current->GetBoundsI(IndexDomain::interior);
+  const auto jb = current->GetBoundsJ(IndexDomain::interior);
+  const auto kb = current->GetBoundsK(IndexDomain::interior);
+  const auto options = current->GetBlockData(0)->GetBlockPointer()->packages
+                           .Get("numerical_relativity")->Param<Z4cOptions>("z4c_options");
+  parthenon::par_for(
+      DEFAULT_LOOP_PATTERN, "PANGU classical RK4 update", parthenon::DevExecSpace(), 0,
+      original.GetDim(5) - 1, 0, kZ4cComponents - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+      KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
+        const Real rhs = rhs_values(block, component, k, j, i);
+        // Stage 1 must not read the previous step's (initially unallocated)
+        // accumulator value, even when it contains NaN.
+        const Real previous = stage == 1 ? 0.0 : sum(block, component, k, j, i);
+        const Real accumulated = classical_rk4::Accumulate(stage, rhs, previous);
+        sum(block, component, k, j, i) = accumulated;
+        Real value = classical_rk4::Update(stage, original(block, component, k, j, i),
+                                           rhs, accumulated, dt);
+        if (options.floor_chi && component == Index(Z4cComponent::chi) &&
+            (!Kokkos::isfinite(value) || value < options.chi_min_floor))
+          value = options.chi_min_floor;
+        output(block, component, k, j, i) = value;
+      });
+  return TaskStatus::complete;
+}
+
 TaskStatus AccumulateRKStateMeshTask(MeshData<Real>* current, MeshData<Real>* accumulator,
                                      const Real delta, const bool initialize) {
   const auto input = current->PackVariables(std::vector<std::string>{"nr.z4c"});
@@ -1880,7 +1918,6 @@ TaskStatus AccumulateRKStateMeshTask(MeshData<Real>* current, MeshData<Real>* ac
 TaskStatus EnforceAlgebraicConstraintsBlockTask(MeshBlockData<Real>* data) {
   const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
   auto block = data->GetBlockPointer();
-  const bool awa = block->packages.Get("numerical_relativity")->Param<bool>("awa_strict");
   const auto ib = block->cellbounds.GetBoundsI(IndexDomain::entire);
   const auto jb = block->cellbounds.GetBoundsJ(IndexDomain::entire);
   const auto kb = block->cellbounds.GetBoundsK(IndexDomain::entire);
@@ -1892,13 +1929,13 @@ TaskStatus EnforceAlgebraicConstraintsBlockTask(MeshBlockData<Real>* data) {
           metric[component] = z4c(Index(Z4cComponent::gxx) + component, k, j, i);
         Real determinant = rhs::SpatialDeterminant(metric);
         determinant = determinant > 0.0 ? determinant : 1.0;
-        const Real normalization = awa ? 1.0 : cbrt(1.0 / determinant);
+        const Real normalization = cbrt(1.0 / determinant);
         for (int component = 0; component < 6; ++component) {
           metric[component] *= normalization;
           z4c(Index(Z4cComponent::gxx) + component, k, j, i) = metric[component];
         }
         Real inverse[6]{};
-        rhs::SpatialInverse(awa ? 1.0 / determinant : 1.0, metric, inverse);
+        rhs::SpatialInverse(1.0, metric, inverse);
         Real trace_a = 0.0;
         for (int first = 0; first < 3; ++first) {
           for (int second = 0; second < 3; ++second) {
@@ -1917,7 +1954,6 @@ TaskStatus EnforceAlgebraicConstraintsBlockTask(MeshBlockData<Real>* data) {
 TaskStatus EnforceAlgebraicConstraintsMeshTask(MeshData<Real>* data) {
   const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
   const auto first = data->GetBlockData(0)->GetBlockPointer();
-  const bool awa = first->packages.Get("numerical_relativity")->Param<bool>("awa_strict");
   const auto ib = first->cellbounds.GetBoundsI(IndexDomain::entire);
   const auto jb = first->cellbounds.GetBoundsJ(IndexDomain::entire);
   const auto kb = first->cellbounds.GetBoundsK(IndexDomain::entire);
@@ -1930,13 +1966,13 @@ TaskStatus EnforceAlgebraicConstraintsMeshTask(MeshData<Real>* data) {
           metric[component] = z4c(block, Index(Z4cComponent::gxx) + component, k, j, i);
         Real determinant = rhs::SpatialDeterminant(metric);
         determinant = determinant > 0.0 ? determinant : 1.0;
-        const Real normalization = awa ? 1.0 : cbrt(1.0 / determinant);
+        const Real normalization = cbrt(1.0 / determinant);
         for (int component = 0; component < 6; ++component) {
           metric[component] *= normalization;
           z4c(block, Index(Z4cComponent::gxx) + component, k, j, i) = metric[component];
         }
         Real inverse[6]{};
-        rhs::SpatialInverse(awa ? 1.0 / determinant : 1.0, metric, inverse);
+        rhs::SpatialInverse(1.0, metric, inverse);
         Real trace_a = 0.0;
         for (int first_axis = 0; first_axis < 3; ++first_axis) {
           for (int second_axis = 0; second_axis < 3; ++second_axis) {

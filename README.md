@@ -73,6 +73,15 @@ Bowen--York punctures without GSL or an external TwoPuncturesC installation.
 Use `problem_id=nr_puncture`; the legacy `nr_two_punctures` name and parameter
 deck remain accepted for migration.
 
+Vacuum synchronized Z4c evolution accepts
+`numerical_relativity/rk4_variant=classical` with `time/integrator=rk4` to
+select classical four-stage RK4. The default, `rk4_variant=athenak`, retains
+the AthenaK low-storage coefficients; classical RK4 is not yet supported
+for matter-coupled runs. Both paths enforce determinant normalization and
+trace-free conformal extrinsic curvature after every substage, including
+in AwA mode. Finite-difference stencils use differences of field values to
+annihilate constant backgrounds exactly without changing their formal order.
+
 PANGU does not support in-source builds. Configuration and build artifacts
 must be placed in a separate directory such as `build-serial` or
 `build-cuda`.

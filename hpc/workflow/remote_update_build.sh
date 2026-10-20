@@ -7,7 +7,12 @@ workflow_dir="${3:?absolute workflow directory required}"
 repo_dir=/lustre/home/2601110206/PANGU
 dependency_prefix=/lustre/home/2601110206
 [[ "$expected_commit" =~ ^[0-9a-f]{40}$ ]]
-[[ "$workflow_dir" == "$dependency_prefix"/pangu-workflow-* ]]
+case "$workflow_dir" in
+  "$dependency_prefix"/pangu-workflow-* | \
+  "$dependency_prefix"/CODEX_WORKPLACE/ApplesWithApples/deployments/*) ;;
+  *) printf 'Unsupported deployment record directory: %s\n' "$workflow_dir" >&2; exit 2 ;;
+esac
+[[ "$workflow_dir" != *'/../'* && "$workflow_dir" != */.. ]]
 mkdir -p "$workflow_dir"
 cd "$repo_dir"
 test -f update.sh

@@ -130,6 +130,7 @@ const std::map<std::string, std::set<std::string>> kPanguSchema{
     {"numerical_relativity",
      {"cfl",
       "awa_strict",
+      "rk4_variant",
       "finite_difference_order",
       "boundary_extrapolation_order",
       "chi_psi_power",

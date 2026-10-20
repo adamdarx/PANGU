@@ -23,6 +23,55 @@ template <class View> struct Accessor {
   }
 };
 
+struct ConstantAccessor {
+  Real constant;
+  KOKKOS_INLINE_FUNCTION Real operator()(int, int, int) const { return constant; }
+};
+
+struct SingleAxisAccessor {
+  int axis;
+  KOKKOS_INLINE_FUNCTION Real operator()(const int dk, const int dj, const int di) const {
+    const int offset = axis == 0 ? di : (axis == 1 ? dj : dk);
+    return 1.0 + 1.0e-8 * (offset + 0.125 * offset * offset);
+  }
+};
+
+template <int Order> int CheckConstantPreservation() {
+  Kokkos::View<int*> failures("NR-1 constant preservation", 18);
+  Kokkos::parallel_for(
+      "NR-1 constant and axis-independent derivatives", 18, KOKKOS_LAMBDA(const int test) {
+        const Real constants[6] = {0.0, 1.0, 1.0 + 1.0e-8, 1.0e-8, -2.8, 1.0e30};
+        const ConstantAccessor value{constants[test % 6]};
+        const Real inverse_spacing = test < 6 ? 50.0 : (test < 12 ? 200.0 : 4096.0);
+        int failed = 0;
+        for (int direction = 0; direction < 3; ++direction) {
+          failed += !(pangu::nr::fd::First<Order>(direction, inverse_spacing, value) == 0.0);
+          failed += !(pangu::nr::fd::Second<Order>(direction, inverse_spacing, value) == 0.0);
+          failed += !(pangu::nr::fd::AdvectiveFirst<Order>(direction, inverse_spacing,
+                                                          -0.7, value) == 0.0);
+          failed += !(pangu::nr::fd::AdvectiveFirst<Order>(direction, inverse_spacing,
+                                                          0.9, value) == 0.0);
+          failed += !(pangu::nr::fd::AdvectiveFirst<Order>(direction, inverse_spacing,
+                                                          0.0, value) == 0.0);
+          failed += !(pangu::nr::fd::KreissOliger<Order>(direction, inverse_spacing, value) == 0.0);
+          for (int second = direction + 1; second < 3; ++second) {
+            failed += !(pangu::nr::fd::MixedSecond<Order>(direction, second, inverse_spacing,
+                                                          inverse_spacing, value) == 0.0);
+            for (int axis = 0; axis < 3; ++axis) {
+              const SingleAxisAccessor one_axis{axis};
+              failed += !(pangu::nr::fd::MixedSecond<Order>(direction, second, inverse_spacing,
+                                                            inverse_spacing, one_axis) == 0.0);
+            }
+          }
+        }
+        failures(test) = failed;
+      });
+  const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), failures);
+  int result = 0;
+  for (int test = 0; test < 18; ++test) result += host(test);
+  return result;
+}
+
 template <int Order, class View>
 Real CheckOrder(const View& field, const int center, const Real inverse_x, const Real inverse_y,
                 const Real inverse_z) {
@@ -112,6 +161,15 @@ int main(int argc, char** argv) {
     } else {
       std::cout << "NR-1 finite-difference polynomial PASS: order2=" << second_order
                 << " order4=" << fourth_order << " order6=" << sixth_order << '\n';
+    }
+    const int constant_failures = CheckConstantPreservation<2>() +
+                                  CheckConstantPreservation<4>() +
+                                  CheckConstantPreservation<6>();
+    if (constant_failures != 0) {
+      std::cerr << "NR-1 constant/axis preservation failure: " << constant_failures << '\n';
+      return_code = 1;
+    } else {
+      std::cout << "NR-1 constant/axis preservation PASS (orders 2,4,6; exact zeros)\n";
     }
   }
   Kokkos::finalize();

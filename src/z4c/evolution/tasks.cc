@@ -15,6 +15,7 @@
 #include "interface/update.hpp"
 #include "mhd/mhd_package.h"
 #include "z4c/evolution/package.h"
+#include "z4c/evolution/classical_rk4.h"
 #include "z4c/coupling/sync_grhd.h"
 #include "z4c/coupling/sync_grmhd.h"
 
@@ -108,8 +109,31 @@ TaskStatus CarrySyncStageStateMeshTask(MeshData<Real>* current, MeshData<Real>* 
 
 void ConfigureSyncIntegrator(Mesh* mesh, parthenon::LowStorageIntegrator& integrator) {
   PARTHENON_REQUIRE(mesh->ndim == 3, "sync Z4c evolution requires a three-dimensional mesh");
+  const auto nr = mesh->packages.Get("numerical_relativity");
+  const bool classical = nr->Param<std::string>("rk4_variant") == "classical";
+  PARTHENON_REQUIRE(!classical || integrator.GetName() == "rk4",
+                    "numerical_relativity/rk4_variant=classical requires time/integrator=rk4");
   if (integrator.GetName() != "rk4")
     return;
+  if (classical) {
+    // Keep the common four-stage driver, but do NOT use its two-register
+    // recurrence. ClassicalRK4UpdateMeshTask owns an immutable U^n and a
+    // weighted RHS sum, with the classical Butcher abscissae 0,1/2,1/2,1.
+    PARTHENON_REQUIRE(nr->Param<bool>("vacuum") &&
+                          mesh->packages.AllPackages().count("hydro") == 0 &&
+                          mesh->packages.AllPackages().count("mhd") == 0,
+                      "classical RK4 currently supports vacuum Z4c only");
+    integrator.nstages = 4;
+    integrator.nbuffers = 2;
+    integrator.gam0 = {0.0, 0.0, 0.0, 0.0};
+    integrator.gam1 = {1.0, 1.0, 1.0, 1.0};
+    integrator.beta = {0.5, 0.5, 1.0, 1.0 / 6.0};
+    integrator.delta = {0.0, 0.0, 0.0, 0.0};
+    integrator.c = {0.0, 0.5, 0.5, 1.0};
+    integrator.buffer_name = {"base", "base", "base"};
+    integrator.stage_name = {"base", "base", "base", "base", "base"};
+    return;
+  }
   // AthenaK's four-stage RK4(4)[2S] differs from Parthenon's default
   // five-stage SSPRK(5,4).  The sync-Z4c reference path keeps Parthenon's
   // storage object but installs the reference coefficients and explicit
@@ -183,7 +207,9 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
   const auto dt = integrator->dt;
   // ConfigureSyncIntegrator replaced the rk4 coefficients with the four-stage
   // low-storage scheme that needs the explicit accumulator below.
-  const bool low_storage_rk4 = integrator->GetName() == "rk4";
+  const bool classical = mesh->packages.Get("numerical_relativity")
+                             ->Param<std::string>("rk4_variant") == "classical";
+  const bool low_storage_rk4 = integrator->GetName() == "rk4" && !classical;
   const bool vacuum = mesh->packages.Get("numerical_relativity")->Param<bool>("vacuum");
   TaskCollection collection;
   TaskID none(0);
@@ -239,6 +265,15 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       accumulator = mesh->mesh_data.Add("nr_rk4_accumulator", base);
       rk_reference = accumulator.get();
     }
+    std::shared_ptr<MeshData<Real>> classical_initial;
+    std::shared_ptr<MeshData<Real>> classical_rhs_sum;
+    if (classical) {
+      classical_initial = mesh->mesh_data.Add("nr_classical_rk4_initial", base);
+      classical_rhs_sum = mesh->mesh_data.Add("nr_classical_rk4_rhs_sum", base);
+      if (stage == 1)
+        accumulated = tasks.AddTask(current_ready, AccumulateRKStateMeshTask, current.get(),
+                                     classical_initial.get(), 0.0, true);
+    }
     const auto receive =
         tasks.AddTask(none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>,
                       next_boundary);
@@ -279,12 +314,17 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
         accumulator ? tasks.AddTask(matter, AccumulateRKStateMeshTask, current.get(),
                                     accumulator.get(), integrator->delta[stage - 1], stage == 1)
                     : matter;
+    const Real rhs_time = classical ? tm.time + integrator->c[stage - 1] * dt : tm.time;
     const auto rhs =
-        tasks.AddTask(rk_accumulated, CalculateRHSMeshTask, current.get(), tm.time);
+        tasks.AddTask(rk_accumulated, CalculateRHSMeshTask, current.get(), rhs_time);
     const auto boundary_rhs =
         tasks.AddTask(rhs, ApplySommerfeldRHSMeshTask, current.get());
-    auto update = tasks.AddTask(boundary_rhs | carried, RKUpdateMeshTask, current.get(),
-                                rk_reference, gam0, gam1, beta * dt, next.get());
+    auto update = classical
+                      ? tasks.AddTask(boundary_rhs | carried, ClassicalRK4UpdateMeshTask,
+                                      current.get(), classical_initial.get(),
+                                      classical_rhs_sum.get(), stage, dt, next.get())
+                      : tasks.AddTask(boundary_rhs | carried, RKUpdateMeshTask, current.get(),
+                                      rk_reference, gam0, gam1, beta * dt, next.get());
     TaskID hydro_update = none;
     TaskID magnetic_update = none;
     if (sync_matter) {
@@ -320,13 +360,10 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
                   parthenon::BValOnMDFunc_t(ApplyPackedSyncOutflowBoundariesMeshTask))
             : parthenon::AddBoundaryExchangeTasks(boundary_dependency, tasks, next_boundary,
                                                   mesh->multilevel);
-    // Match AthenaK's EnforceAlgConstr scheduling: vacuum Z4c is projected only
-    // after the completed RK step, while matter-coupled evolution is projected
-    // after every stage before the ADM/C2P chain consumes the state.
-    TaskID projected = boundaries;
-    if (sync_matter || stage == integrator->nstages ||
-        mesh->packages.Get("numerical_relativity")->Param<bool>("awa_strict"))
-      projected = tasks.AddTask(boundaries, EnforceAlgebraicConstraintsMeshTask, next.get());
+    // Enforce both algebraic constraints on every substage, including ghost
+    // cells. The AwA diagnostic/gauge flag must not disable normalization.
+    const auto projected =
+        tasks.AddTask(boundaries, EnforceAlgebraicConstraintsMeshTask, next.get());
     const Real next_stage_time =
         stage < integrator->nstages ? tm.time + integrator->c[stage] * dt : tm.time + dt;
     TaskID ready = projected;
