@@ -8,6 +8,7 @@
 #include "z4c/core/component_indices.h"
 #include "z4c/core/finite_difference.h"
 #include "z4c/coupling/stress_energy.h"
+#include "z4c/gauge/dispatch.hpp"
 
 namespace pangu::nr {
 
@@ -19,19 +20,7 @@ struct Z4cOptions {
   parthenon::Real dissipation = 0.0;
   parthenon::Real damp_kappa1 = 0.0;
   parthenon::Real damp_kappa2 = 0.0;
-  parthenon::Real lapse_oplog = 2.0;
-  parthenon::Real lapse_harmonic_factor = 1.0;
-  parthenon::Real lapse_harmonic = 0.0;
-  parthenon::Real lapse_advect = 1.0;
-  bool slow_start_lapse = false;
-  parthenon::Real slow_start_amplitude = 0.6;
-  parthenon::Real slow_start_time = 20.0;
-  parthenon::Real slow_start_index = 1.0;
-  parthenon::Real shift_gamma = 1.0;
-  parthenon::Real shift_alpha2_gamma = 0.0;
-  parthenon::Real shift_harmonic = 0.0;
-  parthenon::Real shift_advect = 1.0;
-  parthenon::Real shift_eta = 2.0;
+  gauge::Options gauge{};
   bool use_z4c = true;
 };
 
@@ -525,29 +514,23 @@ KOKKOS_INLINE_FUNCTION void ComputeVacuum(const PointState& state,
     }
   }
 
-  const Real lapse_factor =
-      options.lapse_oplog * options.lapse_harmonic_factor + options.lapse_harmonic * state.alpha;
-  output[Index(Z4cComponent::alpha)] =
-      options.lapse_advect * derivatives.lie_alpha - lapse_factor * state.alpha * state.khat;
-  if (options.slow_start_lapse) {
+  output[Index(Z4cComponent::alpha)] = gauge::LapseRhs(
+      options.gauge, state.alpha, state.khat, derivatives.lie_alpha, derivatives.dalpha);
+  if (options.gauge.slow_start_lapse) {
     const Real w2 = state.chi > options.chi_min_floor ? state.chi : options.chi_min_floor;
     const Real w = sqrt(w2);
-    const Real time_ratio = time / options.slow_start_time;
-    output[Index(Z4cComponent::alpha)] += options.slow_start_amplitude * (w - state.alpha) *
-                                          pow(w, options.slow_start_index) *
+    const Real time_ratio = time / options.gauge.slow_start_time;
+    output[Index(Z4cComponent::alpha)] += options.gauge.slow_start_amplitude * (w - state.alpha) *
+                                          pow(w, options.gauge.slow_start_index) *
                                           exp(-0.5 * time_ratio * time_ratio);
   }
   for (int first = 0; first < 3; ++first) {
-    Real beta_rhs = options.shift_gamma * state.gamma[first] +
-                    options.shift_advect * derivatives.lie_beta[first] -
-                    options.shift_eta * state.beta[first] +
-                    options.shift_alpha2_gamma * state.alpha * state.alpha * state.gamma[first];
-    for (int second = 0; second < 3; ++second) {
-      beta_rhs += options.shift_harmonic * state.alpha * chi_guarded *
-                  (0.5 * state.alpha * derivatives.dchi[second] - derivatives.dalpha[second]) *
-                  SymmetricValue(inverse_metric, first, second);
-    }
-    output[Index(Z4cComponent::betax) + first] = beta_rhs;
+    output[Index(Z4cComponent::betax) + first] = gauge::ShiftRhs(
+        options.gauge, first, state.alpha, chi_guarded, state.gamma, state.beta,
+        derivatives.lie_beta, derivatives.dalpha, derivatives.dchi, inverse_metric,
+        [](const Real values[6], const int a, const int b) {
+          return SymmetricValue(values, a, b);
+        });
   }
 }
 

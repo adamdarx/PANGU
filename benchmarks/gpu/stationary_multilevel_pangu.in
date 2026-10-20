@@ -1,0 +1,67 @@
+# Matched GPU evolution benchmark: 232 blocks, FD2, RK4, no outputs/tracker.
+<parthenon/job>
+problem_id = nr_boosted_puncture
+<pangu>
+compatibility_mode = native
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+<parthenon/mesh>
+refinement = static
+numlevel = 5
+nghost = 2
+nx1 = 32
+x1min = -32
+x1max = 32
+ix1_bc = nr_outflow
+ox1_bc = nr_outflow
+nx2 = 32
+x2min = -32
+x2max = 32
+ix2_bc = nr_outflow
+ox2_bc = nr_outflow
+nx3 = 32
+x3min = -32
+x3max = 32
+ix3_bc = nr_outflow
+ox3_bc = nr_outflow
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 16
+<parthenon/time>
+integrator = rk4
+tlim = 2
+nlim = 40
+ncycle_out = 1
+<numerical_relativity>
+cfl = 0.2
+finite_difference_order = 2
+dissipation = 0.1
+chi_div_floor = 1e-5
+damp_kappa1 = 0.02
+damp_kappa2 = 0
+lapse_gauge = one_plus_log
+shift_gauge = gamma_driver
+slow_start_lapse = true
+slow_start_amplitude = 0.6
+slow_start_time = 20
+slow_start_index = 1
+tracker_enabled = false
+weyl_enabled = false
+waveform_enabled = false
+horizon_enabled = false
+<problem>
+punc_ADM_mass = 1
+punc_velocity_x1 = 0
+punc_velocity_x2 = 0
+punc_velocity_x3 = 0
+<parthenon/static_refinement0>
+level = 4
+x1min = -4
+x1max = 4
+x2min = -4
+x2max = 4
+x3min = -4
+x3max = 4

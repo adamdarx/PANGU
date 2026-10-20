@@ -27,6 +27,10 @@ void NumericalRelativityLinearWave(parthenon::MeshBlock *block,
                                    parthenon::ParameterInput *pin);
 void NumericalRelativityGaugeWave(parthenon::MeshBlock *block,
                                   parthenon::ParameterInput *pin);
+void NumericalRelativityShiftedGaugeWave(parthenon::MeshBlock *block,
+                                         parthenon::ParameterInput *pin);
+void NumericalRelativityPolarizedGowdy(parthenon::MeshBlock *block,
+                                       parthenon::ParameterInput *pin);
 void NumericalRelativityRobustStability(parthenon::MeshBlock *block,
                                         parthenon::ParameterInput *pin);
 void RegisterNumericalRelativityReflectingBoundaries(
@@ -44,6 +48,12 @@ void NumericalRelativityLinearWaveAfterLoop(parthenon::Mesh *mesh,
 void NumericalRelativityGaugeWaveAfterLoop(parthenon::Mesh *mesh,
                                            parthenon::ParameterInput *pin,
                                            parthenon::SimTime &time);
+void NumericalRelativityShiftedGaugeWaveAfterLoop(
+    parthenon::Mesh *mesh, parthenon::ParameterInput *pin,
+    parthenon::SimTime &time);
+void NumericalRelativityPolarizedGowdyAfterLoop(
+    parthenon::Mesh *mesh, parthenon::ParameterInput *pin,
+    parthenon::SimTime &time);
 void NumericalRelativityRobustStabilityAfterLoop(parthenon::Mesh *mesh,
                                                  parthenon::ParameterInput *pin,
                                                  parthenon::SimTime &time);

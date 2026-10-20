@@ -17,21 +17,25 @@ KOKKOS_INLINE_FUNCTION int TrackerTag(const Bounds& bounds, const int level,
                                       const Radii& radii, const Levels& target_levels) {
   int flag = kDerefine;
   for (int tracker = 0; tracker < tracker_count; ++tracker) {
-    Real distance_squared = 0.0;
-    for (int direction = 0; direction < 3; ++direction) {
-      const Real lower = bounds[2 * direction];
-      const Real upper = bounds[2 * direction + 1];
-      const Real position = centers[3 * tracker + direction];
-      const Real closest = fmax(lower, fmin(position, upper));
-      const Real distance = position - closest;
-      distance_squared += distance * distance;
-    }
+    // Keep the operation order and strict comparison of AthenaK RefineTracker.
+    // In particular, a roundoff-sized displacement must not be suppressed here.
+    const Real x = centers[3 * tracker];
+    const Real y = centers[3 * tracker + 1];
+    const Real z = centers[3 * tracker + 2];
+    const Real cx = fmax(bounds[0], fmin(x, bounds[1]));
+    const Real cy = fmax(bounds[2], fmin(y, bounds[3]));
+    const Real cz = fmax(bounds[4], fmin(z, bounds[5]));
+    const Real distance_squared =
+        (x - cx) * (x - cx) + (y - cy) * (y - cy) + (z - cz) * (z - cz);
     const bool contained =
         centers[3 * tracker] >= bounds[0] && centers[3 * tracker] <= bounds[1] &&
         centers[3 * tracker + 1] >= bounds[2] && centers[3 * tracker + 1] <= bounds[3] &&
         centers[3 * tracker + 2] >= bounds[4] && centers[3 * tracker + 2] <= bounds[5];
     int tracker_flag = kDerefine;
-    if (distance_squared < radii[tracker] * radii[tracker] || contained) {
+    const Real radius_squared = radii[tracker] * radii[tracker];
+    const bool intersects = distance_squared < radius_squared;
+    // Keep the containment safety net, including the radius-zero case.
+    if (intersects || contained) {
       if (target_levels[tracker] < 0 || level < target_levels[tracker])
         tracker_flag = kRefine;
       else if (level == target_levels[tracker])

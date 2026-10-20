@@ -1,10 +1,12 @@
 #include "z4c/evolution/package.h"
+#include "z4c/evolution/classical_rk4.h"
 #include "z4c/evolution/amr_refinement.h"
 #include "z4c/evolution/tasks.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iostream>
 #include <limits>
 #include <string>
 #include <vector>
@@ -17,6 +19,8 @@
 #include "z4c/evolution/constraints.h"
 #include "z4c/core/finite_difference.h"
 #include "z4c/evolution/amr.h"
+#include "z4c/tracking/position_update.h"
+#include "z4c/tracking/interpolation.h"
 #include "z4c/coupling/stress_energy.h"
 #include "z4c/coupling/sync_grhd.h"
 #include "z4c/coupling/sync_grmhd.h"
@@ -38,6 +42,29 @@ namespace {
 // Splitting every 32 blocks multiplied launch latency by sixteen on the 484-block
 // Stage-02 case and prevented the GPU scheduler from seeing the complete workload.
 inline constexpr int kHeavyKernelBlockBatch = 2048;
+
+gauge::Lapse ParseLapseGauge(const std::string& name) {
+  if (name == "legacy") return gauge::Lapse::legacy;
+  if (name == "frozen" || name == "geodesic") return gauge::Lapse::frozen;
+  if (name == "harmonic") return gauge::Lapse::harmonic;
+  if (name == "one_plus_log" || name == "1+log" || name == "moving_puncture")
+    return gauge::Lapse::one_plus_log;
+  if (name == "shifted_gauge_wave" || name == "awa_shifted_gauge_wave")
+    return gauge::Lapse::shifted_gauge_wave;
+  PARTHENON_FAIL("Unknown numerical_relativity/lapse_gauge='" + name +
+                 "' (expected legacy, frozen, harmonic, one_plus_log, or shifted_gauge_wave)");
+}
+
+gauge::Shift ParseShiftGauge(const std::string& name) {
+  if (name == "legacy") return gauge::Shift::legacy;
+  if (name == "frozen" || name == "zero") return gauge::Shift::frozen;
+  if (name == "gamma_driver" || name == "moving_puncture") return gauge::Shift::gamma_driver;
+  if (name == "harmonic") return gauge::Shift::harmonic;
+  if (name == "shifted_gauge_wave" || name == "awa_shifted_gauge_wave")
+    return gauge::Shift::shifted_gauge_wave;
+  PARTHENON_FAIL("Unknown numerical_relativity/shift_gauge='" + name +
+                 "' (expected legacy, frozen, gamma_driver, harmonic, or shifted_gauge_wave)");
+}
 
 
 template <class Z4cPack, class ADMPack>
@@ -431,6 +458,28 @@ void CheckRefinementMesh(MeshData<Real>* data, parthenon::ParArray1D<AmrTag>& am
     fixed_levels[region] = fixed_level[region];
   }
   const int fixed_count = fixed_radius.size();
+  const int root_level = data->GetMeshPointer()->GetRootLevel();
+  if (method == 1) {
+    // AthenaK evaluates tracker geometry on the host. Match that execution
+    // space as well as its expression: device contraction at a tangent face
+    // can otherwise change a strict intersection decision.
+    auto tags = amr_tags.GetHostMirrorAndCopy();
+    for (int block = 0; block < data->NumBlocks(); ++block) {
+      const auto pointer = data->GetBlockData(block)->GetBlockPointer();
+      const int level = pointer->loc.level() - root_level;
+      const Kokkos::Array<Real, 6> block_bounds{
+          pointer->block_size.xmin(X1DIR), pointer->block_size.xmax(X1DIR),
+          pointer->block_size.xmin(X2DIR), pointer->block_size.xmax(X2DIR),
+          pointer->block_size.xmin(X3DIR), pointer->block_size.xmax(X3DIR)};
+      int flag = amr::TrackerTag<Real>(block_bounds, level, tracker_count,
+                                      tracker_centers, tracker_radii, tracker_levels);
+      flag = amr::ApplyFixedRadii<Real>(flag, block_bounds, level, fixed_count,
+                                        fixed_radii, fixed_levels);
+      tags(block) = static_cast<AmrTag>(std::max(static_cast<int>(tags(block)), flag));
+    }
+    Kokkos::deep_copy(amr_tags.KokkosView(), tags.KokkosView());
+    return;
+  }
   const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
   const auto ib = data->GetBoundsI(IndexDomain::interior);
   const auto jb = data->GetBoundsJ(IndexDomain::interior);
@@ -439,7 +488,6 @@ void CheckRefinementMesh(MeshData<Real>* data, parthenon::ParArray1D<AmrTag>& am
   const int nx2 = jb.e - jb.s + 1;
   const int nx3 = kb.e - kb.s + 1;
   const int cells_per_block = nx1 * nx2 * nx3;
-  const int root_level = data->GetMeshPointer()->GetRootLevel();
   parthenon::ParArray1D<int> levels("PANGU NR AMR block levels", z4c.GetDim(5));
   parthenon::ParArray2D<Real> bounds("PANGU NR AMR block bounds", z4c.GetDim(5), 6);
   auto host_levels = Kokkos::create_mirror_view(levels);
@@ -465,13 +513,7 @@ void CheckRefinementMesh(MeshData<Real>* data, parthenon::ParArray1D<AmrTag>& am
       DEFAULT_OUTER_LOOP_PATTERN, "PANGU Z4c AMR", parthenon::DevExecSpace(), 0, 0, 0,
       z4c.GetDim(5) - 1, KOKKOS_LAMBDA(parthenon::team_mbr_t team_member, const int b) {
         int flag_value = amr::kSame;
-        if (method == 1) {
-          Kokkos::Array<Real, 6> block_bounds{};
-          for (int component = 0; component < 6; ++component)
-            block_bounds[component] = bounds(b, component);
-          flag_value = amr::TrackerTag<Real>(block_bounds, levels(b), tracker_count,
-                                             tracker_centers, tracker_radii, tracker_levels);
-        } else if (method == 2) {
+        if (method == 2) {
           Real minimum = std::numeric_limits<Real>::max();
           parthenon::par_reduce_inner(
               parthenon::inner_loop_pattern_ttr_tag, team_member, 0, cells_per_block - 1,
@@ -569,6 +611,13 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   const Real cfl = pin->GetOrAddReal("numerical_relativity", "cfl", 0.4);
   const int finite_difference_order =
       pin->GetOrAddInteger("numerical_relativity", "finite_difference_order", 2);
+  package->AddParam<bool>("awa_strict", pin->GetOrAddBoolean(
+      "numerical_relativity", "awa_strict", false));
+  const auto rk4_variant =
+      pin->GetOrAddString("numerical_relativity", "rk4_variant", "athenak");
+  PARTHENON_REQUIRE(rk4_variant == "athenak" || rk4_variant == "classical",
+                    "numerical_relativity/rk4_variant must be athenak or classical");
+  package->AddParam<std::string>("rk4_variant", rk4_variant);
   const int ghost_zones = pin->GetOrAddInteger("parthenon/mesh", "nghost", 2);
   const int requested_boundary_extrapolation_order =
       pin->GetOrAddInteger("numerical_relativity", "boundary_extrapolation_order", 2);
@@ -594,10 +643,23 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   } else {
     PARTHENON_FAIL("unknown numerical_relativity/amr_method");
   }
+  if (amr_method == 1) {
+    // For tracker AMR checked every step, AthenaK has no ten-request hysteresis.
+    // Its tree checks proper nesting after finer families have coarsened, not
+    // against the old neighbor list. Preserve explicit application overrides.
+    // Set application policy, not a second conflicting library default.
+    if (!pin->DoesParameterExist("parthenon/mesh", "derefine_count"))
+      pin->SetInteger("parthenon/mesh", "derefine_count", 1);
+    if (!pin->DoesParameterExist("parthenon/mesh", "defer_derefinement_nesting_checks"))
+      pin->SetBoolean("parthenon/mesh", "defer_derefinement_nesting_checks", true);
+  }
   const Real amr_chi_min = pin->GetOrAddReal("numerical_relativity", "amr_chi_min", 0.2);
   const Real amr_dchi_max = pin->GetOrAddReal("numerical_relativity", "amr_dchi_max", 0.01);
   const bool tracker_enabled =
       pin->GetOrAddBoolean("numerical_relativity", "tracker_enabled", false);
+  const std::string tracker_mode_name =
+      pin->GetOrAddString("numerical_relativity", "tracker_mode", "ode");
+  const auto tracker_mode = tracking::ParseMode(tracker_mode_name);
   const int tracker_count = pin->GetOrAddInteger("numerical_relativity", "tracker_count", 1);
   const bool weyl_enabled = pin->GetOrAddBoolean("numerical_relativity", "weyl_enabled", false);
   const bool waveform_enabled =
@@ -829,7 +891,10 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   package->AddParam<Real>("amr_chi_min", amr_chi_min);
   package->AddParam<Real>("amr_dchi_max", amr_dchi_max);
   package->AddParam<bool>("tracker_enabled", tracker_enabled);
+  package->AddParam<tracking::Mode>("tracker_mode", tracker_mode);
   package->AddParam<int>("tracker_count", tracker_count);
+  if (tracker_enabled && parthenon::Globals::my_rank == 0)
+    std::cout << "Puncture tracker mode = " << tracker_mode_name << '\n';
   package->AddParam<bool>("weyl_enabled", weyl_enabled);
   package->AddParam<bool>("waveform_enabled", waveform_enabled);
   package->AddParam<bool>("horizon_enabled", horizon_enabled);
@@ -876,6 +941,8 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   package->AddParam<Real>("tracker_center_x3", tracker_center_x3);
   package->AddParam<std::vector<Real>>("tracker_position", tracker_positions,
                                        parthenon::Params::Mutability::Restart);
+  package->AddParam<std::string>("amr_topology_trace", pin->GetOrAddString(
+      "numerical_relativity", "amr_topology_trace", ""));
   package->AddParam<std::vector<Real>>("tracker_mass", tracker_masses);
   package->AddParam<std::vector<Real>>("tracker_refinement_radii", tracker_refinement_radii);
   package->AddParam<std::vector<int>>("tracker_refinement_levels", tracker_refinement_levels);
@@ -905,37 +972,42 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       pin->GetOrAddReal("numerical_relativity", "damp_kappa1", options.damp_kappa1);
   options.damp_kappa2 =
       pin->GetOrAddReal("numerical_relativity", "damp_kappa2", options.damp_kappa2);
-  options.lapse_oplog =
-      pin->GetOrAddReal("numerical_relativity", "lapse_oplog", options.lapse_oplog);
-  options.lapse_harmonic_factor = pin->GetOrAddReal("numerical_relativity", "lapse_harmonic_factor",
-                                                    options.lapse_harmonic_factor);
-  options.lapse_harmonic =
-      pin->GetOrAddReal("numerical_relativity", "lapse_harmonic", options.lapse_harmonic);
-  options.lapse_advect =
-      pin->GetOrAddReal("numerical_relativity", "lapse_advect", options.lapse_advect);
-  options.slow_start_lapse =
-      pin->GetOrAddBoolean("numerical_relativity", "slow_start_lapse", options.slow_start_lapse);
-  options.slow_start_amplitude = pin->GetOrAddReal("numerical_relativity", "slow_start_amplitude",
-                                                   options.slow_start_amplitude);
-  options.slow_start_time =
-      pin->GetOrAddReal("numerical_relativity", "slow_start_time", options.slow_start_time);
-  options.slow_start_index =
-      pin->GetOrAddReal("numerical_relativity", "slow_start_index", options.slow_start_index);
-  options.shift_gamma =
-      pin->GetOrAddReal("numerical_relativity", "shift_gamma", options.shift_gamma);
-  options.shift_alpha2_gamma =
-      pin->GetOrAddReal("numerical_relativity", "shift_alpha2_gamma", options.shift_alpha2_gamma);
-  options.shift_harmonic =
-      pin->GetOrAddReal("numerical_relativity", "shift_harmonic", options.shift_harmonic);
-  options.shift_advect =
-      pin->GetOrAddReal("numerical_relativity", "shift_advect", options.shift_advect);
-  options.shift_eta = pin->GetOrAddReal("numerical_relativity", "shift_eta", options.shift_eta);
+  options.gauge.lapse = ParseLapseGauge(
+      pin->GetOrAddString("numerical_relativity", "lapse_gauge", "legacy"));
+  options.gauge.lapse_oplog = pin->GetOrAddReal(
+      "numerical_relativity", "lapse_oplog", options.gauge.lapse_oplog);
+  options.gauge.lapse_harmonic_factor = pin->GetOrAddReal(
+      "numerical_relativity", "lapse_harmonic_factor", options.gauge.lapse_harmonic_factor);
+  options.gauge.lapse_harmonic = pin->GetOrAddReal(
+      "numerical_relativity", "lapse_harmonic", options.gauge.lapse_harmonic);
+  options.gauge.lapse_advect = pin->GetOrAddReal(
+      "numerical_relativity", "lapse_advect", options.gauge.lapse_advect);
+  options.gauge.slow_start_lapse = pin->GetOrAddBoolean(
+      "numerical_relativity", "slow_start_lapse", options.gauge.slow_start_lapse);
+  options.gauge.slow_start_amplitude = pin->GetOrAddReal(
+      "numerical_relativity", "slow_start_amplitude", options.gauge.slow_start_amplitude);
+  options.gauge.slow_start_time = pin->GetOrAddReal(
+      "numerical_relativity", "slow_start_time", options.gauge.slow_start_time);
+  options.gauge.slow_start_index = pin->GetOrAddReal(
+      "numerical_relativity", "slow_start_index", options.gauge.slow_start_index);
+  options.gauge.shift = ParseShiftGauge(
+      pin->GetOrAddString("numerical_relativity", "shift_gauge", "legacy"));
+  options.gauge.shift_gamma = pin->GetOrAddReal(
+      "numerical_relativity", "shift_gamma", options.gauge.shift_gamma);
+  options.gauge.shift_alpha2_gamma = pin->GetOrAddReal(
+      "numerical_relativity", "shift_alpha2_gamma", options.gauge.shift_alpha2_gamma);
+  options.gauge.shift_harmonic = pin->GetOrAddReal(
+      "numerical_relativity", "shift_harmonic", options.gauge.shift_harmonic);
+  options.gauge.shift_advect = pin->GetOrAddReal(
+      "numerical_relativity", "shift_advect", options.gauge.shift_advect);
+  options.gauge.shift_eta = pin->GetOrAddReal(
+      "numerical_relativity", "shift_eta", options.gauge.shift_eta);
   options.use_z4c = pin->GetOrAddBoolean("numerical_relativity", "use_z4c", options.use_z4c);
   PARTHENON_REQUIRE(options.chi_psi_power != 0.0,
                     "numerical_relativity/chi_psi_power must be nonzero");
   PARTHENON_REQUIRE(options.chi_min_floor > 0.0,
                     "numerical_relativity/chi_min_floor must be positive");
-  PARTHENON_REQUIRE(!options.slow_start_lapse || options.slow_start_time > 0.0,
+  PARTHENON_REQUIRE(!options.gauge.slow_start_lapse || options.gauge.slow_start_time > 0.0,
                     "slow_start_time must be positive when slow_start_lapse is enabled");
   package->AddParam<Z4cOptions>("z4c_options", options);
 
@@ -988,17 +1060,15 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
     // The ordinary NR FillDerived pass below then adds constraints/Weyl and is
     // deliberately self-contained, so callers outside the generic Parthenon
     // initialization path retain the existing contract.
-    package->PreFillDerivedBlock = [](MeshBlockData<Real>* data) {
-      Z4cToADMFieldsBlockTask(data);
-      // StateDescriptor callbacks do not carry a TaskID dependency between the
-      // PreFillDerived and FillDerived phases.  Each packed kernel may obtain a
-      // different CUDA execution-space instance, so make the reconstructed ADM
-      // view visible before the MHD package starts primitive recovery.  This is
-      // essential after dynamic AMR creates many fine blocks at once.
-      Kokkos::fence("PANGU synchronized ADM pre-fill");
-    };
+    // Mesh::FillDerived invokes both MeshData and MeshBlockData callbacks.
+    // The synchronized graph already uses MeshData, and the packed pass below
+    // reconstructs every block, including after initialization, restart and
+    // AMR. Register only that pass: a second block callback would repeat the
+    // same work and introduce one global CUDA fence per MeshBlock.
     package->PreFillDerivedMesh = [](MeshData<Real>* data) {
       Z4cToADMFieldsMeshTask(data);
+      // Make ADM visible before the next package recovers matter primitives,
+      // even when packed kernels use distinct execution-space instances.
       Kokkos::fence("PANGU synchronized ADM pre-fill");
     };
     if (matter_options.source == StressEnergySource::grhd ||
@@ -1008,28 +1078,45 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       // pre/post passes, so rebuild stress energy only after hydro/MHD has
       // recovered primitives, then recompute the matter constraints.  This
       // ordering is the Parthenon equivalent of AthenaK's restart sequence.
-      package->PostFillDerivedBlock = [](MeshBlockData<Real>* data) {
-        BuildStressEnergyBlockTask(data, 0.0);
-        Z4cToADMBlockTask(data);
-      };
       package->PostFillDerivedMesh = [](MeshData<Real>* data) {
         BuildStressEnergyMeshTask(data, 0.0);
         Z4cToADMMeshTask(data);
       };
     }
   }
-  package->FillDerivedBlock = Z4cToADMBlockTask;
+  if constexpr (!geometry::ConfiguredGeometryIsSynchronized())
+    package->FillDerivedBlock = Z4cToADMBlockTask;
   package->FillDerivedMesh = Z4cToADMMeshTask;
+  // Outputs::MakeOutputs invokes this hook, not FillDerived. With constraints
+  // omitted from the vacuum evolution graph, field dumps otherwise retain
+  // the initialization/remesh diagnostics despite an evolved Z4c state.
+  // ADM and matter fields are already current after the completed RK stage.
+  package->UserWorkBeforeOutputMesh = [](Mesh* mesh, parthenon::ParameterInput*,
+                                         parthenon::SimTime&) {
+    const auto package = mesh->packages.Get("numerical_relativity");
+    for (const auto& partition : mesh->GetDefaultBlockPartitions()) {
+      auto& data = mesh->mesh_data.Add("base", partition);
+      if (data->NumBlocks() == 0)
+        continue;
+      ComputeConstraintsMeshTask(data.get());
+      if (package->Param<bool>("weyl_enabled"))
+        ComputeWeylMeshTask(data.get());
+    }
+    Kokkos::fence("PANGU NR output diagnostics");
+  };
   package->EstimateTimestepBlock = EstimateTimestepBlock;
   package->EstimateTimestepMesh = EstimateTimestepMesh;
   package->CheckRefinementMesh = CheckRefinementMesh;
   return package;
 }
 
-void AdvancePunctureTracker(Mesh* mesh) {
+void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
   const auto package = mesh->packages.Get("numerical_relativity");
   if (!package->Param<bool>("tracker_enabled"))
     return;
+  PARTHENON_REQUIRE(std::isfinite(dt) && dt >= 0.0,
+                    "NR puncture tracker requires a finite, nonnegative completed-step dt");
+  const auto tracker_mode = package->Param<tracking::Mode>("tracker_mode");
   const int tracker_count = package->Param<int>("tracker_count");
   auto* position = package->MutableParam<std::vector<Real>>("tracker_position");
   auto* velocity = package->MutableParam<std::vector<Real>>("tracker_velocity");
@@ -1037,11 +1124,9 @@ void AdvancePunctureTracker(Mesh* mesh) {
                         velocity->size() == position->size(),
                     "NR puncture tracker state has an invalid size");
 
-  // Match AthenaK's walk tracker.  At the end of each complete RK step, move
-  // each compact-object center to the minimum lapse in the 3x3x3 neighborhood
-  // surrounding its nearest cell center.  Unlike the ODE tracker, this remains
-  // well defined when the shift becomes too steep to interpolate reliably at
-  // an under-resolved puncture.
+  // Match AthenaK's ODE tracker by default. The optional walk tracker locates
+  // the minimum lapse in a 3x3x3 neighborhood instead; using it implicitly
+  // snaps a stationary puncture off the origin and changes tracker AMR.
   for (int tracker = 0; tracker < tracker_count; ++tracker) {
     const int offset = 3 * tracker;
     std::shared_ptr<MeshBlock> owner;
@@ -1071,6 +1156,8 @@ void AdvancePunctureTracker(Mesh* mesh) {
                           (size.xmax(X2DIR) - size.xmin(X2DIR)) / size.nx(X2DIR),
                           (size.xmax(X3DIR) - size.xmin(X3DIR)) / size.nx(X3DIR)};
       const Real xmin[3] = {size.xmin(X1DIR), size.xmin(X2DIR), size.xmin(X3DIR)};
+      const Real xmax[3] = {size.xmax(X1DIR), size.xmax(X2DIR), size.xmax(X3DIR)};
+      const int cells[3] = {size.nx(X1DIR), size.nx(X2DIR), size.nx(X3DIR)};
       const int interior_start[3] = {ib.s, jb.s, kb.s};
       const int nghost = parthenon::Globals::nghost;
       const int points = 2 * nghost;
@@ -1086,12 +1173,14 @@ void AdvancePunctureTracker(Mesh* mesh) {
         for (int point = 0; point < points; ++point) {
           Real weight = 1.0;
           const int point_index = nearest_left[direction] - nghost + point + 1;
-          const Real point_coordinate = xmin[direction] + (point_index + 0.5) * dx[direction];
+          const Real point_coordinate = tracking::InterpolationCellCenter(
+              point_index, cells[direction], xmin[direction], xmax[direction]);
           for (int other = 0; other < points; ++other) {
             if (other == point)
               continue;
             const int other_index = nearest_left[direction] - nghost + other + 1;
-            const Real other_coordinate = xmin[direction] + (other_index + 0.5) * dx[direction];
+            const Real other_coordinate = tracking::InterpolationCellCenter(
+                other_index, cells[direction], xmin[direction], xmax[direction]);
             weight *= ((*position)[offset + direction] - other_coordinate) /
                       (point_coordinate - other_coordinate);
           }
@@ -1101,63 +1190,74 @@ void AdvancePunctureTracker(Mesh* mesh) {
       const int first_i = interior_start[0] + nearest_left[0] - nghost + 1;
       const int first_j = interior_start[1] + nearest_left[1] - nghost + 1;
       const int first_k = interior_start[2] + nearest_left[2] - nghost + 1;
-      Kokkos::View<Real[3]> interpolated("NR puncture tracker velocity");
+      const int stencil_size = points * points * points;
+      Kokkos::View<Real**> stencil("NR puncture tracker shift stencil", 3, stencil_size);
       Kokkos::parallel_for(
-          "PANGU NR puncture tracker shift interpolation",
-          Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 3), KOKKOS_LAMBDA(const int axis) {
-            Real value = 0.0;
-            for (int pk = 0; pk < points; ++pk)
-              for (int pj = 0; pj < points; ++pj)
-                for (int pi = 0; pi < points; ++pi)
-                  value += weights[pi] * weights[kMaximumPoints + pj] *
-                           weights[2 * kMaximumPoints + pk] *
-                           z4c(Index(Z4cComponent::betax) + axis, first_k + pk, first_j + pj,
-                               first_i + pi);
-            interpolated(axis) = -value;
+          "PANGU NR gather puncture tracker shift stencil",
+          Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 3 * stencil_size),
+          KOKKOS_LAMBDA(const int index) {
+            const int axis = index / stencil_size;
+            const int point = index % stencil_size;
+            const int pi = point / (points * points);
+            const int pj = (point / points) % points;
+            const int pk = point % points;
+            stencil(axis, point) = z4c(Index(Z4cComponent::betax) + axis, first_k + pk,
+                                       first_j + pj, first_i + pi);
           });
-      const auto interpolated_host =
-          Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), interpolated);
+      // AthenaK accumulates on the host. Gather the entire small stencil once,
+      // instead of its one device-to-host scalar copy per term, then preserve
+      // the same host expression and i,j,k summation order.
+      const auto host_stencil =
+          Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), stencil);
       for (int axis = 0; axis < 3; ++axis)
-        local_state[3 + axis] = interpolated_host(axis);
+        local_state[3 + axis] = -tracking::InterpolateHost<Real>(
+            points, kMaximumPoints, weights,
+            [&](int point) { return host_stencil(axis, point); });
 
-      int nearest[3]{};
-      for (int direction = 0; direction < 3; ++direction) {
-        nearest[direction] = static_cast<int>(
-            round(((*position)[offset + direction] - (xmin[direction] + 0.5 * dx[direction])) /
-                  dx[direction]));
-      }
-      const int center_i = interior_start[0] + nearest[0];
-      const int center_j = interior_start[1] + nearest[1];
-      const int center_k = interior_start[2] + nearest[2];
-      Kokkos::View<Real[27]> lapse("NR puncture tracker lapse neighborhood");
-      Kokkos::parallel_for(
-          "PANGU NR puncture tracker lapse walk",
-          Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 27), KOKKOS_LAMBDA(const int index) {
-            const int dk = index / 9;
-            const int dj = (index - 9 * dk) / 3;
-            const int di = index - 9 * dk - 3 * dj;
-            lapse(index) = z4c(Index(Z4cComponent::alpha), center_k + dk - 1,
-                                center_j + dj - 1, center_i + di - 1);
-          });
-      const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), lapse);
-      int minimum = -1;
-      Real minimum_lapse = std::numeric_limits<Real>::max();
-      for (int index = 0; index < 27; ++index) {
-        if (host(index) < minimum_lapse) {
-          minimum = index;
-          minimum_lapse = host(index);
-        }
-      }
-      if (minimum >= 0) {
-        const int minimum_k = minimum / 9;
-        const int minimum_j = (minimum - 9 * minimum_k) / 3;
-        const int minimum_i = minimum - 9 * minimum_k - 3 * minimum_j;
-        local_state[0] = xmin[0] + (nearest[0] + minimum_i - 1 + 0.5) * dx[0];
-        local_state[1] = xmin[1] + (nearest[1] + minimum_j - 1 + 0.5) * dx[1];
-        local_state[2] = xmin[2] + (nearest[2] + minimum_k - 1 + 0.5) * dx[2];
-      } else {
+      if (tracker_mode == tracking::Mode::ode) {
         for (int axis = 0; axis < 3; ++axis)
-          local_state[axis] = (*position)[offset + axis];
+          local_state[axis] = tracking::AdvanceOdePosition(
+              (*position)[offset + axis], local_state[3 + axis], dt);
+      } else {
+        int nearest[3]{};
+        for (int direction = 0; direction < 3; ++direction) {
+          nearest[direction] = static_cast<int>(
+              round(((*position)[offset + direction] - (xmin[direction] + 0.5 * dx[direction])) /
+                    dx[direction]));
+        }
+        const int center_i = interior_start[0] + nearest[0];
+        const int center_j = interior_start[1] + nearest[1];
+        const int center_k = interior_start[2] + nearest[2];
+        Kokkos::View<Real[27]> lapse("NR puncture tracker lapse neighborhood");
+        Kokkos::parallel_for(
+            "PANGU NR puncture tracker lapse walk",
+            Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 27), KOKKOS_LAMBDA(const int index) {
+              const int dk = index / 9;
+              const int dj = (index - 9 * dk) / 3;
+              const int di = index - 9 * dk - 3 * dj;
+              lapse(index) = z4c(Index(Z4cComponent::alpha), center_k + dk - 1,
+                                  center_j + dj - 1, center_i + di - 1);
+            });
+        const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), lapse);
+        int minimum = -1;
+        Real minimum_lapse = std::numeric_limits<Real>::max();
+        for (int index = 0; index < 27; ++index) {
+          if (host(index) < minimum_lapse) {
+            minimum = index;
+            minimum_lapse = host(index);
+          }
+        }
+        if (minimum >= 0) {
+          const int minimum_k = minimum / 9;
+          const int minimum_j = (minimum - 9 * minimum_k) / 3;
+          const int minimum_i = minimum - 9 * minimum_k - 3 * minimum_j;
+          local_state[0] = xmin[0] + (nearest[0] + minimum_i - 1 + 0.5) * dx[0];
+          local_state[1] = xmin[1] + (nearest[1] + minimum_j - 1 + 0.5) * dx[1];
+          local_state[2] = xmin[2] + (nearest[2] + minimum_k - 1 + 0.5) * dx[2];
+        } else {
+          for (int axis = 0; axis < 3; ++axis)
+            local_state[axis] = (*position)[offset + axis];
+        }
       }
       local_state[6] = 1.0;
     }
@@ -1759,6 +1859,38 @@ TaskStatus RKUpdateMeshTask(MeshData<Real>* current, MeshData<Real>* base,
         if (floor_chi && component == Index(Z4cComponent::chi) &&
             (!Kokkos::isfinite(value) || value < chi_min_floor))
           value = chi_min_floor;
+        output(block, component, k, j, i) = value;
+      });
+  return TaskStatus::complete;
+}
+
+TaskStatus ClassicalRK4UpdateMeshTask(MeshData<Real>* current, MeshData<Real>* initial,
+                                      MeshData<Real>* rhs_sum, const int stage, const Real dt,
+                                      MeshData<Real>* next) {
+  const auto original = initial->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto sum = rhs_sum->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto rhs_values = current->PackVariables(std::vector<std::string>{"nr.rhs"});
+  const auto output = next->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto ib = current->GetBoundsI(IndexDomain::interior);
+  const auto jb = current->GetBoundsJ(IndexDomain::interior);
+  const auto kb = current->GetBoundsK(IndexDomain::interior);
+  const auto options = current->GetBlockData(0)->GetBlockPointer()->packages
+                           .Get("numerical_relativity")->Param<Z4cOptions>("z4c_options");
+  parthenon::par_for(
+      DEFAULT_LOOP_PATTERN, "PANGU classical RK4 update", parthenon::DevExecSpace(), 0,
+      original.GetDim(5) - 1, 0, kZ4cComponents - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+      KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
+        const Real rhs = rhs_values(block, component, k, j, i);
+        // Stage 1 must not read the previous step's (initially unallocated)
+        // accumulator value, even when it contains NaN.
+        const Real previous = stage == 1 ? 0.0 : sum(block, component, k, j, i);
+        const Real accumulated = classical_rk4::Accumulate(stage, rhs, previous);
+        sum(block, component, k, j, i) = accumulated;
+        Real value = classical_rk4::Update(stage, original(block, component, k, j, i),
+                                           rhs, accumulated, dt);
+        if (options.floor_chi && component == Index(Z4cComponent::chi) &&
+            (!Kokkos::isfinite(value) || value < options.chi_min_floor))
+          value = options.chi_min_floor;
         output(block, component, k, j, i) = value;
       });
   return TaskStatus::complete;

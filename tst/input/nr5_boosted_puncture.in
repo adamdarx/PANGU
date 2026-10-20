@@ -47,6 +47,7 @@ ncycle_out_mesh = 1
 
 <numerical_relativity>
 tracker_enabled = true
+tracker_mode = ode
 # Set a nonnegative radius in adaptive runs to restrict chi-gradient tagging
 # to a tracker-centered ball; -1 preserves the global indicator.
 tracker_refinement_radius = -1.0

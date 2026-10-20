@@ -20,6 +20,7 @@
 #include "pgen/radiation_shadow.h"
 #include "utils/error_checking.hpp"
 #include "z4c/evolution/package.h"
+#include "z4c/diagnostics/awa.hpp"
 
 namespace pangu::app {
 namespace {
@@ -331,6 +332,22 @@ const std::map<std::string, ProblemDefinition> &Registry() {
                                     pgen::NumericalRelativityGaugeWaveAfterLoop,
                                     nullptr, nullptr, nullptr, nr::Initialize})
               .second;
+      static const bool inserted_shifted_gauge_wave =
+          registry
+              .emplace("nr_shifted_gauge_wave",
+                       ProblemDefinition{
+                           pgen::NumericalRelativityShiftedGaugeWave,
+                           pgen::NumericalRelativityShiftedGaugeWaveAfterLoop,
+                           nullptr, nullptr, nullptr, nr::Initialize})
+              .second;
+      static const bool inserted_polarized_gowdy =
+          registry
+              .emplace("nr_polarized_gowdy",
+                       ProblemDefinition{
+                           pgen::NumericalRelativityPolarizedGowdy,
+                           pgen::NumericalRelativityPolarizedGowdyAfterLoop,
+                           nullptr, nullptr, nullptr, nr::Initialize})
+              .second;
       static const bool inserted_robust_stability =
           registry
               .emplace("nr_robust_stability",
@@ -346,7 +363,8 @@ const std::map<std::string, ProblemDefinition> &Registry() {
           inserted_sync_grmhd_linear_wave && inserted_schwarzschild &&
           inserted_schwarzschild_ks && inserted_boosted_puncture &&
           inserted_puncture && inserted_two_punctures && inserted_linear_wave &&
-          inserted_gauge_wave && inserted_robust_stability;
+          inserted_gauge_wave && inserted_shifted_gauge_wave &&
+          inserted_polarized_gowdy && inserted_robust_stability;
     }
   }(std::bool_constant<geometry::ConfiguredGeometryIsSynchronized()>{},
     registry);
@@ -393,6 +411,11 @@ void ConfigureProblem(const std::string &problem_id,
   }
   app_input->ProblemGenerator = it->second.generator;
   app_input->UserWorkAfterLoop = it->second.after_loop;
+  if (std::getenv("AWA_FAMILY"))
+    app_input->PostInitialization = [](parthenon::MeshBlock *block,
+        parthenon::ParameterInput *) {
+      pangu::nr::WriteAwADiagnostics(block->pmy_mesh, 0.0, 0);
+    };
   const bool synchronized_geometry =
       geometry::ConfiguredGeometryIsSynchronized();
   const bool numerical_relativity_problem = problem_id.rfind("nr_", 0) == 0;

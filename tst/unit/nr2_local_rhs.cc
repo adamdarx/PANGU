@@ -12,6 +12,11 @@ using Real = parthenon::Real;
 using pangu::nr::Index;
 using pangu::nr::SpatialSymmetricComponent;
 using pangu::nr::Z4cComponent;
+struct OracleSymmetric {
+  KOKKOS_INLINE_FUNCTION Real operator()(const Real *metric, int a, int b) const {
+    return metric[pangu::nr::SpatialSymmetricComponent(a,b)];
+  }
+};
 
 Real ScaledDifference(const Real measured, const Real expected) {
   return std::abs(measured - expected) / std::max({1.0, std::abs(measured), std::abs(expected)});
@@ -50,9 +55,9 @@ int main(int argc, char* argv[]) {
           state.beta[2] = -0.04;
           options.damp_kappa1 = 0.13;
           options.damp_kappa2 = -0.2;
-          options.shift_gamma = 0.8;
-          options.shift_alpha2_gamma = 0.17;
-          options.shift_eta = 1.4;
+          options.gauge.shift_gamma = 0.8;
+          options.gauge.shift_alpha2_gamma = 0.17;
+          options.gauge.shift_eta = 1.4;
         } else if (test == 1) {
           derivatives.dgamma[0][0] = 0.11;
           derivatives.dgamma[0][1] = -0.07;
@@ -178,6 +183,27 @@ int main(int argc, char* argv[]) {
   }
 
   Real maximum = 0.0;
+  // Eq. (28) with chi != 1 and nonzero advection detects all three terms
+  // independently; flat-space/zero-shift waves cannot expose these errors.
+  Kokkos::View<Real*> harmonic_result("AwA harmonic gauge oracle", 3);
+  Kokkos::parallel_for("AwA harmonic gauge oracle", 3, KOKKOS_LAMBDA(const int axis) {
+    pangu::nr::gauge::Options options;
+    options.shift = pangu::nr::gauge::Shift::harmonic;
+    options.shift_advect = 1.0;
+    const Real gamma[3] = {1.0, -1.0, 2.0};
+    const Real beta[3] = {0.0, 0.0, 0.0};
+    const Real lie[3] = {7.0, 8.0, 9.0};
+    const Real dalpha[3] = {0.1, 0.2, 0.3};
+    const Real dchi[3] = {0.4, 0.5, 0.6};
+    const Real inverse[6] = {1.0, 0.0, 0.0, 2.0, 0.0, 3.0};
+    harmonic_result(axis) = pangu::nr::gauge::ShiftRhs(
+        options, axis, 2.0, 0.5, gamma, beta, lie, dalpha, dchi, inverse, OracleSymmetric{});
+  });
+  const auto harmonic_host =
+      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), harmonic_result);
+  const Real harmonic_expected[3] = {9.7, 7.6, 15.7};
+  for (int axis = 0; axis < 3; ++axis)
+    maximum = std::max(maximum, ScaledDifference(harmonic_host(axis), harmonic_expected[axis]));
   for (int test = 0; test < cases; ++test) {
     for (int component = 0; component < pangu::nr::kZ4cComponents; ++component)
       maximum =
