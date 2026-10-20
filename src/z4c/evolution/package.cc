@@ -1026,17 +1026,15 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
     // The ordinary NR FillDerived pass below then adds constraints/Weyl and is
     // deliberately self-contained, so callers outside the generic Parthenon
     // initialization path retain the existing contract.
-    package->PreFillDerivedBlock = [](MeshBlockData<Real>* data) {
-      Z4cToADMFieldsBlockTask(data);
-      // StateDescriptor callbacks do not carry a TaskID dependency between the
-      // PreFillDerived and FillDerived phases.  Each packed kernel may obtain a
-      // different CUDA execution-space instance, so make the reconstructed ADM
-      // view visible before the MHD package starts primitive recovery.  This is
-      // essential after dynamic AMR creates many fine blocks at once.
-      Kokkos::fence("PANGU synchronized ADM pre-fill");
-    };
+    // Mesh::FillDerived invokes both MeshData and MeshBlockData callbacks.
+    // The synchronized graph already uses MeshData, and the packed pass below
+    // reconstructs every block, including after initialization, restart and
+    // AMR. Register only that pass: a second block callback would repeat the
+    // same work and introduce one global CUDA fence per MeshBlock.
     package->PreFillDerivedMesh = [](MeshData<Real>* data) {
       Z4cToADMFieldsMeshTask(data);
+      // Make ADM visible before the next package recovers matter primitives,
+      // even when packed kernels use distinct execution-space instances.
       Kokkos::fence("PANGU synchronized ADM pre-fill");
     };
     if (matter_options.source == StressEnergySource::grhd ||
@@ -1046,17 +1044,14 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       // pre/post passes, so rebuild stress energy only after hydro/MHD has
       // recovered primitives, then recompute the matter constraints.  This
       // ordering is the Parthenon equivalent of AthenaK's restart sequence.
-      package->PostFillDerivedBlock = [](MeshBlockData<Real>* data) {
-        BuildStressEnergyBlockTask(data, 0.0);
-        Z4cToADMBlockTask(data);
-      };
       package->PostFillDerivedMesh = [](MeshData<Real>* data) {
         BuildStressEnergyMeshTask(data, 0.0);
         Z4cToADMMeshTask(data);
       };
     }
   }
-  package->FillDerivedBlock = Z4cToADMBlockTask;
+  if constexpr (!geometry::ConfiguredGeometryIsSynchronized())
+    package->FillDerivedBlock = Z4cToADMBlockTask;
   package->FillDerivedMesh = Z4cToADMMeshTask;
   // Outputs::MakeOutputs invokes this hook, not FillDerived. With constraints
   // omitted from the vacuum evolution graph, field dumps otherwise retain
