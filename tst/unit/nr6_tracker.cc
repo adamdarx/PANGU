@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "z4c/tracking/interpolation.h"
 #include "z4c/tracking/position_update.h"
 
 int main() {
@@ -50,6 +51,35 @@ int main() {
   const double tiny = tracking::AdvanceOdePosition(0.0, 1.0e-25, 0.025);
   check(tiny > 0.0 && tiny < 1.0e-26,
         "roundoff-scale motion was snapped or suppressed");
+  // Literal independent transcriptions of the reference host expressions.
+  for (double lower : {-32., -2., 0., 2., 1.e6}) {
+    const double upper = lower + 2.;
+    for (int index = -2; index < 18; ++index) {
+      const double x = (static_cast<double>(index) + 0.5) / 16.;
+      const double expected = (x * upper - x * lower) -
+                              (0.5 * upper - 0.5 * lower) +
+                              (0.5 * lower + 0.5 * upper);
+      check(tracking::InterpolationCellCenter(index, 16, lower, upper) ==
+                expected,
+            "interpolation coordinate differs from AthenaK CellCenterX");
+    }
+  }
+  const std::array<double, 12> weights{-.0625, .5625, .5625, -.0625,
+                                       -.0625, .5625, .5625, -.0625,
+                                       -.0625, .5625, .5625, -.0625};
+  const auto sample = [](int index) {
+    return (index % 2 ? -1. : 1.) / (index + 1.);
+  };
+  double expected = 0.;
+  for (int i = 0; i < 4; ++i)
+    for (int j = 0; j < 4; ++j)
+      for (int k = 0; k < 4; ++k) {
+        const double w = weights[i] * weights[4 + j] * weights[8 + k];
+        const double scalar = sample((i * 4 + j) * 4 + k);
+        expected += w * scalar;
+      }
+  check(tracking::InterpolateHost<double>(4, 4, weights, sample) == expected,
+        "host tensor interpolation differs from AthenaK accumulation");
   if (failures)
     return 1;
   std::cout << "NR tracker mode/ODE update PASS (logic only, not a speed "

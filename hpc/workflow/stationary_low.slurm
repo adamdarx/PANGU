@@ -1,7 +1,7 @@
 #!/bin/bash
 # Resource and transport settings follow stage02/scripts/stationary_low.slurm
-# and stage02/scripts/run_case.sh. Only the output location is isolated.
-#SBATCH --partition=GPU80G
+# and stage02/scripts/run_case.sh, with GPU40G preferred and isolated outputs.
+#SBATCH --partition=GPU40G
 #SBATCH --qos=low
 #SBATCH --job-name=S02_STAT_LOW_FLOW
 #SBATCH --nodes=1

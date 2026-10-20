@@ -45,8 +45,7 @@ KOKKOS_INLINE_FUNCTION int AthenaTrackerTagOracle(const Bounds& bounds, const in
 template <class Scalar> int CheckTrackerTangency(const char* precision) {
   constexpr int cases = 3 * 3 * 3 * 8;
   constexpr int checks = 7;
-  Kokkos::View<int**> errors("NR tracker tangency roundoff", cases, checks);
-  Kokkos::View<int*> intentional_differences("Tracker tangency strict oracle differences", cases);
+  Kokkos::View<int**> errors("NR tracker strict tangency", cases, checks);
   Kokkos::parallel_for(
       "NR tracker tangency at faces edges corners", cases, KOKKOS_LAMBDA(const int test) {
         int index = test;
@@ -82,7 +81,7 @@ template <class Scalar> int CheckTrackerTangency(const char* precision) {
           center[axis] = origin;
         }
         errors(test, 0) = amr::TrackerTag<Scalar>(bounds, 1, 1, center, radii, levels) !=
-                          amr::kDerefine;
+                          AthenaTrackerTagOracle<Scalar>(bounds, 1, 1, center, radii, levels);
         const Scalar coordinate_scale = fmax(fabs(origin), radius);
         const Scalar jitter = std::numeric_limits<Scalar>::epsilon() * coordinate_scale;
         for (int direction = 0; direction < 2; ++direction) {
@@ -90,10 +89,9 @@ template <class Scalar> int CheckTrackerTangency(const char* precision) {
             const Scalar sign = (signs & (1 << axis)) ? Scalar(-1.) : Scalar(1.);
             center[axis] = origin + sign * (direction == 0 ? jitter : -jitter);
           }
-          const int robust = amr::TrackerTag<Scalar>(bounds, 1, 1, center, radii, levels);
+          const int actual = amr::TrackerTag<Scalar>(bounds, 1, 1, center, radii, levels);
           const int strict = AthenaTrackerTagOracle<Scalar>(bounds, 1, 1, center, radii, levels);
-          errors(test, 1 + direction) = robust != amr::kDerefine;
-          intentional_differences(test) += robust != strict;
+          errors(test, 1 + direction) = actual != strict;
         }
         // A resolvable displacement must still cross the boundary, in every
         // reflected/translated case and in both float and double arithmetic.
@@ -131,13 +129,6 @@ template <class Scalar> int CheckTrackerTangency(const char* precision) {
     }
   std::cout << "Tracker tangency " << precision << ": " << cases * checks - failures << '/'
             << cases * checks << " checks passed\n";
-  const auto differences = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),
-                                                              intentional_differences);
-  int difference_count = 0;
-  for (int test = 0; test < cases; ++test)
-    difference_count += differences(test);
-  std::cout << "AthenaK strict oracle " << precision << ": " << difference_count
-            << " intentional roundoff-band differences; resolved inside/outside checks match\n";
   return failures;
 }
 

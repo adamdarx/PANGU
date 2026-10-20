@@ -5,6 +5,8 @@ expected_commit="${1:?expected PANGU commit required}"
 workflow_dir="${2:?absolute workflow directory required}"
 repo_dir=/lustre/home/2601110206/PANGU
 dependency_prefix=/lustre/home/2601110206
+partition="${PANGU_SLURM_PARTITION:-GPU40G}"
+[[ "$partition" == GPU40G || "$partition" == GPU80G ]]
 [[ "$expected_commit" =~ ^[0-9a-f]{40}$ ]]
 [[ "$workflow_dir" == "$dependency_prefix"/pangu-workflow-* ]]
 [[ "$(hostname -s)" == wm2-login* ]]
@@ -47,7 +49,10 @@ cd "$workflow_dir"
 sha256sum pangu > pangu.sha256
 sha256sum input.in > input.sha256
 date -Is > submission-attempted.txt
+printf '%s\n' "$partition" > submission-partition.txt
+# Explicit CLI partition overrides the frozen original script's GPU80G header.
 submission=$(sbatch --parsable --chdir="$workflow_dir" --job-name=S02_STAT_LOW \
+  --partition="$partition" \
   --comment="${workflow_dir##*/}" \
   --output="$workflow_dir/slurm-%j.out" --error="$workflow_dir/slurm-%j.err" \
   --export="ALL,PANGU_EXECUTABLE=$workflow_dir/pangu,PANGU_OUTPUT_DIR=$workflow_dir/data" \

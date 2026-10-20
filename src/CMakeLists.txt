@@ -561,6 +561,26 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     target_include_directories(pangu_nr6_tracker PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
     target_compile_features(pangu_nr6_tracker PRIVATE cxx_std_20)
     if(PANGU_ATHENAK_REFERENCE_DIR AND
+       EXISTS "${PANGU_ATHENAK_REFERENCE_DIR}/src/mesh/meshblock_tree.cpp")
+      set(mesh_reference_dir "${CMAKE_CURRENT_BINARY_DIR}/athenak_mesh_reference")
+      file(MAKE_DIRECTORY "${mesh_reference_dir}")
+      foreach(name meshblock_tree.cpp meshblock_tree.hpp)
+        configure_file("${PANGU_ATHENAK_REFERENCE_DIR}/src/mesh/${name}"
+                       "${mesh_reference_dir}/${name}" COPYONLY)
+      endforeach()
+      foreach(name athena.hpp mesh.hpp parameter_input.hpp)
+        configure_file("${CMAKE_SOURCE_DIR}/tst/reference/athenak_mesh/${name}"
+                       "${mesh_reference_dir}/${name}" COPYONLY)
+      endforeach()
+      add_executable(pangu_nr6_athenak_mesh
+        "${CMAKE_SOURCE_DIR}/tst/reference/nr6_athenak_mesh.cc"
+        "${mesh_reference_dir}/meshblock_tree.cpp")
+      target_include_directories(pangu_nr6_athenak_mesh PRIVATE
+        "${mesh_reference_dir}" "${CMAKE_CURRENT_SOURCE_DIR}")
+      target_link_libraries(pangu_nr6_athenak_mesh PRIVATE Parthenon::parthenon)
+      target_compile_features(pangu_nr6_athenak_mesh PRIVATE cxx_std_20)
+    endif()
+    if(PANGU_ATHENAK_REFERENCE_DIR AND
        EXISTS "${PANGU_ATHENAK_REFERENCE_DIR}/src/utils/finite_diff.hpp")
       configure_file(
         "${CMAKE_SOURCE_DIR}/tst/reference/athenak_finite_difference_reference.h.in"

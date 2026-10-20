@@ -446,6 +446,16 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     add_test(NAME pangu.nr6.amr COMMAND $<TARGET_FILE:pangu_nr6_amr>)
     set_tests_properties(pangu.nr6.amr PROPERTIES
       LABELS "unit;gpu;numerical-relativity;nr6;amr;athenak")
+    if(TARGET pangu_nr6_athenak_mesh)
+      add_test(NAME pangu.nr6.athenak_mesh
+        COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tst/reference/nr6_mesh_replay.py"
+                --replay $<TARGET_FILE:pangu_nr6_athenak_mesh>
+                --self-test --workdir "${CMAKE_CURRENT_BINARY_DIR}/nr6-mesh-replay")
+      set_tests_properties(pangu.nr6.athenak_mesh PROPERTIES
+        LABELS "numerical-relativity;nr6;amr;logic;athenak"
+        TIMEOUT 120)
+    endif()
     add_test(NAME pangu.nr6.tracker COMMAND $<TARGET_FILE:pangu_nr6_tracker>)
     set_tests_properties(pangu.nr6.tracker PROPERTIES
       LABELS "unit;logic;numerical-relativity;nr6;tracker;athenak")

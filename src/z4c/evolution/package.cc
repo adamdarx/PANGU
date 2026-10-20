@@ -19,6 +19,7 @@
 #include "z4c/core/finite_difference.h"
 #include "z4c/evolution/amr.h"
 #include "z4c/tracking/position_update.h"
+#include "z4c/tracking/interpolation.h"
 #include "z4c/coupling/stress_energy.h"
 #include "z4c/coupling/sync_grhd.h"
 #include "z4c/coupling/sync_grmhd.h"
@@ -456,6 +457,28 @@ void CheckRefinementMesh(MeshData<Real>* data, parthenon::ParArray1D<AmrTag>& am
     fixed_levels[region] = fixed_level[region];
   }
   const int fixed_count = fixed_radius.size();
+  const int root_level = data->GetMeshPointer()->GetRootLevel();
+  if (method == 1) {
+    // AthenaK evaluates tracker geometry on the host. Match that execution
+    // space as well as its expression: device contraction at a tangent face
+    // can otherwise change a strict intersection decision.
+    auto tags = amr_tags.GetHostMirrorAndCopy();
+    for (int block = 0; block < data->NumBlocks(); ++block) {
+      const auto pointer = data->GetBlockData(block)->GetBlockPointer();
+      const int level = pointer->loc.level() - root_level;
+      const Kokkos::Array<Real, 6> block_bounds{
+          pointer->block_size.xmin(X1DIR), pointer->block_size.xmax(X1DIR),
+          pointer->block_size.xmin(X2DIR), pointer->block_size.xmax(X2DIR),
+          pointer->block_size.xmin(X3DIR), pointer->block_size.xmax(X3DIR)};
+      int flag = amr::TrackerTag<Real>(block_bounds, level, tracker_count,
+                                      tracker_centers, tracker_radii, tracker_levels);
+      flag = amr::ApplyFixedRadii<Real>(flag, block_bounds, level, fixed_count,
+                                        fixed_radii, fixed_levels);
+      tags(block) = static_cast<AmrTag>(std::max(static_cast<int>(tags(block)), flag));
+    }
+    Kokkos::deep_copy(amr_tags.KokkosView(), tags.KokkosView());
+    return;
+  }
   const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
   const auto ib = data->GetBoundsI(IndexDomain::interior);
   const auto jb = data->GetBoundsJ(IndexDomain::interior);
@@ -464,7 +487,6 @@ void CheckRefinementMesh(MeshData<Real>* data, parthenon::ParArray1D<AmrTag>& am
   const int nx2 = jb.e - jb.s + 1;
   const int nx3 = kb.e - kb.s + 1;
   const int cells_per_block = nx1 * nx2 * nx3;
-  const int root_level = data->GetMeshPointer()->GetRootLevel();
   parthenon::ParArray1D<int> levels("PANGU NR AMR block levels", z4c.GetDim(5));
   parthenon::ParArray2D<Real> bounds("PANGU NR AMR block bounds", z4c.GetDim(5), 6);
   auto host_levels = Kokkos::create_mirror_view(levels);
@@ -490,13 +512,7 @@ void CheckRefinementMesh(MeshData<Real>* data, parthenon::ParArray1D<AmrTag>& am
       DEFAULT_OUTER_LOOP_PATTERN, "PANGU Z4c AMR", parthenon::DevExecSpace(), 0, 0, 0,
       z4c.GetDim(5) - 1, KOKKOS_LAMBDA(parthenon::team_mbr_t team_member, const int b) {
         int flag_value = amr::kSame;
-        if (method == 1) {
-          Kokkos::Array<Real, 6> block_bounds{};
-          for (int component = 0; component < 6; ++component)
-            block_bounds[component] = bounds(b, component);
-          flag_value = amr::TrackerTag<Real>(block_bounds, levels(b), tracker_count,
-                                             tracker_centers, tracker_radii, tracker_levels);
-        } else if (method == 2) {
+        if (method == 2) {
           Real minimum = std::numeric_limits<Real>::max();
           parthenon::par_reduce_inner(
               parthenon::inner_loop_pattern_ttr_tag, team_member, 0, cells_per_block - 1,
@@ -620,6 +636,16 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
     amr_method = 4;
   } else {
     PARTHENON_FAIL("unknown numerical_relativity/amr_method");
+  }
+  if (amr_method == 1) {
+    // For tracker AMR checked every step, AthenaK has no ten-request hysteresis.
+    // Its tree checks proper nesting after finer families have coarsened, not
+    // against the old neighbor list. Preserve explicit application overrides.
+    // Set application policy, not a second conflicting library default.
+    if (!pin->DoesParameterExist("parthenon/mesh", "derefine_count"))
+      pin->SetInteger("parthenon/mesh", "derefine_count", 1);
+    if (!pin->DoesParameterExist("parthenon/mesh", "defer_derefinement_nesting_checks"))
+      pin->SetBoolean("parthenon/mesh", "defer_derefinement_nesting_checks", true);
   }
   const Real amr_chi_min = pin->GetOrAddReal("numerical_relativity", "amr_chi_min", 0.2);
   const Real amr_dchi_max = pin->GetOrAddReal("numerical_relativity", "amr_dchi_max", 0.01);
@@ -909,6 +935,8 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   package->AddParam<Real>("tracker_center_x3", tracker_center_x3);
   package->AddParam<std::vector<Real>>("tracker_position", tracker_positions,
                                        parthenon::Params::Mutability::Restart);
+  package->AddParam<std::string>("amr_topology_trace", pin->GetOrAddString(
+      "numerical_relativity", "amr_topology_trace", ""));
   package->AddParam<std::vector<Real>>("tracker_mass", tracker_masses);
   package->AddParam<std::vector<Real>>("tracker_refinement_radii", tracker_refinement_radii);
   package->AddParam<std::vector<int>>("tracker_refinement_levels", tracker_refinement_levels);
@@ -1122,6 +1150,8 @@ void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
                           (size.xmax(X2DIR) - size.xmin(X2DIR)) / size.nx(X2DIR),
                           (size.xmax(X3DIR) - size.xmin(X3DIR)) / size.nx(X3DIR)};
       const Real xmin[3] = {size.xmin(X1DIR), size.xmin(X2DIR), size.xmin(X3DIR)};
+      const Real xmax[3] = {size.xmax(X1DIR), size.xmax(X2DIR), size.xmax(X3DIR)};
+      const int cells[3] = {size.nx(X1DIR), size.nx(X2DIR), size.nx(X3DIR)};
       const int interior_start[3] = {ib.s, jb.s, kb.s};
       const int nghost = parthenon::Globals::nghost;
       const int points = 2 * nghost;
@@ -1137,12 +1167,14 @@ void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
         for (int point = 0; point < points; ++point) {
           Real weight = 1.0;
           const int point_index = nearest_left[direction] - nghost + point + 1;
-          const Real point_coordinate = xmin[direction] + (point_index + 0.5) * dx[direction];
+          const Real point_coordinate = tracking::InterpolationCellCenter(
+              point_index, cells[direction], xmin[direction], xmax[direction]);
           for (int other = 0; other < points; ++other) {
             if (other == point)
               continue;
             const int other_index = nearest_left[direction] - nghost + other + 1;
-            const Real other_coordinate = xmin[direction] + (other_index + 0.5) * dx[direction];
+            const Real other_coordinate = tracking::InterpolationCellCenter(
+                other_index, cells[direction], xmin[direction], xmax[direction]);
             weight *= ((*position)[offset + direction] - other_coordinate) /
                       (point_coordinate - other_coordinate);
           }
@@ -1152,25 +1184,29 @@ void AdvancePunctureTracker(Mesh* mesh, const Real dt) {
       const int first_i = interior_start[0] + nearest_left[0] - nghost + 1;
       const int first_j = interior_start[1] + nearest_left[1] - nghost + 1;
       const int first_k = interior_start[2] + nearest_left[2] - nghost + 1;
-      Kokkos::View<Real[3]> interpolated("NR puncture tracker velocity");
+      const int stencil_size = points * points * points;
+      Kokkos::View<Real**> stencil("NR puncture tracker shift stencil", 3, stencil_size);
       Kokkos::parallel_for(
-          "PANGU NR puncture tracker shift interpolation",
-          Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 3), KOKKOS_LAMBDA(const int axis) {
-            Real value = 0.0;
-            // AthenaK sums its tensor-product interpolation in i,j,k order.
-            for (int pi = 0; pi < points; ++pi)
-              for (int pj = 0; pj < points; ++pj)
-                for (int pk = 0; pk < points; ++pk)
-                  value += weights[pi] * weights[kMaximumPoints + pj] *
-                           weights[2 * kMaximumPoints + pk] *
-                           z4c(Index(Z4cComponent::betax) + axis, first_k + pk, first_j + pj,
-                               first_i + pi);
-            interpolated(axis) = -value;
+          "PANGU NR gather puncture tracker shift stencil",
+          Kokkos::RangePolicy<parthenon::DevExecSpace>(0, 3 * stencil_size),
+          KOKKOS_LAMBDA(const int index) {
+            const int axis = index / stencil_size;
+            const int point = index % stencil_size;
+            const int pi = point / (points * points);
+            const int pj = (point / points) % points;
+            const int pk = point % points;
+            stencil(axis, point) = z4c(Index(Z4cComponent::betax) + axis, first_k + pk,
+                                       first_j + pj, first_i + pi);
           });
-      const auto interpolated_host =
-          Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), interpolated);
+      // AthenaK accumulates on the host. Gather the entire small stencil once,
+      // instead of its one device-to-host scalar copy per term, then preserve
+      // the same host expression and i,j,k summation order.
+      const auto host_stencil =
+          Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), stencil);
       for (int axis = 0; axis < 3; ++axis)
-        local_state[3 + axis] = interpolated_host(axis);
+        local_state[3 + axis] = -tracking::InterpolateHost<Real>(
+            points, kMaximumPoints, weights,
+            [&](int point) { return host_stencil(axis, point); });
 
       if (tracker_mode == tracking::Mode::ode) {
         for (int axis = 0; axis < 3; ++axis)

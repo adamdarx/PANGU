@@ -122,7 +122,6 @@ def stationary_tangency_case(binary, directory, env, template):
     cases = [("origin", None, 0.)]
     cases += [(f"axis-{axis}-{sign:+d}", axis, sign * 2.3e-16)
               for axis in range(3) for sign in (-1, 1)]
-    reference = None
     records = []
     for name, axis, offset in cases:
         overrides = ["parthenon/time/tlim=0", "parthenon/time/nlim=0",
@@ -133,15 +132,13 @@ def stationary_tangency_case(binary, directory, env, template):
         execute([*tracker_command(binary, template), *overrides,
                  "parthenon/output2/id=state"], target, env)
         state = snapshot(target)
-        if state["blocks"] != 120:
-            raise RuntimeError(f"Roundoff-sized stationary offset changes mesh: {name}: "
-                               f"{state['blocks']}")
-        if reference is None:
-            reference = state
-        error, = compare([reference], [state])
-        if error != 0.:
-            raise RuntimeError(f"Stationary initial state changes with tracker jitter: {name}")
-        records.append(dict(case=name, offset=offset, blocks=state["blocks"], state_linf=error))
+        # AthenaK uses strict sphere/AABB intersection: the offset is allowed
+        # to change tangent decisions. Do not impose jitter invariance.
+        expected = 120 if axis is None else 148
+        if state["blocks"] != expected:
+            raise RuntimeError(f"Strict stationary tangency differs: {name}: "
+                               f"{state['blocks']} != {expected}")
+        records.append(dict(case=name, offset=offset, blocks=state["blocks"]))
     return records
 
 

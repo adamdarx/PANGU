@@ -2,6 +2,8 @@
 #include "z4c/diagnostics/awa.hpp"
 
 #include <algorithm>
+#include <fstream>
+#include <iomanip>
 #include <memory>
 #include <string>
 #include <vector>
@@ -9,6 +11,7 @@
 #include "amr_criteria/refinement_package.hpp"
 #include "bvals/comms/bvals_in_one.hpp"
 #include "driver/task_assembly.h"
+#include "globals.hpp"
 #include "interface/update.hpp"
 #include "mhd/mhd_package.h"
 #include "z4c/evolution/package.h"
@@ -134,6 +137,25 @@ void ConfigureSyncIntegrator(Mesh* mesh, parthenon::LowStorageIntegrator& integr
 
 void RunPostStep(Mesh* mesh, const parthenon::SimTime& time) {
   AdvancePunctureTracker(mesh, time.dt);
+  const auto nr = mesh->packages.Get("numerical_relativity");
+  const auto& trace_path = nr->Param<std::string>("amr_topology_trace");
+  if (!trace_path.empty()) {
+    // Opt-in correctness evidence, disabled for timing runs. Record the
+    // completed step BEFORE AMR, matching AthenaK's output ordering, together
+    // with the post-step tracker centers used for the upcoming AMR decision.
+    std::ofstream trace(trace_path + ".rank" + std::to_string(parthenon::Globals::my_rank),
+                        std::ios::out | (time.ncycle == 0 ? std::ios::trunc : std::ios::app));
+    PARTHENON_REQUIRE(trace.good(), "cannot open NR AMR topology trace");
+    trace << std::setprecision(17) << time.ncycle + 1;
+    for (const Real x : nr->Param<std::vector<Real>>("tracker_position")) trace << ' ' << x;
+    trace << ' ' << mesh->block_list.size();
+    for (const auto& block : mesh->block_list)
+      trace << ' ' << block->loc.level() << ',' << block->loc.lx1() << ','
+            << block->loc.lx2() << ',' << block->loc.lx3();
+    trace << '\n';
+    trace.flush();
+    PARTHENON_REQUIRE(trace.good(), "cannot write NR AMR topology trace");
+  }
   WriteAwADiagnostics(mesh, time.time + time.dt, time.ncycle + 1);
   RunPostStepDiagnostics(mesh, time.time + time.dt, time.ncycle + 1);
   // Like AthenaK, tag the completed state AFTER advancing compact objects.
