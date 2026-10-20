@@ -136,6 +136,16 @@ void RunPostStep(Mesh* mesh, const parthenon::SimTime& time) {
   AdvancePunctureTracker(mesh, time.dt);
   WriteAwADiagnostics(mesh, time.time + time.dt, time.ncycle + 1);
   RunPostStepDiagnostics(mesh, time.time + time.dt, time.ncycle + 1);
+  // Like AthenaK, tag the completed state AFTER advancing compact objects.
+  // Tagging in the final RK graph used the previous step's tracker center.
+  // Do this exactly once per partition so derefinement counters are not
+  // incremented twice. Step() has completed every partition before this hook.
+  if (mesh->adaptive) {
+    for (auto& partition : mesh->GetDefaultBlockPartitions()) {
+      auto& data = mesh->mesh_data.Add("base", partition);
+      parthenon::Refinement::Tag<MeshData<Real>>(data.get());
+    }
+  }
 }
 
 TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
@@ -331,10 +341,7 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       }
     }
     if (stage == integrator->nstages) {
-      const auto timestep =
-          tasks.AddTask(ready, parthenon::Update::EstimateTimestep<MeshData<Real>>, next.get());
-      if (mesh->adaptive)
-        tasks.AddTask(timestep, parthenon::Refinement::Tag<MeshData<Real>>, next.get());
+      tasks.AddTask(ready, parthenon::Update::EstimateTimestep<MeshData<Real>>, next.get());
     }
   }
   return collection;

@@ -449,6 +449,18 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     add_test(NAME pangu.nr6.tracker COMMAND $<TARGET_FILE:pangu_nr6_tracker>)
     set_tests_properties(pangu.nr6.tracker PROPERTIES
       LABELS "unit;logic;numerical-relativity;nr6;tracker;athenak")
+    if(PANGU_ENABLE_CUDA AND PANGU_ENABLE_MPI AND PANGU_ENABLE_HDF5 AND
+       MPIEXEC_EXECUTABLE)
+      add_test(NAME pangu.nr6.amr_local_transfer
+        COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tst/regression/nr_amr_local_transfer.py"
+                --pangu $<TARGET_FILE:pangu>
+                --mpiexec "${MPIEXEC_EXECUTABLE}"
+                --workdir "${CMAKE_CURRENT_BINARY_DIR}/nr6-amr-local-transfer")
+      set_tests_properties(pangu.nr6.amr_local_transfer PROPERTIES
+        LABELS "numerical-relativity;nr6;amr;gpu;mpi;cuda-aware;regression;tracker"
+        RUN_SERIAL TRUE TIMEOUT 900)
+    endif()
     set_tests_properties(pangu.nr5.boosted_puncture PROPERTIES
       LABELS "numerical-relativity;nr5;unit;gpu;analytic;puncture")
     add_test(NAME pangu.nr7.bowen_york COMMAND $<TARGET_FILE:pangu_nr7_bowen_york>)
