@@ -93,8 +93,8 @@ def compare(left, right):
     return differences
 
 
-def tracker_case(binary, directory, env, template):
-    command = [binary, "-i", template,
+def tracker_command(binary, template):
+    return [binary, "-i", template,
                "parthenon/mesh/refinement=adaptive", "parthenon/mesh/numlevel=3",
                "parthenon/mesh/nx1=16", "parthenon/mesh/nx2=16", "parthenon/mesh/nx3=16",
                "parthenon/meshblock/nx1=8", "parthenon/meshblock/nx2=8",
@@ -105,13 +105,44 @@ def tracker_case(binary, directory, env, template):
                "numerical_relativity/tracker_0_refinement_radius=4",
                "numerical_relativity/tracker_0_refinement_level=2",
                "numerical_relativity/chi_div_floor=1e-5"]
-    text = execute(command, directory, env)
+
+
+def tracker_case(binary, directory, env, template):
+    text = execute(tracker_command(binary, template), directory, env)
     counts = [int(n) for n in re.findall(r"Total number of MeshBlocks = (\d+)", text)]
     if len(counts) < 2 or counts[-1] <= counts[0]:
         raise RuntimeError(f"Tracker AMR used stale center on first step: {counts}")
     if "cycle=1 " not in text or "Puncture tracker mode = ode" not in text:
         raise RuntimeError("Missing tracker mode/step evidence")
     return dict(initial_blocks=counts[0], first_completed_step_blocks=counts[-1])
+
+
+def stationary_tangency_case(binary, directory, env, template):
+    directory.mkdir()
+    cases = [("origin", None, 0.)]
+    cases += [(f"axis-{axis}-{sign:+d}", axis, sign * 2.3e-16)
+              for axis in range(3) for sign in (-1, 1)]
+    reference = None
+    records = []
+    for name, axis, offset in cases:
+        overrides = ["parthenon/time/tlim=0", "parthenon/time/nlim=0",
+                     "problem/punc_velocity_x1=0", "numerical_relativity/horizon_enabled=false"]
+        if axis is not None:
+            overrides += [f"numerical_relativity/tracker_0_center_x{axis+1}={offset:.17g}"]
+        target = directory / name
+        execute([*tracker_command(binary, template), *overrides,
+                 "parthenon/output2/id=state"], target, env)
+        state = snapshot(target)
+        if state["blocks"] != 120:
+            raise RuntimeError(f"Roundoff-sized stationary offset changes mesh: {name}: "
+                               f"{state['blocks']}")
+        if reference is None:
+            reference = state
+        error, = compare([reference], [state])
+        if error != 0.:
+            raise RuntimeError(f"Stationary initial state changes with tracker jitter: {name}")
+        records.append(dict(case=name, offset=offset, blocks=state["blocks"], state_linf=error))
+    return records
 
 
 def main():
@@ -145,7 +176,9 @@ def main():
     result = dict(binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
                   block_counts=[s["blocks"] for s in single],
                   one_vs_two_rank_linf=compare(single, paired),
-                  tracker=tracker_case(binary, case / "tracker", env, tracker))
+                  tracker=tracker_case(binary, case / "tracker", env, tracker),
+                  stationary_tangency=stationary_tangency_case(
+                      binary, case / "stationary-tangency", env, tracker))
     if args.baseline:
         reference = case / "baseline"
         reference.mkdir()
