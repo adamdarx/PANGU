@@ -792,9 +792,11 @@ void NormalizeParameters(parthenon::ParameterInput *pin) {
     // individual block boundary. Aggregate the vacuum NR field messages with
     // Parthenon's native transport before Mesh constructs its buffer caches.
     // Preserve an explicit false, including one read from an older restart.
-    const bool coalesced = pin->GetOrAddBoolean(
-        "parthenon/mesh", "do_coalesced_comms", true,
-        "Combine inter-rank vacuum Z4c boundary messages");
+    // Use an application override, not a second GetOrAdd default: Parthenon
+    // registers false in Mesh and rejects inconsistent registered defaults.
+    if (!pin->DoesParameterExist("parthenon/mesh", "do_coalesced_comms"))
+      pin->SetBoolean("parthenon/mesh", "do_coalesced_comms", true);
+    const bool coalesced = pin->GetBoolean("parthenon/mesh", "do_coalesced_comms");
     if (parthenon::Globals::my_rank == 0)
       std::cout << "NR MPI boundary communication = "
                 << (coalesced ? "coalesced" : "individual messages") << '\n';
