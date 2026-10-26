@@ -1,11 +1,13 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <limits>
 
 #include <Kokkos_Core.hpp>
 
 #include "z4c/core/component_indices.h"
 #include "z4c/diagnostics/diagnostics.h"
+#include "z4c/diagnostics/horizon_convergence.h"
 #include "z4c/diagnostics/weyl.h"
 
 using pangu::nr::ADMComponent;
@@ -16,12 +18,25 @@ using parthenon::Real;
 
 int main(int argc, char** argv) {
   Kokkos::ScopeGuard guard(argc, argv);
+  using pangu::nr::HorizonConverged;
+  const double nan = std::numeric_limits<double>::quiet_NaN();
+  if (HorizonConverged(1.0, 1.0, 0.13, 1.0, 1, 1e-2, 1e-4, true) ||
+      !HorizonConverged(1.0, 1.0, 0.13, 1.0, 1, 1e-2, 1e-4, false) ||
+      !HorizonConverged(1.0, 1.0, 9e-5, 1.0, 1, 1e-2, 1e-4, true) ||
+      HorizonConverged(1.0, 1.0, 9e-5, 2.0, 1, 1e-2, 1e-4, true) ||
+      HorizonConverged(1.0, 1.0, 0.0, 1.0, 0, 1e-2, 1e-4, true) ||
+      HorizonConverged(1.0, 1.0, nan, 1.0, 1, 1e-2, 1e-4, true) ||
+      HorizonConverged(nan, 1.0, 0.0, 1.0, 1, 1e-2, 1e-4, true) ||
+      HorizonConverged(1.0, 0.0, 0.0, 1.0, 1, 1e-2, 1e-4, true)) {
+    std::cerr << "NR-6 horizon convergence acceptance mismatch\n";
+    return 1;
+  }
   constexpr int extent = 9;
   constexpr int center = extent / 2;
   Kokkos::View<Real*****> adm("NR-6 ADM fixture", 2, pangu::nr::kADMComponents, extent, extent,
                               extent);
   Kokkos::View<Real* [2]> errors("NR-6 Weyl errors", 2);
-  Kokkos::View<Real*> diagnostic_errors("NR-6 diagnostic errors", 6);
+  Kokkos::View<Real*> diagnostic_errors("NR-6 diagnostic errors", 8);
   Kokkos::parallel_for(
       "NR-6 Weyl scalar fixtures", 2, KOKKOS_LAMBDA(const int test) {
         for (int k = 0; k < extent; ++k) {
@@ -117,6 +132,39 @@ int main(int argc, char** argv) {
         const Real expected_ellipsoid = 2.0 * (inverse_a2 + inverse_b2 + inverse_c2) / gradient -
                                         hessian_contraction / (gradient * gradient * gradient);
         diagnostic_errors(5) = fabs(ellipsoid.expansion - expected_ellipsoid);
+        // Curved-space reference, independent of the Cartesian connection
+        // implementation: Theta=psi^-2*(2/r+4 psi'/psi), K_ij=0.
+        Real expansion_error = 0.0;
+        Real area_error = 0.0;
+        for (int m = 0; m < 3; ++m) {
+          const Real mass = m == 0 ? 0.5 : (m == 1 ? 1.0 : 2.0);
+          for (int shell = 0; shell < 3; ++shell) {
+            const Real r = mass * (shell == 0 ? 0.4 : (shell == 1 ? 0.5 : 0.8));
+            const Real psi = 1.0 + mass / (2.0 * r);
+            const Real psi_prime = -mass / (2.0 * r * r);
+            const Real psi4 = psi * psi * psi * psi;
+            for (int angle = 0; angle < 5; ++angle) {
+              const Real th = 0.15 + angle * 0.65;
+              const Real ph = 0.37 + angle * 1.1;
+              const Real normal[3] = {sin(th) * cos(ph), sin(th) * sin(ph), cos(th)};
+              for (int d = 0; d < 3; ++d)
+                for (int a = 0; a < 3; ++a)
+                  for (int b = 0; b < 3; ++b) {
+                    metric[a][b] = a == b ? psi4 : 0.0;
+                    derivative[d][a][b] =
+                        a == b ? 4.0 * psi * psi * psi * psi_prime * normal[d] : 0.0;
+                  }
+              const auto sphere = pangu::nr::CoordinateSphereExpansion(
+                  metric, derivative, extrinsic, r, th, ph);
+              const Real expected = (2.0 / r + 4.0 * psi_prime / psi) / (psi * psi);
+              expansion_error = fmax(expansion_error, fabs(mass * (sphere.expansion - expected)));
+              area_error = fmax(area_error,
+                               fabs(sphere.area_jacobian / (psi4 * r * r * sin(th)) - 1.0));
+            }
+          }
+        }
+        diagnostic_errors(6) = expansion_error;
+        diagnostic_errors(7) = area_error;
       });
   const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), errors);
   Real maximum = 0.0;
@@ -125,7 +173,7 @@ int main(int argc, char** argv) {
       maximum = std::max(maximum, host(test, component));
   const auto diagnostic_host =
       Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), diagnostic_errors);
-  for (int component = 0; component < 6; ++component)
+  for (int component = 0; component < 8; ++component)
     maximum = std::max(maximum, diagnostic_host(component));
   if (maximum > 2.0e-13) {
     std::cerr << "NR-6 Weyl scalar mismatch: " << maximum << '\n';

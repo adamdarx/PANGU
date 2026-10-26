@@ -1,4 +1,5 @@
 #include "z4c/evolution/package.h"
+#include "z4c/evolution/host_loops.h"
 #include "z4c/evolution/classical_rk4.h"
 #include "z4c/evolution/amr_refinement.h"
 #include "z4c/evolution/tasks.h"
@@ -331,7 +332,7 @@ void ApplyPackedOutflowFace(MeshData<Real>* data, const bool coarse) {
     const std::string label =
         std::string("PANGU packed SYNC outflow ") + (Inner ? "inner x" : "outer x") +
         std::to_string(static_cast<int>(Direction));
-    parthenon::par_for(
+    host_loops::ParallelFor(
         DEFAULT_LOOP_PATTERN, label, parthenon::DevExecSpace(), 0, fields.GetDim(5) - 1, 0,
         fields.GetDim(4) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
         KOKKOS_LAMBDA(const int block, const int component, const int k, const int j,
@@ -712,6 +713,14 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   }
   const Real horizon_mass_tolerance =
       pin->GetOrAddReal("numerical_relativity", "horizon_mass_tolerance", 1.0e-2);
+  const std::string horizon_convergence =
+      pin->GetOrAddString("numerical_relativity", "horizon_convergence", "mass_and_expansion");
+  // Retain the old acceptance rule only as an explicit diagnostic comparison mode.
+  PARTHENON_REQUIRE(horizon_convergence == "mass_and_expansion" ||
+                        horizon_convergence == "legacy_mass",
+                    "horizon_convergence must be mass_and_expansion or legacy_mass");
+  const Real horizon_expansion_tolerance =
+      pin->GetOrAddReal("numerical_relativity", "horizon_expansion_tolerance", 1.0e-4);
   const Real horizon_hmean_limit =
       pin->GetOrAddReal("numerical_relativity", "horizon_hmean_limit", 100.0);
   const Real horizon_expand_guess =
@@ -848,6 +857,8 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
                         horizon_ntheta >= horizon_lmax + 1 && horizon_iterations > 0 &&
                         horizon_initial_radius > 0.0 && horizon_flow_gain > 0.0 &&
                         horizon_mass_tolerance > 0.0 && horizon_hmean_limit > 0.0 &&
+                        std::isfinite(horizon_expansion_tolerance) &&
+                        horizon_expansion_tolerance > 0.0 &&
                         horizon_expand_guess > 0.0,
                     "invalid numerical-relativity apparent-horizon controls");
   PARTHENON_REQUIRE(horizon_dt > 0.0 && horizon_max_radius_factor > 1.0 &&
@@ -912,6 +923,8 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   package->AddParam<std::string>("horizon_flow", horizon_flow);
   package->AddParam<int>("horizon_flow_flag", horizon_flow_flag);
   package->AddParam<Real>("horizon_mass_tolerance", horizon_mass_tolerance);
+  package->AddParam<std::string>("horizon_convergence", horizon_convergence);
+  package->AddParam<Real>("horizon_expansion_tolerance", horizon_expansion_tolerance);
   package->AddParam<Real>("horizon_hmean_limit", horizon_hmean_limit);
   package->AddParam<Real>("horizon_expand_guess", horizon_expand_guess);
   package->AddParam<Real>("horizon_dt", horizon_dt);
@@ -1023,8 +1036,13 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
                      std::vector<int>{kADMComponents});
   const Metadata rhs_field({Metadata::Cell, Metadata::Derived, Metadata::OneCopy},
                            std::vector<int>{kZ4cComponents});
-  const Metadata adm_derivatives({Metadata::Cell, Metadata::Derived, Metadata::OneCopy},
-                                 std::vector<int>{kADMMetricDerivativeComponents});
+  // Surface interpolation crosses block faces. Interior finite differences
+  // alone do not populate the derivative samples in those interpolation stencils.
+  Metadata adm_derivatives(
+      {Metadata::Cell, Metadata::Derived, Metadata::OneCopy, Metadata::FillGhost},
+      std::vector<int>{kADMMetricDerivativeComponents});
+  adm_derivatives.RegisterRefinementOps<amr::ProlongateZ4cHighOrder,
+                                        amr::RestrictZ4cHighOrder>();
   const Metadata constraints({Metadata::Cell, Metadata::Derived, Metadata::OneCopy},
                              std::vector<int>{kConstraintComponents});
   const Metadata stress_energy(
@@ -1323,7 +1341,7 @@ TaskStatus BuildStressEnergyMeshTask(MeshData<Real>* data, const Real time) {
   const auto ib = first->cellbounds.GetBoundsI(IndexDomain::interior);
   const auto jb = first->cellbounds.GetBoundsJ(IndexDomain::interior);
   const auto kb = first->cellbounds.GetBoundsK(IndexDomain::interior);
-  parthenon::par_for(
+  host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU packed analytic NR stress-energy", parthenon::DevExecSpace(), 0,
       tmunu.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
@@ -1380,7 +1398,7 @@ TaskStatus Z4cToADMFieldsMeshTask(MeshData<Real>* data) {
   const auto kb = first->cellbounds.GetBoundsK(IndexDomain::entire);
   const auto chi_psi_power =
       first->packages.Get("numerical_relativity")->Param<Z4cOptions>("z4c_options").chi_psi_power;
-  parthenon::par_for(
+  host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU packed NR Z4c to ADM", parthenon::DevExecSpace(), 0,
       z4c.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
@@ -1410,7 +1428,7 @@ template <int Order> TaskStatus ComputeWeylMeshImpl(MeshData<Real>* data) {
   const auto ib = first->cellbounds.GetBoundsI(IndexDomain::interior);
   const auto jb = first->cellbounds.GetBoundsJ(IndexDomain::interior);
   const auto kb = first->cellbounds.GetBoundsK(IndexDomain::interior);
-  parthenon::par_for(
+  host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU NR Weyl scalars", parthenon::DevExecSpace(), 0,
       adm.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
@@ -1484,7 +1502,7 @@ template <int Order> TaskStatus ComputeConstraintsMeshImpl(MeshData<Real>* data)
   for (int block_begin = 0; block_begin < z4c.GetDim(5);
        block_begin += kHeavyKernelBlockBatch) {
     const int block_end = std::min(block_begin + kHeavyKernelBlockBatch, z4c.GetDim(5)) - 1;
-    parthenon::par_for(
+    host_loops::ParallelFor(
         DEFAULT_LOOP_PATTERN, "PANGU NR constraints", parthenon::DevExecSpace(), block_begin,
         block_end, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
         KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
@@ -1516,7 +1534,7 @@ template <int Order> TaskStatus ComputeMatterConstraintsMeshImpl(MeshData<Real>*
   for (int block_begin = 0; block_begin < z4c.GetDim(5);
        block_begin += kHeavyKernelBlockBatch) {
     const int block_end = std::min(block_begin + kHeavyKernelBlockBatch, z4c.GetDim(5)) - 1;
-    parthenon::par_for(
+    host_loops::ParallelFor(
         DEFAULT_LOOP_PATTERN, "PANGU NR matter constraints", parthenon::DevExecSpace(), block_begin,
         block_end, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
         KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
@@ -1644,15 +1662,14 @@ TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
          block_begin += kHeavyKernelBlockBatch) {
       const int block_end =
           std::min(block_begin + kHeavyKernelBlockBatch, input.GetDim(5)) - 1;
-      parthenon::par_for(
+      host_loops::ParallelFor(
           DEFAULT_LOOP_PATTERN, "PANGU matter Z4c RHS", parthenon::DevExecSpace(), block_begin,
           block_end, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
           KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-            // Cache the per-block packs once per point.  MeshBlockPack access otherwise
-            // repeats the outer block lookup for every stencil load in the RHS.
-            const auto block_input = input(block);
-            const auto block_tmunu = tmunu(block);
-            const auto block_output = output(block);
+            // Cache block lookups, borrowing managed packs on host backends.
+            const auto& block_input = rhs::CachePointPack(input(block));
+            const auto& block_tmunu = rhs::CachePointPack(tmunu(block));
+            const auto& block_output = rhs::CachePointPack(output(block));
             const auto& coordinates = block_input.GetCoords();
             const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
                                              1.0 / coordinates.Dxc<X2DIR>(k, j, i),
@@ -1667,14 +1684,13 @@ TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
          block_begin += kHeavyKernelBlockBatch) {
       const int block_end =
           std::min(block_begin + kHeavyKernelBlockBatch, input.GetDim(5)) - 1;
-      parthenon::par_for(
+      host_loops::ParallelFor(
           DEFAULT_LOOP_PATTERN, "PANGU vacuum Z4c RHS", parthenon::DevExecSpace(), block_begin,
           block_end, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
           KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
-            // Cache the per-block packs once per point.  MeshBlockPack access otherwise
-            // repeats the outer block lookup for every stencil load in the RHS.
-            const auto block_input = input(block);
-            const auto block_output = output(block);
+            // Cache block lookups, borrowing managed packs on host backends.
+            const auto& block_input = rhs::CachePointPack(input(block));
+            const auto& block_output = rhs::CachePointPack(output(block));
             const auto& coordinates = block_input.GetCoords();
             const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
                                              1.0 / coordinates.Dxc<X2DIR>(k, j, i),
@@ -1686,12 +1702,12 @@ TaskStatus CalculateRHSMeshImpl(MeshData<Real>* current, const Real time) {
     }
   }
 
-  parthenon::par_for(
+  host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU Z4c K-O dissipation", parthenon::DevExecSpace(), 0,
       input.GetDim(5) - 1, 0, kZ4cComponents - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
-        const auto block_input = input(block);
-        const auto block_output = output(block);
+        const auto& block_input = rhs::CachePointPack(input(block));
+        const auto& block_output = rhs::CachePointPack(output(block));
         const auto& coordinates = block_input.GetCoords();
         const Real inverse_spacing[3] = {1.0 / coordinates.Dxc<X1DIR>(k, j, i),
                                          1.0 / coordinates.Dxc<X2DIR>(k, j, i),
@@ -1747,7 +1763,7 @@ TaskStatus ApplySommerfeldRHSMeshTask(MeshData<Real>* current) {
                            is_outflow(mesh->mesh_bc_names[4]), is_outflow(mesh->mesh_bc_names[5])};
   const Real tolerance = 32.0 * std::numeric_limits<Real>::epsilon();
   if (outflow[0] || outflow[1]) {
-    parthenon::par_for(
+    host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld x1 RHS", parthenon::DevExecSpace(), 0,
       input.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e,
       KOKKOS_LAMBDA(const int block, const int k, const int j) {
@@ -1775,7 +1791,7 @@ TaskStatus ApplySommerfeldRHSMeshTask(MeshData<Real>* current) {
       });
   }
   if (outflow[2] || outflow[3]) {
-    parthenon::par_for(
+    host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld x2 RHS", parthenon::DevExecSpace(), 0,
       input.GetDim(5) - 1, kb.s, kb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int k, const int i) {
@@ -1803,7 +1819,7 @@ TaskStatus ApplySommerfeldRHSMeshTask(MeshData<Real>* current) {
       });
   }
   if (outflow[4] || outflow[5]) {
-    parthenon::par_for(
+    host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU Z4c Sommerfeld x3 RHS", parthenon::DevExecSpace(), 0,
       input.GetDim(5) - 1, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int j, const int i) {
@@ -1848,7 +1864,7 @@ TaskStatus RKUpdateMeshTask(MeshData<Real>* current, MeshData<Real>* base,
       first->packages.Get("numerical_relativity")->Param<Z4cOptions>("z4c_options");
   const bool floor_chi = options.floor_chi;
   const Real chi_min_floor = options.chi_min_floor;
-  parthenon::par_for(
+  host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU Z4c RK update", parthenon::DevExecSpace(), 0,
       input.GetDim(5) - 1, 0, kZ4cComponents - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
@@ -1876,7 +1892,7 @@ TaskStatus ClassicalRK4UpdateMeshTask(MeshData<Real>* current, MeshData<Real>* i
   const auto kb = current->GetBoundsK(IndexDomain::interior);
   const auto options = current->GetBlockData(0)->GetBlockPointer()->packages
                            .Get("numerical_relativity")->Param<Z4cOptions>("z4c_options");
-  parthenon::par_for(
+  host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU classical RK4 update", parthenon::DevExecSpace(), 0,
       original.GetDim(5) - 1, 0, kZ4cComponents - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
@@ -1903,7 +1919,7 @@ TaskStatus AccumulateRKStateMeshTask(MeshData<Real>* current, MeshData<Real>* ac
   const auto ib = current->GetBoundsI(IndexDomain::interior);
   const auto jb = current->GetBoundsJ(IndexDomain::interior);
   const auto kb = current->GetBoundsK(IndexDomain::interior);
-  parthenon::par_for(
+  host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU RK accumulator", parthenon::DevExecSpace(), 0,
       input.GetDim(5) - 1, 0, input.GetDim(4) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
@@ -1957,7 +1973,7 @@ TaskStatus EnforceAlgebraicConstraintsMeshTask(MeshData<Real>* data) {
   const auto ib = first->cellbounds.GetBoundsI(IndexDomain::entire);
   const auto jb = first->cellbounds.GetBoundsJ(IndexDomain::entire);
   const auto kb = first->cellbounds.GetBoundsK(IndexDomain::entire);
-  parthenon::par_for(
+  host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU NR algebraic projection", parthenon::DevExecSpace(), 0,
       z4c.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {

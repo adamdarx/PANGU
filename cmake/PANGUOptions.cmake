@@ -3,6 +3,8 @@ include_guard(GLOBAL)
 option(PANGU_ENABLE_MPI "Build PANGU with MPI" ON)
 option(PANGU_ENABLE_HDF5 "Build PANGU with HDF5 output/restart" ON)
 option(PANGU_ENABLE_OPENMP "Build PANGU with the Kokkos OpenMP backend" OFF)
+option(PANGU_ENABLE_HOST_SIMD_THREADS
+       "Thread NR host outer loops while retaining innermost SIMD (CPU OpenMP only)" OFF)
 option(PANGU_ENABLE_CUDA "Build PANGU with the Kokkos CUDA backend" OFF)
 option(PANGU_SINGLE_PRECISION "Use single precision Parthenon Real" OFF)
 option(PANGU_ENABLE_TESTING "Register PANGU tests" ON)
@@ -38,6 +40,11 @@ elseif(PHYSICS STREQUAL "gr")
 endif()
 
 function(pangu_configure_parthenon)
+  if(PANGU_ENABLE_HOST_SIMD_THREADS AND
+     (NOT PANGU_ENABLE_OPENMP OR PANGU_ENABLE_CUDA))
+    message(FATAL_ERROR
+      "PANGU_ENABLE_HOST_SIMD_THREADS requires PANGU_ENABLE_OPENMP=ON and CUDA=OFF")
+  endif()
   set(PARTHENON_DISABLE_EXAMPLES ON CACHE BOOL "" FORCE)
   set(PARTHENON_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
   set(PARTHENON_ENABLE_UNIT_TESTS OFF CACHE BOOL "" FORCE)

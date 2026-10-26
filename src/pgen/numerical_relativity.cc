@@ -30,6 +30,7 @@
 #include "z4c/evolution/package.h"
 #include "z4c/evolution/z4c_rhs.h"
 #include "z4c/initial_data/analytic.h"
+#include "z4c/initial_data/awa_wave.hpp"
 #include "z4c/initial_data/tov.h"
 #include "z4c/puncture/initializer.h"
 
@@ -1705,6 +1706,7 @@ void NumericalRelativityLinearWave(MeshBlock *block, ParameterInput *pin) {
 }
 
 void NumericalRelativityGaugeWave(MeshBlock *block, ParameterInput *pin) {
+  const bool rotated = pin->GetOrAddBoolean("problem", "awa_diagonal", false);
   InitializeConstraintMask(block);
   auto data = block->meshblock_data.Get();
   const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
@@ -1714,7 +1716,8 @@ void NumericalRelativityGaugeWave(MeshBlock *block, ParameterInput *pin) {
   const auto coordinates = block->coords;
   const auto &mesh_size = block->pmy_mesh->mesh_size;
   const Real x1_min = mesh_size.xmin(X1DIR);
-  const Real wavelength = mesh_size.xmax(X1DIR) - x1_min;
+  const Real wavelength = rotated ? pin->GetOrAddReal("problem", "awa_wavelength", 1.0)
+                                  : mesh_size.xmax(X1DIR) - x1_min;
   const Real amplitude = pin->GetOrAddReal("problem", "amplitude", 1.0e-2);
   const auto options = block->packages.Get("numerical_relativity")
                            ->Param<nr::Z4cOptions>("z4c_options");
@@ -1726,6 +1729,14 @@ void NumericalRelativityGaugeWave(MeshBlock *block, ParameterInput *pin) {
         for (int component = 0; component < nr::kZ4cComponents; ++component)
           z4c(component, k, j, i) = 0.0;
         const Real x = coordinates.Xc<X1DIR>(k, j, i);
+        if (rotated) {
+          Real exact[22];
+          awa_exact::GaugeWave(false, true, amplitude, x,
+              coordinates.Xc<X2DIR>(k,j,i), coordinates.Xc<X3DIR>(k,j,i),
+              0.0, wavelength, exact);
+          for (int a=0;a<22;++a) z4c(a,k,j,i)=exact[a];
+          return;
+        }
         const Real phase = 2.0 * M_PI * (x - x1_min) / wavelength;
         const Real h = amplitude * sin(phase);
         const Real physical_gxx = 1.0 - h;
@@ -1758,6 +1769,7 @@ void NumericalRelativityGaugeWave(MeshBlock *block, ParameterInput *pin) {
 }
 
 void NumericalRelativityShiftedGaugeWave(MeshBlock *block, ParameterInput *pin) {
+  const bool rotated = pin->GetOrAddBoolean("problem", "awa_diagonal", false);
   InitializeConstraintMask(block);
   auto data = block->meshblock_data.Get();
   const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
@@ -1767,7 +1779,8 @@ void NumericalRelativityShiftedGaugeWave(MeshBlock *block, ParameterInput *pin) 
   const auto coordinates = block->coords;
   const auto &mesh_size = block->pmy_mesh->mesh_size;
   const Real x1_min = mesh_size.xmin(X1DIR);
-  const Real wavelength = mesh_size.xmax(X1DIR) - x1_min;
+  const Real wavelength = rotated ? pin->GetOrAddReal("problem", "awa_wavelength", 1.0)
+                                  : mesh_size.xmax(X1DIR) - x1_min;
   const Real amplitude = pin->GetOrAddReal("problem", "amplitude", 1.0e-2);
   const auto options = block->packages.Get("numerical_relativity")
                            ->Param<nr::Z4cOptions>("z4c_options");
@@ -1778,6 +1791,14 @@ void NumericalRelativityShiftedGaugeWave(MeshBlock *block, ParameterInput *pin) 
       ib.s, ib.e, KOKKOS_LAMBDA(const int k, const int j, const int i) {
         for (int component = 0; component < nr::kZ4cComponents; ++component)
           z4c(component, k, j, i) = 0.0;
+        if (rotated) {
+          Real exact[22];
+          awa_exact::GaugeWave(true, true, amplitude,
+              coordinates.Xc<X1DIR>(k,j,i), coordinates.Xc<X2DIR>(k,j,i),
+              coordinates.Xc<X3DIR>(k,j,i), 0.0, wavelength, exact);
+          for (int a=0;a<22;++a) z4c(a,k,j,i)=exact[a];
+          return;
+        }
         const Real phase =
             2.0 * M_PI * (coordinates.Xc<X1DIR>(k, j, i) - x1_min) / wavelength;
         const Real b = amplitude * sin(phase);
@@ -2163,6 +2184,8 @@ void NumericalRelativityLinearWaveAfterLoop(Mesh *mesh, ParameterInput *pin,
 
 void NumericalRelativityGaugeWaveAfterLoop(Mesh *mesh, ParameterInput *pin,
                                            SimTime &time) {
+  // The common AwA diagnostic evaluates all rotated components and K.
+  if (pin->GetOrAddBoolean("problem", "awa_diagonal", false)) return;
   const Real amplitude = pin->GetReal("problem", "amplitude");
   const Real x1_min = mesh->mesh_size.xmin(X1DIR);
   const Real wavelength = mesh->mesh_size.xmax(X1DIR) - x1_min;
@@ -2230,6 +2253,7 @@ void NumericalRelativityGaugeWaveAfterLoop(Mesh *mesh, ParameterInput *pin,
 void NumericalRelativityShiftedGaugeWaveAfterLoop(Mesh *mesh,
                                                    ParameterInput *pin,
                                                    SimTime &time) {
+  if (pin->GetOrAddBoolean("problem", "awa_diagonal", false)) return;
   const Real amplitude = pin->GetReal("problem", "amplitude");
   const Real x1_min = mesh->mesh_size.xmin(X1DIR);
   const Real wavelength = mesh->mesh_size.xmax(X1DIR) - x1_min;

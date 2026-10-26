@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "awa_wave.hpp"
 
 namespace awa_diagnostic {
 constexpr double pi = 3.141592653589793238462643383279502884;
@@ -48,6 +49,11 @@ inline double analytic(const Config &c, int component, double x, double y,
                        double z, double time) {
   const bool diagonal = component == 0 || component == 3 || component == 5;
   if (c.family == "robust") return diagonal ? 1.0 : 0.0;
+  if (c.variant=="diagonal" && (c.family=="gauge" || c.family=="shifted-gauge")) {
+    double exact[22];
+    awa_exact::GaugeWave(c.family=="shifted-gauge",true,c.amplitude,x,y,z,time,1.0,exact);
+    return exact[1+component]/exact[0];
+  }
   if (c.family == "linear") {
     const bool rotated = c.variant == "diagonal";
     const double q = rotated ? z-y-std::sqrt(2.0)*time : z-time;
@@ -65,7 +71,9 @@ template<class State, class Constraint>
 void write(const Config &c, double time, int cycle, const std::array<int,3> &n,
            const std::array<double,3> &dx, State state, Constraint constraint) {
   const auto start = std::chrono::steady_clock::now();
-  const int axis = c.family == "linear" || c.family == "robust" ? 2 : 0;
+  const int axis = c.family == "linear" || c.family == "robust" || c.variant=="diagonal" ? 2 : 0;
+  const int profile_component = c.variant=="diagonal" &&
+      (c.family=="gauge" || c.family=="shifted-gauge") ? 5 : 0;
   const int count = n[axis];
   std::vector<double> profile(count), exact(count);
   std::array<std::vector<double>,3> extra_profile, extra_exact;
@@ -130,10 +138,12 @@ void write(const Config &c, double time, int cycle, const std::array<int,3> &n,
         gtt+=state(1+sym(aa,bb),k,j,i)/chi*state(19+aa,k,j,i)*state(19+bb,k,j,i);
     }
     const bool gauge_wave=c.family=="gauge"||c.family=="shifted-gauge";
-    const double wave=gauge_wave ? c.amplitude*std::sin(2*pi*(x-time)) : 0.0;
+    const bool rotated_gauge=gauge_wave && c.variant=="diagonal";
+    const double q=rotated_gauge ? z-y-std::sqrt(2.0)*time : x-time;
+    const double wave=gauge_wave ? c.amplitude*std::sin(2*pi*q) : 0.0;
     const double exact_gtt=-1.0+wave;
-    const double exact_gtaxis=c.family=="shifted-gauge" ? -wave : 0.0;
-    const double exact_k=gauge_wave ? -pi*c.amplitude*std::cos(2*pi*(x-time))/
+    const double exact_gtaxis=c.family=="shifted-gauge" ? -wave/(rotated_gauge ? std::sqrt(2.0) : 1.0) : 0.0;
+    const double exact_k=gauge_wave ? -(rotated_gauge ? std::sqrt(2.0) : 1.0)*pi*c.amplitude*std::cos(2*pi*q)/
         std::pow(1.0+(c.family=="gauge" ? -wave : wave),1.5) : 0.0;
     const double physical_k=state(7,k,j,i)+2*state(17,k,j,i);
     gtt_error=std::max(gtt_error,std::abs(gtt-exact_gtt));
@@ -142,8 +152,8 @@ void write(const Config &c, double time, int cycle, const std::array<int,3> &n,
     // A single physical line, with a cell-centred analytic reference.
     if ((axis==2 && i==0 && j==0) || (axis==0 && j==0 && k==0)) {
       const int p=axis==2 ? k : i;
-      profile[p]=state(1,k,j,i)/chi-1;
-      exact[p]=analytic(c,0,x,y,z,time)-1;
+      profile[p]=state(1+profile_component,k,j,i)/chi-1;
+      exact[p]=analytic(c,profile_component,x,y,z,time)-1;
       extra_profile[0][p]=gtt+1; extra_exact[0][p]=exact_gtt+1;
       extra_profile[1][p]=gtaxis; extra_exact[1][p]=exact_gtaxis;
       extra_profile[2][p]=physical_k; extra_exact[2][p]=exact_k;

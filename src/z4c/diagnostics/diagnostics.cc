@@ -1,4 +1,5 @@
 #include "z4c/diagnostics/diagnostics.h"
+#include "z4c/diagnostics/horizon_convergence.h"
 
 #include <algorithm>
 #include <array>
@@ -897,6 +898,9 @@ HorizonEvaluation EvaluateStarShapedSurface(Mesh* mesh,
   parthenon::ParArray2DRaw<Real> values("NR horizon surface", points.size(), 7);
   Kokkos::deep_copy(values, 0.0);
   const auto partitions = mesh->GetDefaultBlockPartitions();
+  const Real global_lower_x1 = mesh->mesh_size.xmin(X1DIR);
+  const Real global_lower_x2 = mesh->mesh_size.xmin(X2DIR);
+  const Real global_lower_x3 = mesh->mesh_size.xmin(X3DIR);
   const Real global_upper_x1 = mesh->mesh_size.xmax(X1DIR);
   const Real global_upper_x2 = mesh->mesh_size.xmax(X2DIR);
   const Real global_upper_x3 = mesh->mesh_size.xmax(X3DIR);
@@ -969,10 +973,21 @@ HorizonEvaluation EvaluateStarShapedSurface(Mesh* mesh,
           int first[3]{};
           Real weights[3][2 * NGHOST]{};
           const int starts[3] = {ib.s, jb.s, kb.s};
-          for (int direction = 0; direction < 3; ++direction)
+          for (int direction = 0; direction < 3; ++direction) {
             LagrangeInterpolation<NGHOST>(query(point, direction), lower[direction],
                                                  spacing[direction], starts[direction],
                                                  &first[direction], weights[direction]);
+            // Derivative ghosts are exchanged across leaf blocks, not
+            // extrapolated beyond the physical domain. Reject such a trial
+            // surface instead of treating unfilled physical ghosts as data.
+            const Real domain_lower[3] = {global_lower_x1, global_lower_x2, global_lower_x3};
+            const Real domain_upper[3] = {global_upper_x1, global_upper_x2, global_upper_x3};
+            const Real first_center = lower[direction] +
+                (first[direction] - starts[direction] + 0.5) * spacing[direction];
+            const Real last_center = first_center + (2 * NGHOST - 1) * spacing[direction];
+            if (first_center < domain_lower[direction] || last_center > domain_upper[direction])
+              return;
+          }
           Real metric[3][3]{};
           Real extrinsic[3][3]{};
           Real metric_derivative[3][3][3]{};
@@ -1130,25 +1145,33 @@ void RefreshDiagnosticFields(Mesh* mesh, const bool synchronize_weyl,
         mesh->packages.Get("numerical_relativity")->Param<int>("finite_difference_order");
     ComputeADMMetricDerivativesDispatch(mesh, order);
   }
-  if (!synchronize_weyl)
+  if (!synchronize_weyl && !compute_horizon_derivatives)
     return;
 
   parthenon::TaskCollection collection;
   auto& region = collection.AddRegion(partitions.size());
   for (std::size_t partition = 0; partition < partitions.size(); ++partition) {
     auto& base = mesh->mesh_data.Add("base", partitions[partition]);
-    auto& weyl =
-        mesh->mesh_data.AddShallow("nr_weyl_diagnostic", base, std::vector<std::string>{"nr.weyl"});
+    std::vector<std::string> fields;
+    if (synchronize_weyl)
+      fields.emplace_back("nr.weyl");
+    if (compute_horizon_derivatives)
+      fields.emplace_back("nr.adm_derivatives");
+    auto& diagnostic = mesh->mesh_data.AddShallow(
+        synchronize_weyl ? (compute_horizon_derivatives ? "nr_weyl_horizon_diagnostic"
+                                                       : "nr_weyl_diagnostic")
+                         : "nr_horizon_diagnostic",
+        base, fields);
     auto& tasks = region[partition];
     const auto receive = tasks.AddTask(
-        parthenon::TaskID(0), parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, weyl);
-    parthenon::AddBoundaryExchangeTasks(receive, tasks, weyl, mesh->multilevel,
+        parthenon::TaskID(0), parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, diagnostic);
+    parthenon::AddBoundaryExchangeTasks(receive, tasks, diagnostic, mesh->multilevel,
                                         [](parthenon::TaskID dependency, parthenon::TaskList*,
                                            std::shared_ptr<MeshData<Real>>,
                                            bool) { return dependency; });
   }
   PARTHENON_REQUIRE(collection.Execute() == parthenon::TaskListStatus::complete,
-                    "NR diagnostic Weyl boundary exchange failed");
+                    "NR diagnostic boundary exchange failed");
 }
 
 void AppendWaveforms(Mesh* mesh, const std::shared_ptr<StateDescriptor>& package, const Real time,
@@ -1313,6 +1336,9 @@ void AppendHorizon(Mesh* mesh, const std::shared_ptr<StateDescriptor>& package, 
   const int maximum_iterations = package->Param<int>("horizon_iterations");
   const Real gain = package->Param<Real>("horizon_flow_gain");
   const Real mass_tolerance = package->Param<Real>("horizon_mass_tolerance");
+  const Real expansion_tolerance = package->Param<Real>("horizon_expansion_tolerance");
+  const bool require_expansion =
+      package->Param<std::string>("horizon_convergence") == "mass_and_expansion";
   const Real hmean_limit = package->Param<Real>("horizon_hmean_limit");
   const Real expand_guess = package->Param<Real>("horizon_expand_guess");
   const Real maximum_radius_factor = package->Param<Real>("horizon_max_radius_factor");
@@ -1410,10 +1436,15 @@ void AppendHorizon(Mesh* mesh, const std::shared_ptr<StateDescriptor>& package, 
       valid = false;
       break;
     }
-    // AthenaK's native fast-flow convergence criterion is the change in
-    // irreducible mass between consecutive surface iterations.
-    if (fabs(previous_mass - mass) < mass_tolerance) {
+    if (HorizonConverged(previous_mass, mass, result.rms, mass_scale, iterations,
+                         mass_tolerance, expansion_tolerance, require_expansion)) {
       found = true;
+      ++iterations;
+      break;
+    }
+    // Do not update the surface after the final evaluation: the returned
+    // radius/coefficients must describe the area and residual just measured.
+    if (iterations + 1 == maximum_iterations) {
       ++iterations;
       break;
     }
@@ -1467,14 +1498,16 @@ void AppendHorizon(Mesh* mesh, const std::shared_ptr<StateDescriptor>& package, 
                 "implementation=fast-flow; "
                 "interpolation=native-block-2nghost-tensor-Lagrange; "
                 "metric_derivatives=grid-centered-finite-difference-then-interpolate; "
-                "convergence=successive-irreducible-mass-difference; "
+                "convergence=" << (require_expansion ? "mass-and-expansion" : "legacy-mass")
+             << "; residual_norm=M_input*rms_expansion; mass_tolerance=" << mass_tolerance
+             << "; expansion_tolerance=" << expansion_tolerance << "; "
                 "surface=F(r,theta,phi)=r-h(theta,phi); "
                 "flow=expansion*norm(grad(F)); "
                 "expansion=D_i(s^i)+K_ij*s^i*s^j-K\n";
       stream << "time,cycle,found,iterations,center_x,center_y,center_z,radius,area,"
                 "coordinate_area,irreducible_mass,christodoulou_mass,spin_x,spin_y,spin_z,spin,"
                 "hmean_integral,hrms_mean_square,mean_expansion,rms_expansion,min_radius,"
-                "max_radius,lmax\n";
+                "max_radius,lmax,scaled_rms_expansion,expansion_tolerance\n";
     }
     stream << std::setprecision(17) << time << ',' << cycle << ',' << (found ? 1 : 0) << ','
            << iterations << ',' << center[0] << ',' << center[1] << ',' << center[2] << ','
@@ -1483,7 +1516,7 @@ void AppendHorizon(Mesh* mesh, const std::shared_ptr<StateDescriptor>& package, 
            << result.spin_y << ',' << result.spin_z << ',' << spin << ','
            << result.integrated_expansion << ',' << result.rms * result.rms << ',' << result.mean
            << ',' << result.rms << ',' << minimum_radius << ',' << maximum_radius << ',' << lmax
-           << '\n';
+           << ',' << mass_scale * result.rms << ',' << expansion_tolerance << '\n';
 
     const auto iteration_path = directory / ("nr_horizon_iterations" + suffix + ".csv");
     const bool iterations_need_header = !std::filesystem::exists(iteration_path);

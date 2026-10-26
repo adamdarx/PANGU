@@ -142,6 +142,7 @@ if(PHYSICS STREQUAL "gr" AND METRIC STREQUAL "z4c" AND MODE STREQUAL "sync")
     z4c/puncture/initializer.cc
     z4c/diagnostics/weyl.h
     z4c/evolution/z4c_rhs.h
+    z4c/evolution/host_loops.h
     z4c/evolution/amr_refinement.h
     pgen/numerical_relativity.cc
     pgen/numerical_relativity.h)
@@ -288,6 +289,8 @@ target_include_directories(pangu PRIVATE
   ${PANGU_PLUGIN_INCLUDE_DIRS})
 target_link_libraries(pangu PRIVATE Parthenon::parthenon)
 target_compile_features(pangu PRIVATE cxx_std_20)
+target_compile_definitions(pangu PRIVATE
+  PANGU_ENABLE_HOST_SIMD_THREADS=$<BOOL:${PANGU_ENABLE_HOST_SIMD_THREADS}>)
 
 if(PANGU_WARNINGS_AS_ERRORS AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(pangu PRIVATE -Werror=return-type)
@@ -299,6 +302,14 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/pangu/plugin_api/"
         DESTINATION include/pangu/plugin_api)
 
 if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
+  if(NOT PANGU_ENABLE_CUDA)
+    add_executable(pangu_nr_host_loops "${CMAKE_SOURCE_DIR}/tst/unit/nr_host_loops.cc")
+    target_include_directories(pangu_nr_host_loops PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_link_libraries(pangu_nr_host_loops PRIVATE Parthenon::parthenon)
+    target_compile_features(pangu_nr_host_loops PRIVATE cxx_std_20)
+    target_compile_definitions(pangu_nr_host_loops PRIVATE
+      PANGU_ENABLE_HOST_SIMD_THREADS=$<BOOL:${PANGU_ENABLE_HOST_SIMD_THREADS}>)
+  endif()
   if(PANGU_ENABLE_CUDA)
     add_executable(pangu_command_line
       "${CMAKE_SOURCE_DIR}/tst/unit/command_line.cc"

@@ -15,17 +15,30 @@ SpectralInterpolator::SpectralInterpolator(const HamiltonianSolution& solution)
 
 SpectralInterpolator::Stencil SpectralInterpolator::BuildStencil(const double coordinate) const {
   const int n = grid_.points();
-  int upper = 1;
-  while (upper < n - 2 && grid_.PhysicalCoordinate(upper + 1) > coordinate) ++upper;
+  // Invert x=L*q/(1-q^2) without cancellation or squaring a large x.
+  // Interpolate in the bounded coordinate of the elliptic grid, including
+  // u=0 at infinity. Cartesian cubic extrapolation beyond the last finite
+  // collocation node can instead grow as x^3 and make psi negative.
+  double q;
+  if (std::abs(coordinate) <= grid_.scale()) {
+    const double ratio = coordinate / grid_.scale();
+    q = 2.0 * ratio / (1.0 + std::hypot(1.0, 2.0 * ratio));
+  } else {
+    const double half_inverse = 0.5 * (grid_.scale() / coordinate);
+    q = std::copysign(1.0 / (std::hypot(1.0, half_inverse) +
+                              std::abs(half_inverse)), coordinate);
+  }
+  int upper = 0;
+  while (upper < n - 2 && grid_.ComputationalCoordinate(upper + 1) > q) ++upper;
   Stencil stencil{};
-  stencil.start = std::clamp(upper - 1, 1, n - 5);
+  stencil.start = std::clamp(upper - 1, 0, n - 4);
   for (int local = 0; local < 4; ++local) {
-    const double node = grid_.PhysicalCoordinate(stencil.start + local);
+    const double node = grid_.ComputationalCoordinate(stencil.start + local);
     double weight = 1.0;
     for (int other = 0; other < 4; ++other) {
       if (other == local) continue;
-      const double other_node = grid_.PhysicalCoordinate(stencil.start + other);
-      weight *= (coordinate - other_node) / (node - other_node);
+      const double other_node = grid_.ComputationalCoordinate(stencil.start + other);
+      weight *= (q - other_node) / (node - other_node);
     }
     stencil.weight[local] = weight;
   }

@@ -5,9 +5,9 @@
 
 namespace pangu::nr::puncture {
 
-// Fixed-cost tricubic interpolation from the compactified collocation grid.
-// Only finite interior nodes participate, so evolution domains never sample
-// the formal +/- infinity endpoints.
+// Fixed-cost tricubic interpolation in compactified coordinates, including
+// the homogeneous asymptotic boundary values at q=+/-1. Finite physical
+// coordinates always map inside this grid; far-field extrapolation is avoided.
 class SpectralInterpolator {
  public:
   explicit SpectralInterpolator(const HamiltonianSolution& solution);

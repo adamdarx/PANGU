@@ -40,6 +40,18 @@ int main() {
               << " trace=" << trace << " isotropy=" << isotropy << '\n';
     return 1;
   }
+  // A converged elliptic solution must remain usable on domains larger than
+  // its outermost finite collocation node, including evolution ghost cells.
+  for (const double radius : {-1.e6, -400., -214.583, 214.583, 400., 1.e6}) {
+    ADMState far{};
+    if (!BuildPunctureADM(radius, radius, radius, {body}, interpolator, far) ||
+        !std::isfinite(far.metric[0]) ||
+        std::abs(far.metric[0] - 1.0) > 0.02 ||
+        std::abs(far.lapse - 1.0) > 0.01) {
+      std::cerr << "far-field puncture ADM invalid at " << radius << '\n';
+      return 1;
+    }
+  }
   Puncture first{};
   first.mass = 0.5;
   first.center[0] = 2.0;

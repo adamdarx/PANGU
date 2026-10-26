@@ -2,6 +2,7 @@
 #define PANGU_Z4C_Z4C_RHS_H_
 
 #include <cmath>
+#include <type_traits>
 
 #include <parthenon/parthenon.hpp>
 
@@ -28,6 +29,20 @@ namespace rhs {
 
 using Real = parthenon::Real;
 
+// Packs outlive these point-local accessors. On the host, copying a managed
+// VariablePack repeatedly updates its Kokkos View reference counts; different
+// OpenMP workers then contend on the same allocation records. Borrow it instead.
+// Keep the existing by-value device storage for CUDA/HIP/etc. kernels.
+template <class Pack>
+using PointPackStorage = std::conditional_t<
+    std::is_same_v<parthenon::DevExecSpace, parthenon::HostExecSpace>,
+    const std::remove_cvref_t<Pack>&, std::remove_cvref_t<Pack>>;
+
+template <class Pack>
+KOKKOS_FORCEINLINE_FUNCTION PointPackStorage<Pack> CachePointPack(const Pack& pack) {
+  return pack;
+}
+
 struct PointState {
   Real chi = 0.0;
   Real metric[6]{};
@@ -40,7 +55,7 @@ struct PointState {
 };
 
 template <class Pack> struct PointOutput {
-  Pack values;
+  PointPackStorage<Pack> values;
   int block;
   int k;
   int j;
@@ -92,7 +107,7 @@ KOKKOS_INLINE_FUNCTION Real DoubleSymmetricDerivative(const Real values[6][6],
 }
 
 template <class Pack> struct ComponentAccessor {
-  Pack values;
+  PointPackStorage<Pack> values;
   int block;
   int component;
   int k;

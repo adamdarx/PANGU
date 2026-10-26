@@ -18,6 +18,35 @@ struct OracleSymmetric {
   }
 };
 
+struct CopyCountPack {
+  int* copies;
+  Real* data;
+  KOKKOS_INLINE_FUNCTION CopyCountPack(int* count, Real* values)
+      : copies(count), data(values) {}
+  KOKKOS_INLINE_FUNCTION CopyCountPack(const CopyCountPack& other)
+      : copies(other.copies), data(other.data) { ++*copies; }
+  KOKKOS_INLINE_FUNCTION Real& operator()(int, int component, int, int, int) const {
+    return data[component];
+  }
+};
+
+bool CheckPointPackStorage() {
+  int copies = 0;
+  Real values[2] = {2.0, 3.0};
+  const CopyCountPack pack(&copies, values);
+  const auto& cached = pangu::nr::rhs::CachePointPack(pack);
+  const pangu::nr::rhs::ComponentAccessor<decltype(cached)> read{cached, 0, 0, 0, 0, 0};
+  const pangu::nr::rhs::PointOutput<decltype(cached)> write{cached, 0, 0, 0, 0};
+  write[1] = read(0, 0, 0) + 5.0;
+  if (values[1] != 7.0) return false;
+  if constexpr (std::is_same_v<parthenon::DevExecSpace, parthenon::HostExecSpace>) {
+    if (copies != 0) return false;
+  }
+  static_assert(!std::is_same_v<parthenon::DevExecSpace, parthenon::HostExecSpace> ||
+                std::is_reference_v<pangu::nr::rhs::PointPackStorage<CopyCountPack>>);
+  return true;
+}
+
 Real ScaledDifference(const Real measured, const Real expected) {
   return std::abs(measured - expected) / std::max({1.0, std::abs(measured), std::abs(expected)});
 }
@@ -25,6 +54,10 @@ Real ScaledDifference(const Real measured, const Real expected) {
 
 int main(int argc, char* argv[]) {
   Kokkos::ScopeGuard guard(argc, argv);
+  if (!CheckPointPackStorage()) {
+    std::cerr << "Point-local pack storage copied a host pack or lost its alias\n";
+    return 1;
+  }
   constexpr int cases = 3;
   Kokkos::View<Real * [pangu::nr::kZ4cComponents]> result("nr2 local rhs", cases);
   Kokkos::parallel_for(

@@ -1,4 +1,5 @@
 #include "z4c/evolution/tasks.h"
+#include "z4c/evolution/host_loops.h"
 #include "z4c/diagnostics/awa.hpp"
 
 #include <algorithm>
@@ -59,7 +60,7 @@ TaskStatus CarrySyncStageStateMeshTask(MeshData<Real>* current, MeshData<Real>* 
   const auto interior_ib = current->GetBoundsI(IndexDomain::interior);
   const auto interior_jb = current->GetBoundsJ(IndexDomain::interior);
   const auto interior_kb = current->GetBoundsK(IndexDomain::interior);
-  parthenon::par_for(
+  host_loops::ParallelFor(
       DEFAULT_LOOP_PATTERN, "PANGU carry synchronized cell ghosts", parthenon::DevExecSpace(), 0,
       current->NumBlocks() - 1, 0, source_cell.GetDim(4) - 1, entire_kb.s, entire_kb.e, entire_jb.s,
       entire_jb.e, entire_ib.s, entire_ib.e,
@@ -74,7 +75,7 @@ TaskStatus CarrySyncStageStateMeshTask(MeshData<Real>* current, MeshData<Real>* 
     using TE = parthenon::TopologicalElement;
     const auto source_face = current->PackVariables(std::vector<std::string>{"mhd.b_face"});
     const auto target_face = next->PackVariables(std::vector<std::string>{"mhd.b_face"});
-    parthenon::par_for(
+    host_loops::ParallelFor(
         DEFAULT_LOOP_PATTERN, "PANGU carry synchronized B1 ghosts", parthenon::DevExecSpace(), 0,
         current->NumBlocks() - 1, entire_kb.s, entire_kb.e, entire_jb.s, entire_jb.e, entire_ib.s,
         entire_ib.e + 1, KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
@@ -83,7 +84,7 @@ TaskStatus CarrySyncStageStateMeshTask(MeshData<Real>* current, MeshData<Real>* 
           if (!active)
             target_face(block, TE::F1, 0, k, j, i) = source_face(block, TE::F1, 0, k, j, i);
         });
-    parthenon::par_for(
+    host_loops::ParallelFor(
         DEFAULT_LOOP_PATTERN, "PANGU carry synchronized B2 ghosts", parthenon::DevExecSpace(), 0,
         current->NumBlocks() - 1, entire_kb.s, entire_kb.e, entire_jb.s, entire_jb.e + 1,
         entire_ib.s, entire_ib.e,
@@ -93,7 +94,7 @@ TaskStatus CarrySyncStageStateMeshTask(MeshData<Real>* current, MeshData<Real>* 
           if (!active)
             target_face(block, TE::F2, 0, k, j, i) = source_face(block, TE::F2, 0, k, j, i);
         });
-    parthenon::par_for(
+    host_loops::ParallelFor(
         DEFAULT_LOOP_PATTERN, "PANGU carry synchronized B3 ghosts", parthenon::DevExecSpace(), 0,
         current->NumBlocks() - 1, entire_kb.s, entire_kb.e + 1, entire_jb.s, entire_jb.e,
         entire_ib.s, entire_ib.e,

@@ -34,6 +34,10 @@ add_subdirectory(src)
 
 include(CTest)
 if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
+  if(NOT PANGU_ENABLE_CUDA)
+    add_test(NAME pangu.nr.host_loops COMMAND $<TARGET_FILE:pangu_nr_host_loops>)
+    set_tests_properties(pangu.nr.host_loops PROPERTIES LABELS "numerical-relativity;unit;cpu")
+  endif()
   find_package(Python3 COMPONENTS Interpreter REQUIRED)
   if(PHYSICS STREQUAL "gr" AND METRIC STREQUAL "mks")
     # MKS executables accept only problems on the MKS background.
@@ -491,6 +495,16 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     set_tests_properties(pangu.nr7.puncture_adm PROPERTIES
       LABELS "numerical-relativity;nr7;unit;puncture;adm")
     if(PANGU_ENABLE_HDF5)
+      add_test(
+        NAME pangu.nr6.horizon_multiblock
+        COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tst/regression/nr6_horizon_multiblock.py"
+                --executable $<TARGET_FILE:pangu>
+                --input "${CMAKE_CURRENT_SOURCE_DIR}/tst/input/nr6_stationary_puncture_diagnostics.in"
+                --workdir "${CMAKE_CURRENT_BINARY_DIR}/nr6-horizon-multiblock")
+      set_tests_properties(pangu.nr6.horizon_multiblock PROPERTIES
+        LABELS "numerical-relativity;nr6;regression;gpu;horizon;multi-block"
+        TIMEOUT 600)
       add_test(
         NAME pangu.nr6.waveform_multiblock
         COMMAND "${Python3_EXECUTABLE}"
