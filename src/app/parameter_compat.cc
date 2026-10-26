@@ -1,5 +1,6 @@
 #include "app/parameter_compat.h"
 
+#include <iostream>
 #include <map>
 #include <set>
 #include <sstream>
@@ -8,6 +9,7 @@
 
 #include "estimator/estimator.h"
 #include "geometry_assembly.h"
+#include "globals.hpp"
 #include "pangu_config.h"
 #include "plugin/registry.h"
 #include "utils/error_checking.hpp"
@@ -778,6 +780,26 @@ void NormalizeParameters(parthenon::ParameterInput *pin) {
     pin->SetString("parthenon/mesh", "ix3_bc", "periodic");
     pin->SetString("parthenon/mesh", "ox3_bc", "periodic");
   }
+
+#if PANGU_ENABLE_CUDA && PANGU_ENABLE_MPI
+  if (parthenon::Globals::nranks > 1 &&
+      std::string(geometry::ConfiguredMetricName()) == "z4c" &&
+      std::string(geometry::ConfiguredModeName()) == "sync" &&
+      !pin->DoesBlockExist("hydro") && !pin->DoesBlockExist("mhd") &&
+      (!pin->DoesParameterExist("numerical_relativity", "matter_source") ||
+       pin->GetString("numerical_relativity", "matter_source") == "vacuum")) {
+    // CUDA-aware MPI still pays pointer checks and synchronization for each
+    // individual block boundary. Aggregate the vacuum NR field messages with
+    // Parthenon's native transport before Mesh constructs its buffer caches.
+    // Preserve an explicit false, including one read from an older restart.
+    const bool coalesced = pin->GetOrAddBoolean(
+        "parthenon/mesh", "do_coalesced_comms", true,
+        "Combine inter-rank vacuum Z4c boundary messages");
+    if (parthenon::Globals::my_rank == 0)
+      std::cout << "NR MPI boundary communication = "
+                << (coalesced ? "coalesced" : "individual messages") << '\n';
+  }
+#endif
 
   PARTHENON_REQUIRE(pin->DoesParameterExist("parthenon/job", "problem_id"),
                     "<parthenon/job>/problem_id is required");
