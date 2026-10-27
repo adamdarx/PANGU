@@ -1,0 +1,35 @@
+<parthenon/job>
+problem_id = amr_ghost_probe
+<parthenon/mesh>
+refinement = static
+numlevel = 2
+nghost = 4
+nx1 = 32
+nx2 = 32
+nx3 = 32
+x1min = -2
+x1max = 2
+x2min = -2
+x2max = 2
+x3min = -2
+x3max = 2
+ix1_bc = outflow
+ox1_bc = outflow
+ix2_bc = outflow
+ox2_bc = outflow
+ix3_bc = outflow
+ox3_bc = outflow
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 16
+<parthenon/time>
+tlim = 1
+<parthenon/static_refinement0>
+level = 1
+x1min = -0.75
+x1max = -0.25
+x2min = -0.75
+x2max = -0.25
+x3min = -0.75
+x3max = -0.25

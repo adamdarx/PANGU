@@ -450,6 +450,12 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     add_test(NAME pangu.nr6.amr COMMAND $<TARGET_FILE:pangu_nr6_amr>)
     set_tests_properties(pangu.nr6.amr PROPERTIES
       LABELS "unit;gpu;numerical-relativity;nr6;amr;athenak")
+    add_test(NAME pangu.nr6.amr_ghosts
+      COMMAND $<TARGET_FILE:pangu_nr6_amr_ghosts>
+              -i "${CMAKE_CURRENT_SOURCE_DIR}/tst/input/nr6_amr_ghosts.in")
+    set_tests_properties(pangu.nr6.amr_ghosts PROPERTIES
+      LABELS "numerical-relativity;nr6;amr;analytic;regression"
+      RUN_SERIAL TRUE TIMEOUT 120)
     if(TARGET pangu_nr6_athenak_mesh)
       add_test(NAME pangu.nr6.athenak_mesh
         COMMAND "${Python3_EXECUTABLE}"
@@ -495,13 +501,18 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     set_tests_properties(pangu.nr7.puncture_adm PROPERTIES
       LABELS "numerical-relativity;nr7;unit;puncture;adm")
     if(PANGU_ENABLE_HDF5)
+      set(nr_horizon_mpi_args)
+      if(PANGU_ENABLE_CUDA AND PANGU_ENABLE_MPI AND MPIEXEC_EXECUTABLE)
+        list(APPEND nr_horizon_mpi_args --mpiexec "${MPIEXEC_EXECUTABLE}")
+      endif()
       add_test(
         NAME pangu.nr6.horizon_multiblock
         COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tst/regression/nr6_horizon_multiblock.py"
                 --executable $<TARGET_FILE:pangu>
                 --input "${CMAKE_CURRENT_SOURCE_DIR}/tst/input/nr6_stationary_puncture_diagnostics.in"
-                --workdir "${CMAKE_CURRENT_BINARY_DIR}/nr6-horizon-multiblock")
+                --workdir "${CMAKE_CURRENT_BINARY_DIR}/nr6-horizon-multiblock"
+                ${nr_horizon_mpi_args})
       set_tests_properties(pangu.nr6.horizon_multiblock PROPERTIES
         LABELS "numerical-relativity;nr6;regression;gpu;horizon;multi-block"
         TIMEOUT 600)

@@ -74,24 +74,59 @@ struct ProlongateZ4cHighOrder {
         weights[4] = 0.01708984375;
       }
 
+      // Parthenon restricts same-level fine ghosts only where a corresponding
+      // fine cell exists. The allocation has additional coarse padding, but
+      // its edge/corner combinations need not have been communicated. A
+      // centered tensor stencil there reads unfilled values, even for a
+      // constant field. Keep the stencil inside the coarse image of the fine
+      // allocation, using one-sided Lagrange weights near its outer faces.
+      // Interior interpolation retains the original centered weights.
+      const parthenon::IndexRange coarse_bounds[3] = {cib, cjb, ckb};
+      const int parent[3] = {i, j, k};
+      int first[3] = {i - radius, j - radius, k - radius};
+      parthenon::Real axis_weights[3][2][5]{};
+      for (int axis = 0; axis < DIM; ++axis) {
+        if (ghost == 2 || ghost == 4) {
+          const int lower = coarse_bounds[axis].s - ghost / 2;
+          const int upper_start = coarse_bounds[axis].e + ghost / 2 - points + 1;
+          first[axis] = first[axis] < lower ? lower : first[axis];
+          first[axis] = first[axis] > upper_start ? upper_start : first[axis];
+        }
+        for (int child = 0; child < 2; ++child) {
+          for (int node = 0; node < points; ++node) {
+            if (first[axis] == parent[axis] - radius) {
+              axis_weights[axis][child][node] = weights[child == 0 ? node : ghost - node];
+            } else {
+              const parthenon::Real target = parent[axis] + (child == 0 ? -0.25 : 0.25);
+              parthenon::Real weight = 1.0;
+              for (int other = 0; other < points; ++other) {
+                if (other != node)
+                  weight *= (target - (first[axis] + other)) / (node - other);
+              }
+              axis_weights[axis][child][node] = weight;
+            }
+          }
+        }
+      }
+
       for (int child_k = 0; child_k < (DIM > 2 ? 2 : 1); ++child_k) {
         for (int child_j = 0; child_j < (DIM > 1 ? 2 : 1); ++child_j) {
           for (int child_i = 0; child_i < (DIM > 0 ? 2 : 1); ++child_i) {
             parthenon::Real value = 0.0;
             for (int pk = 0; pk < (DIM > 2 ? points : 1); ++pk) {
               const parthenon::Real wk =
-                  DIM > 2 ? weights[child_k == 0 ? pk : ghost - pk] : 1.0;
+                  DIM > 2 ? axis_weights[2][child_k][pk] : 1.0;
               for (int pj = 0; pj < (DIM > 1 ? points : 1); ++pj) {
                 const parthenon::Real wj =
-                    DIM > 1 ? weights[child_j == 0 ? pj : ghost - pj] : 1.0;
+                    DIM > 1 ? axis_weights[1][child_j][pj] : 1.0;
                 for (int pi = 0; pi < (DIM > 0 ? points : 1); ++pi) {
                   const parthenon::Real wi =
-                      DIM > 0 ? weights[child_i == 0 ? pi : ghost - pi] : 1.0;
+                      DIM > 0 ? axis_weights[0][child_i][pi] : 1.0;
                   value +=
                       wk * wj * wi *
-                      coarse(element, l, m, n, k - (DIM > 2 ? radius : 0) + pk,
-                             j - (DIM > 1 ? radius : 0) + pj,
-                             i - (DIM > 0 ? radius : 0) + pi);
+                      coarse(element, l, m, n, DIM > 2 ? first[2] + pk : k,
+                             DIM > 1 ? first[1] + pj : j,
+                             DIM > 0 ? first[0] + pi : i);
                 }
               }
             }
@@ -212,18 +247,17 @@ struct RestrictZ4cHighOrder {
       }
 
       // Parthenon's restriction index space includes the outer half of the
-      // coarse ghost region.  For nghost=4 those points map to fi=0 (or the
-      // symmetric upper point), where AthenaK's five-point stencil would start
-      // at -1 (or finish one past the allocation).  Use the ordinary two-cell
-      // restriction only for such points; all locations with a complete stencil
-      // retain the AthenaK high-order operator.
+      // coarse ghost region. At its outermost points a centered five-point
+      // stencil leaves the fine allocation. Shift that stencil one-sided,
+      // instead of averaging two cells: geometric fields are point values,
+      // and averaging introduces a second-order error into a high-order halo.
       const bool high_i =
           DIM == 0 || (ref_i >= 0 && ref_i + points <= fine.GetDim(1));
       const bool high_j =
           DIM <= 1 || (ref_j >= 0 && ref_j + points <= fine.GetDim(2));
       const bool high_k =
           DIM <= 2 || (ref_k >= 0 && ref_k + points <= fine.GetDim(3));
-      if (!(high_i && high_j && high_k)) {
+      if (!(high_i && high_j && high_k) && ghost != 4) {
         parthenon::refinement_ops::RestrictAverage::template Do<
             DIM, fine_element, parthenon::TopologicalElement::CC>(
             l, m, n, ck, cj, ci, ckb, cjb, cib, kb, jb, ib, coords,
@@ -231,27 +265,50 @@ struct RestrictZ4cHighOrder {
         return;
       }
 
+      const bool complete[3] = {high_i, high_j, high_k};
+      const int target[3] = {fi, fj, fk};
+      int first[3] = {ref_i, ref_j, ref_k};
+      parthenon::Real boundary_weights[3][5]{};
+      for (int axis = 0; axis < DIM; ++axis) {
+        if (complete[axis])
+          continue;
+        first[axis] = first[axis] < 0 ? 0 : first[axis];
+        const int upper_start = fine.GetDim(axis + 1) - points;
+        first[axis] = first[axis] > upper_start ? upper_start : first[axis];
+        for (int node = 0; node < points; ++node) {
+          parthenon::Real weight = 1.0;
+          for (int other = 0; other < points; ++other) {
+            if (other != node)
+              weight *= (target[axis] + 0.5 - (first[axis] + other)) / (node - other);
+          }
+          boundary_weights[axis][node] = weight;
+        }
+      }
+
       parthenon::Real value = 0.0;
       for (int pk = 0; pk < (DIM > 2 ? points : 1); ++pk) {
         const int weight_k = lower_k ? pk : ghost - pk;
         const parthenon::Real wk =
-            DIM > 2 ? (edge_k && ghost == 4 ? edge_weights[weight_k]
-                                            : weights[weight_k])
+            DIM > 2 ? (!high_k ? boundary_weights[2][pk]
+                              : edge_k && ghost == 4 ? edge_weights[weight_k]
+                                                    : weights[weight_k])
                     : 1.0;
         for (int pj = 0; pj < (DIM > 1 ? points : 1); ++pj) {
           const int weight_j = lower_j ? pj : ghost - pj;
           const parthenon::Real wj =
-              DIM > 1 ? (edge_j && ghost == 4 ? edge_weights[weight_j]
-                                              : weights[weight_j])
+              DIM > 1 ? (!high_j ? boundary_weights[1][pj]
+                                : edge_j && ghost == 4 ? edge_weights[weight_j]
+                                                      : weights[weight_j])
                       : 1.0;
           for (int pi = 0; pi < (DIM > 0 ? points : 1); ++pi) {
             const int weight_i = lower_i ? pi : ghost - pi;
             const parthenon::Real wi =
-                DIM > 0 ? (edge_i && ghost == 4 ? edge_weights[weight_i]
-                                                : weights[weight_i])
+                DIM > 0 ? (!high_i ? boundary_weights[0][pi]
+                                  : edge_i && ghost == 4 ? edge_weights[weight_i]
+                                                        : weights[weight_i])
                         : 1.0;
             value += wk * wj * wi *
-                     fine(element, l, m, n, ref_k + pk, ref_j + pj, ref_i + pi);
+                     fine(element, l, m, n, first[2] + pk, first[1] + pj, first[0] + pi);
           }
         }
       }

@@ -22,6 +22,8 @@ def main():
     parser.add_argument('--executable', type=Path, required=True)
     parser.add_argument('--input', type=Path, required=True)
     parser.add_argument('--workdir', type=Path, required=True)
+    parser.add_argument('--mpiexec', type=Path,
+                        help='Also check four-rank ownership on non-binary block faces')
     args = parser.parse_args()
     args.workdir.mkdir(parents=True, exist_ok=True)
     workdir = Path(tempfile.mkdtemp(prefix='run-', dir=args.workdir.resolve()))
@@ -68,6 +70,32 @@ def main():
     for key in ('irreducible_mass', 'rms_expansion', 'radius'):
         if abs(results[0][key] - results[1][key]) > 1e-10:
             raise RuntimeError(f'Decomposition-dependent horizon {key}: {results}')
+    if args.mpiexec:
+        folder = workdir / 'mpi-nonbinary'
+        folder.mkdir()
+        command = [str(args.mpiexec.resolve()), '-n', '4', str(args.executable.resolve()),
+                   '-i', str(args.input.resolve()), *overrides]
+        for axis in (1, 2, 3):
+            command += [f'parthenon/mesh/nx{axis}=64',
+                        f'parthenon/meshblock/nx{axis}=16',
+                        f'parthenon/mesh/x{axis}min=-2.0833333333333335',
+                        f'parthenon/mesh/x{axis}max=2.0833333333333335']
+        env.update(OMPI_MCA_pml='ob1', OMPI_MCA_btl='self,smcuda,tcp',
+                   OMPI_MCA_opal_cuda_support='true')
+        (folder / 'command.json').write_text(json.dumps(command, indent=2) + '\n')
+        with (folder / 'run.log').open('w') as log:
+            subprocess.run(command, cwd=folder, env=env, stdout=log,
+                           stderr=subprocess.STDOUT, check=True, timeout=180)
+        with (folder / 'diagnostics/nr_horizon.csv').open() as stream:
+            rows = list(csv.DictReader(line for line in stream if not line.startswith('#')))
+        if len(rows) != 1:
+            raise RuntimeError(f'Expected one MPI horizon measurement: {folder}')
+        row = {key: float(value) for key, value in rows[0].items()}
+        if (not all(math.isfinite(value) for value in row.values()) or row['found'] != 1 or
+                row['scaled_rms_expansion'] > 1e-4 or
+                abs(row['irreducible_mass'] - 1.0) > 1e-3):
+            raise RuntimeError(f'Non-binary MPI ownership regression: {row}')
+        results.append({'block': 16, 'ranks': 4, 'nonbinary_faces': True, **row})
     (workdir / 'summary.json').write_text(json.dumps(results, indent=2) + '\n')
     print('NR-6 horizon multiblock CUDA regression: PASS')
     print(json.dumps(results, indent=2))

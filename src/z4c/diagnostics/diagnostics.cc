@@ -916,6 +916,23 @@ HorizonEvaluation EvaluateStarShapedSurface(Mesh* mesh,
     // its device interpolation kernel.  Do the same with the MeshData packs:
     // each GPU thread owns one angular point and searches only the local packed
     // block bounds before applying the unchanged tensor Lagrange stencil.
+    // Ownership must use the shared mesh faces, not faces reconstructed from
+    // ghost-origin + index*dx on the device. CUDA FMA can round the latter
+    // differently on adjacent blocks, overlapping their half-open intervals.
+    // Across MPI ranks this gives two owners and invalidates the whole surface.
+    parthenon::ParArray2DRaw<Real> bounds("NR horizon leaf bounds", adm.GetDim(5), 9);
+    auto host_bounds = Kokkos::create_mirror_view(bounds);
+    for (int block = 0; block < data->NumBlocks(); ++block) {
+      const auto& size = data->GetBlockData(block)->GetBlockPointer()->block_size;
+      for (int direction = 0; direction < 3; ++direction) {
+        const auto axis = static_cast<parthenon::CoordinateDirection>(direction + 1);
+        host_bounds(block, direction) = size.xmin(axis);
+        host_bounds(block, 3 + direction) = size.xmax(axis);
+        host_bounds(block, 6 + direction) =
+            (size.xmax(axis) - size.xmin(axis)) / size.nx(axis);
+      }
+    }
+    Kokkos::deep_copy(bounds, host_bounds);
     parthenon::ParArray2DRaw<Real> query("NR horizon MeshData queries", points.size(), 11);
     auto host_query = Kokkos::create_mirror_view(query);
     for (std::size_t point_index = 0; point_index < points.size(); ++point_index) {
@@ -941,13 +958,10 @@ HorizonEvaluation EvaluateStarShapedSurface(Mesh* mesh,
           Real lower[3]{};
           Real spacing[3]{};
           for (int candidate = 0; candidate < adm.GetDim(5); ++candidate) {
-            const auto& coordinates = adm.GetCoords(candidate);
-            const Real candidate_lower[3] = {coordinates.Xf<X1DIR>(kb.s, jb.s, ib.s),
-                                             coordinates.Xf<X2DIR>(kb.s, jb.s, ib.s),
-                                             coordinates.Xf<X3DIR>(kb.s, jb.s, ib.s)};
-            const Real candidate_upper[3] = {coordinates.Xf<X1DIR>(kb.s, jb.s, ib.e + 1),
-                                             coordinates.Xf<X2DIR>(kb.s, jb.e + 1, ib.s),
-                                             coordinates.Xf<X3DIR>(kb.e + 1, jb.s, ib.s)};
+            const Real candidate_lower[3] = {bounds(candidate, 0), bounds(candidate, 1),
+                                             bounds(candidate, 2)};
+            const Real candidate_upper[3] = {bounds(candidate, 3), bounds(candidate, 4),
+                                             bounds(candidate, 5)};
             const Real global_upper[3] = {global_upper_x1, global_upper_x2, global_upper_x3};
             bool contains = true;
             for (int direction = 0; direction < 3; ++direction) {
@@ -963,9 +977,9 @@ HorizonEvaluation EvaluateStarShapedSurface(Mesh* mesh,
             lower[0] = candidate_lower[0];
             lower[1] = candidate_lower[1];
             lower[2] = candidate_lower[2];
-            spacing[0] = coordinates.Dxc<X1DIR>(kb.s, jb.s, ib.s);
-            spacing[1] = coordinates.Dxc<X2DIR>(kb.s, jb.s, ib.s);
-            spacing[2] = coordinates.Dxc<X3DIR>(kb.s, jb.s, ib.s);
+            spacing[0] = bounds(candidate, 6);
+            spacing[1] = bounds(candidate, 7);
+            spacing[2] = bounds(candidate, 8);
             break;
           }
           if (block < 0)
