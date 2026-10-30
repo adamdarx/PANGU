@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <stdexcept>
 
 #include "z4c/puncture/interpolation.h"
 
@@ -50,5 +51,46 @@ int main() {
     return 1;
   }
   std::cout << "puncture tricubic interpolation PASS: error=" << maximum_error << '\n';
+  // A wider stencil must reproduce its higher-degree polynomial, including
+  // the compactified far field. A cubic-only oracle cannot detect silently
+  // ignoring the selected stencil width.
+  for (const int width : {6, 8}) {
+    auto polynomial = [width](double x, double y, double z) {
+      return (1-x*x)*(1-y*y)*(1-z*z)*
+          (0.25 + 0.125*std::pow(x, width-3) -
+           0.0625*std::pow(y, width-3) + 0.03125*std::pow(z, width-3));
+    };
+    for (int k=0; k<grid.points(); ++k)
+      for (int j=0; j<grid.points(); ++j)
+        for (int i=0; i<grid.points(); ++i)
+          solution.regular_correction[grid.Index(i,j,k)] = polynomial(
+              grid.ComputationalCoordinate(i), grid.ComputationalCoordinate(j),
+              grid.ComputationalCoordinate(k));
+    const SpectralInterpolator wider(solution, width);
+    double error = 0.;
+    for (const auto& point : points) {
+      double q[3];
+      for (int axis=0; axis<3; ++axis) {
+        const long double ratio = static_cast<long double>(point[axis])/grid.scale();
+        q[axis] = 2*ratio/(1+std::sqrt(1+4*ratio*ratio));
+      }
+      const double actual = wider.RegularCorrection(point[0], point[1], point[2]);
+      if (!std::isfinite(actual)) return 1;
+      error = std::max(error, std::abs(actual-polynomial(q[0],q[1],q[2])));
+    }
+    if (error > tolerance) {
+      std::cerr << "puncture " << width << "-point interpolation error=" << error << '\n';
+      return 1;
+    }
+    std::cout << "puncture " << width << "-point interpolation PASS: error=" << error << '\n';
+  }
+  for (const int width : {2, 5, 10, 18}) {
+    try {
+      const SpectralInterpolator invalid(solution, width);
+      std::cerr << "invalid interpolation width accepted: " << width << '\n';
+      return 1;
+    } catch (const std::invalid_argument&) {
+    }
+  }
   return 0;
 }

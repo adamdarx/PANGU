@@ -31,7 +31,8 @@ HamiltonianSolution
 SolveTargetADMMasses(std::vector<Puncture> &punctures,
                      const std::vector<double> &target_masses,
                      const HamiltonianSolveOptions &solve_options,
-                     double mass_tolerance, int maximum_mass_iterations);
+                     double mass_tolerance, int maximum_mass_iterations,
+                     int interpolation_points = 4);
 
 } // namespace pangu::nr::puncture
 

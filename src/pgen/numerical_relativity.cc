@@ -1452,17 +1452,25 @@ NativePunctureData &GetNativePunctureData(ParameterInput *pin) {
       legacy ? 2000
              : pin->GetOrAddInteger("problem",
                                     "puncture_maximum_linear_iterations", 800);
+  const int interpolation_points = pin->GetOrAddInteger(
+      "problem", "puncture_interpolation_points", 4);
+  PARTHENON_REQUIRE((interpolation_points == 4 || interpolation_points == 6 ||
+                    interpolation_points == 8) &&
+                       interpolation_points <= options.grid.points,
+                   "puncture_interpolation_points must be 4, 6, or 8 and no greater "
+                   "than puncture_spectral_points");
   if (tune_target_masses) {
     data.solution = nr::puncture::SolveTargetADMMasses(
-        data.punctures, target_masses, options, legacy_adm_tolerance, 24);
+        data.punctures, target_masses, options, legacy_adm_tolerance, 24,
+        interpolation_points);
   } else {
     data.solution =
         nr::puncture::SolveHamiltonianConstraint(data.punctures, options);
   }
   PARTHENON_REQUIRE(data.solution.converged,
                     "native puncture Hamiltonian-constraint solve did not converge");
-  data.interpolator =
-      std::make_unique<nr::puncture::SpectralInterpolator>(data.solution);
+  data.interpolator = std::make_unique<nr::puncture::SpectralInterpolator>(
+      data.solution, interpolation_points);
   return data;
 }
 

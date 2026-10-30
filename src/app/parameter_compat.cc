@@ -363,6 +363,7 @@ const std::map<std::string, std::set<std::string>> kPanguSchema{
       "puncture_1_spin_z",
       "puncture_spectral_points",
       "puncture_spectral_scale",
+      "puncture_interpolation_points",
       "puncture_nonlinear_tolerance",
       "puncture_linear_tolerance",
       "puncture_maximum_newton_iterations",

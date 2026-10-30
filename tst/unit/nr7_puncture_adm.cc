@@ -76,5 +76,24 @@ int main() {
   std::cout << "native puncture ADM PASS: lapse=" << adm.lapse
             << " trace=" << trace << " bare_mass=" << binary[0].mass
             << " target_error=" << mass_error << '\n';
+  // Mass calibration must use the same interpolated field as initialization.
+  // Nonzero spin/momentum makes u nontrivial, unlike the analytic binary above.
+  std::vector<Puncture> spinning{body};
+  constexpr double spin_target = 1.01;
+  const auto spin_solution = SolveTargetADMMasses(
+      spinning, {spin_target}, options, 1.e-9, 20, 8);
+  if (!spin_solution.converged) {
+    std::cerr << "8-point spinning ADM calibration did not converge\n";
+    return 1;
+  }
+  const SpectralInterpolator spin_interpolator(spin_solution, 8);
+  const double spin_error = std::abs(
+      PunctureEndADMMasses(spinning, spin_interpolator)[0] - spin_target);
+  if (spin_error > 1.e-9) {
+    std::cerr << "8-point spinning ADM mass mismatch: " << spin_error << '\n';
+    return 1;
+  }
+  std::cout << "8-point spinning ADM calibration PASS: target_error="
+            << spin_error << '\n';
   return 0;
 }

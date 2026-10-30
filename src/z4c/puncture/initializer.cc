@@ -64,7 +64,7 @@ PunctureEndADMMasses(const std::vector<Puncture> &punctures,
 HamiltonianSolution SolveTargetADMMasses(
     std::vector<Puncture> &punctures, const std::vector<double> &target_masses,
     const HamiltonianSolveOptions &solve_options, const double mass_tolerance,
-    const int maximum_mass_iterations) {
+    const int maximum_mass_iterations, const int interpolation_points) {
   HamiltonianSolution solution{};
   if (punctures.empty() || punctures.size() != target_masses.size() ||
       !(mass_tolerance > 0.0) || maximum_mass_iterations < 1)
@@ -77,7 +77,7 @@ HamiltonianSolution SolveTargetADMMasses(
     solution = SolveHamiltonianConstraint(punctures, solve_options);
     if (!solution.converged)
       return solution;
-    const SpectralInterpolator interpolator(solution);
+    const SpectralInterpolator interpolator(solution, interpolation_points);
     const auto measured = PunctureEndADMMasses(punctures, interpolator);
     double maximum_relative_error = 0.0;
     for (std::size_t i = 0; i < punctures.size(); ++i) {

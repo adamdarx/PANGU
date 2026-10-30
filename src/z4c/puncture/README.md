@@ -24,3 +24,12 @@ blocks, and constructs maximal conformally flat ADM/Z4c data. Both direct bare
 masses and internal-end target ADM masses are supported. `nr_puncture` is the
 native problem name; `nr_two_punctures` and its historical parameter names are
 accepted as a compatibility interface.
+
+`problem/puncture_interpolation_points` selects 4 (the compatibility default),
+6, or 8 points per axis for mapping the regular correction onto the evolution
+mesh. For spinning data, increase this together with
+`puncture_spectral_points`: refining only the evolution mesh cannot remove
+the fixed spectral-solve and interpolation error. The nonlinear tolerance
+measures the residual at collocation points, not the continuum constraint
+residual between them. The wider stencil affects initialization, not the
+evolution kernels.
