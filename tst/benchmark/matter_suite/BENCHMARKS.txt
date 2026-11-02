@@ -130,6 +130,13 @@ Formation / 3D matter admission
     select h and AMR extents from the stellar/horizon scales, then choose GPU
     count from measured memory. Use existing validated CUDA-aware MPI launch
     and keep HOST_COMM_BUFFERS=OFF. Default QoS=low; no added wall-time limit.
+  Magnetized TOV on AMR additionally requires compatible integrated vector
+    potentials on shared coarse/fine edges before taking the discrete curl.
+    Independently recompute divergence from saved face fields at T=0 and
+    after CT updates; a zeroed cell diagnostic is not evidence of div B=0.
+    tst/regression/sync3_tov_amr_initialization.py tests three refined levels,
+    shifted non-binary block coordinates, zero-field and restart controls,
+    plus unchanged uniform-grid results against an optional reference binary.
 
 State transitions
   planned -> literature_locked -> implemented -> smoke_passed -> formal_running

@@ -431,6 +431,16 @@ void InitializeSyncGRMHDTOV(MeshBlock *block, ParameterInput *pin) {
   const int potential_ni = interior_ib.e - interior_ib.s + 2;
   const int potential_nj = interior_jb.e - interior_jb.s + 2;
   const int potential_nk = interior_kb.e - interior_kb.s + 2;
+  int a1_finer_mask = 0;
+  int a2_finer_mask = 0;
+  for (const auto &neighbor : block->GetNeighbors()) {
+    if (neighbor.loc.level() <= block->loc.level()) continue;
+    const int ox1 = neighbor.offsets(X1DIR);
+    const int ox2 = neighbor.offsets(X2DIR);
+    const int ox3 = neighbor.offsets(X3DIR);
+    if (ox1 == 0) a1_finer_mask |= 1 << ((ox2 + 1) * 3 + (ox3 + 1));
+    if (ox2 == 0) a2_finer_mask |= 1 << ((ox1 + 1) * 3 + (ox3 + 1));
+  }
   ParArray4DRaw<Real> potential("PANGU SYNC magnetized TOV vector potential", 3,
                                 potential_nk, potential_nj, potential_ni);
   block->par_for(
@@ -452,6 +462,45 @@ void InitializeSyncGRMHDTOV(MeshBlock *block, ParameterInput *pin) {
                                   coordinates.Xf<X1DIR>(k, j, i),
                                   coordinates.Xc<X2DIR>(k, j, i),
                                   coordinates.Xf<X3DIR>(k, j, i));
+        // Use the same integrated edge potential on both sides of a coarse /
+        // fine face. Its fine-face fluxes then sum to the coarse curl. Plain
+        // midpoint samples of this nonlinear potential do not commute with
+        // face restriction and inject div B before the first CT update.
+        // Include edge neighbors, as in the existing SANE/eigenmode setup.
+        const auto touches_finer = [](const int mask, const int first,
+                                       const int first_start, const int first_end,
+                                       const int second, const int second_start,
+                                       const int second_end) {
+          const int a = first == first_start ? -1 : (first == first_end + 1 ? 1 : 0);
+          const int b = second == second_start ? -1 : (second == second_end + 1 ? 1 : 0);
+          return (a != 0 && (mask & (1 << ((a + 1) * 3 + 1)))) ||
+                 (b != 0 && (mask & (1 << (3 + b + 1)))) ||
+                 (a != 0 && b != 0 && (mask & (1 << ((a + 1) * 3 + b + 1))));
+        };
+        if (touches_finer(a1_finer_mask, j, interior_jb.s, interior_jb.e,
+                           k, interior_kb.s, interior_kb.e)) {
+          const Real x = coordinates.Xc<X1DIR>(k, j, i);
+          const Real y = coordinates.Xf<X2DIR>(k, j, i);
+          const Real z = coordinates.Xf<X3DIR>(k, j, i);
+          const Real offset = 0.25 * coordinates.Dxc<X1DIR>(k, j, i);
+          potential(0, kk, jj, ii) =
+              0.5 * (magnetic_normalization * TOVVectorPotential<0>(
+                         profile, pressure_cut, magnetic_index, x - offset, y, z) +
+                     magnetic_normalization * TOVVectorPotential<0>(
+                         profile, pressure_cut, magnetic_index, x + offset, y, z));
+        }
+        if (touches_finer(a2_finer_mask, i, interior_ib.s, interior_ib.e,
+                           k, interior_kb.s, interior_kb.e)) {
+          const Real x = coordinates.Xf<X1DIR>(k, j, i);
+          const Real y = coordinates.Xc<X2DIR>(k, j, i);
+          const Real z = coordinates.Xf<X3DIR>(k, j, i);
+          const Real offset = 0.25 * coordinates.Dxc<X2DIR>(k, j, i);
+          potential(1, kk, jj, ii) =
+              0.5 * (magnetic_normalization * TOVVectorPotential<1>(
+                         profile, pressure_cut, magnetic_index, x, y - offset, z) +
+                     magnetic_normalization * TOVVectorPotential<1>(
+                         profile, pressure_cut, magnetic_index, x, y + offset, z));
+        }
         potential(2, kk, jj, ii) = 0.0;
       });
   block->par_for(

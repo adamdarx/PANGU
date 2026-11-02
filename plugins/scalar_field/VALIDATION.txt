@@ -1,0 +1,49 @@
+Nonlinear spherical EMS formal qualification, 2026-11-02
+
+Release 1.0.0. This record qualifies the spherical constrained-PG backend;
+it does not establish nonspherical stability or a 3D Z4c matter coupling.
+
+Action: [R-2(dphi)^2-4V-f F^2]/(16 pi), f=exp(alpha phi^2).
+M_seed=1, Q=.9, V=lambda phi^4/2. Three families: (alpha,lambda)=(5,0),
+(10,0),(5,10). Each reached T=1000 at N8192,16384,32768 on r=[1.1,600],
+with classical RK4, CFL=.3, KO=.05, 12 radial constraint iterations and
+tolerance 1e-11. Failure of nonlinear convergence is a hard runtime error.
+
+Finest-grid results, in the family order above:
+  max exterior |phi-phi_static|:
+    1.134414326e-7, 9.536187014e-8, 2.630882003e-8.
+  final maximum radial mass constraint:
+    1.808532800e-8, 5.960258974e-9, 3.249562130e-8.
+  finite-radius mass plus integrated outgoing-flux residual:
+    -6.321839767e-9, 1.775765738e-8, 1.634707305e-8.
+  maximum charge residual: 2.220446049e-16.
+  phi self-convergence orders: 2.727752, 3.988572, 4.229827.
+  metric N orders: 3.514598, 3.979691, 2.911751.
+  Finest-pair mass-constraint orders: 3.980001, 3.937497, 4.118157.
+  Fourth order is not claimed for every observable.
+
+Independent exterior ODE integrations use DOP853 and measured final horizon
+data as boundary conditions. They verify the remaining exterior equations;
+they do not independently predict those horizon data.
+
+Alpha5 growth observable log|d(phi_h)/dt| gives .07334528838 versus .07335
+in arXiv:2403.02089, a relative difference 6.4235e-5.
+The quartic series is an action-normalized benchmark extension, not a claim
+to reproduce a particular figure of arXiv:2003.01045.
+
+Representative numerical controls passed:
+  Same h, outer radius 600 ->1198.9: exterior L2 change 1.8132e-9,
+    horizon-radius change 1.1369e-13, below the measured spatial differences.
+  CFL .3 ->.15 at N8192: exterior phi RMS change 2.3114e-15 and
+    horizon-radius change 6.6614e-14.
+  Alpha10 N32768 dense history restart from t=600.0019621 to1000:
+    final scalar/geometry difference exactly zero, flux quadrature
+    decimation difference 2.4495e-15. The total budget residual is reported
+    above; a small quadrature error alone is not a conservation result.
+
+Full nine-row error/time table, raw outputs, input/source/executable hashes,
+controls and plots: validation/formal_matter_20261102/EMS_FORMAL_ACCEPTANCE.json,
+EMS_ERROR_AND_TIME.csv and figures/ems_formal_series.pdf; copied with SHA256
+verification to D:/PANGU_TEST_DATA/PANGU_II_NR_DATA/ScalarField/.
+Durations from overlapping laptop qualification are not isolated GPU speed
+benchmarks. See tst/benchmark/matter_suite/BENCHMARKS.txt for scope and criteria.
