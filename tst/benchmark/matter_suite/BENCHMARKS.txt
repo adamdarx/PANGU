@@ -1,0 +1,135 @@
+PANGU II matter and black-hole-formation benchmark protocol
+Frozen initial protocol: 2026-11-02. Status: implementation and qualification.
+
+Scope approved by the user
+  Vacuum: Apples with Apples, isolated punctures, binary punctures.
+  Scalar hair: nonlinear EMS without and with scalar self-interaction.
+  Formation: scalar collapse and head-on neutron-star collision.
+  GRMHD applications: magnetized binary-black-hole accretion and collapse of
+  an unstable magnetized star. Formation has two distinct subcases.
+  Existing qualified vacuum data are retained; this protocol does not restart
+  or cancel existing jobs. New non-core models/initializers belong in plugins.
+
+Primary references and the precise scope of comparison
+  EMS-0: Guo, Wang, Zhang, arXiv:2403.02089, sections II.3 and III.1,
+    equations (23)-(25), figures 2-3. M=1, Q=0.9, f=exp(alpha*phi^2),
+    alpha=5 and 10, V=0; RN seed plus a small neutral scalar perturbation.
+    Growth reference for alpha=5: 0.07335. Compare the same observable,
+    log(abs(d phi_h/dt)), on the resolved linear growth interval.
+    Horizon values read from a plot are illustrative, not raw reference data.
+  EMS-V: Fernandes, arXiv:2003.01045, static massive/self-interacting EMS
+    solutions and spherical stability. Compare action-normalized static ODEs,
+    not a visually similar curve or an unconverted quartic coefficient.
+    Our action is [R-2(dphi)^2-4V-f F^2]/(16*pi), and
+    V=mu^2*phi^2/2+lambda*phi^4/2+nu*phi^6/6. Initial series: alpha=5,
+    lambda=0 and 10, mu=nu=0. This series is our benchmark extension;
+    it is not claimed to reproduce a particular Fernandes figure.
+  SC: Choptuik, PRL 70, 9 (1993), DOI 10.1103/PhysRevLett.70.9;
+    Gundlach, Price, Pullin, arXiv:gr-qc/9307010. Neutral massless scalar
+    collapse from a regular, initially untrapped configuration. Initially
+    qualify dispersion and black-hole formation, not critical exponents.
+  NS-HO: Miller, Suen, Tobias, arXiv:gr-qc/9904041, PRD 63, 121501.
+    Head-on neutron-star collision can promptly collapse for the specified
+    EOS and masses. Their specified case has two 1.4 solar-mass stars,
+    Gamma=2, initial K=1.16e5 cm^5/(g*s^2), initial proper separation 44 km,
+    infall speed sqrt(G*M_star/d), and a York constraint solve after boosted
+    TOV superposition. Preserve shock heating: K is not fixed during evolution.
+    A start-at-rest collision is a different case, not this exact benchmark.
+    Do not substitute a black-hole--neutron-star collision benchmark.
+  BBH-MHD: Kelly et al., arXiv:1710.02132, homogeneous magnetized plasma
+    surrounding an equal-mass binary, orbital-axis-aligned field. Reference
+    the full text for EOS, density normalization, magnetization and duration.
+    IMPORTANT: this paper neglects plasma stress-energy in Einstein's equations.
+    Its rho0=1 and b0=0.1 use an independently rescalable fluid normalization;
+    feeding rho0=1 into the full Einstein source is not the same experiment.
+    Canonical Table 1: d=14.384 M, puncture mass=0.4902240,
+    |P_tang|=0.07563734 M, inward |P_rad|=0.0002963 M, Gamma=4/3,
+    p0/rho0=0.2, specific internal energy=0.6, b0^2/rho0=0.01.
+    Reference merger time is approximately 3514.333 M. A shorter separation
+    pilot must have its own documented initial data and cannot be claimed to
+    reproduce that particular merger time. Paper's Poynting proxy and direct
+    radial electromagnetic energy flux are distinct diagnostics.
+    A circumbinary torus is a different initial-data family: see Farris et al.,
+    arXiv:1207.3354. It must not be silently substituted for the cloud.
+  NS-C: Duez, Shapiro, Yo, arXiv:gr-qc/0401076, and Cook et al.,
+    arXiv:2311.04989, establish collapse-to-BH and post-formation evolution
+    tests. Cook et al.'s D4 model is rotating and uses RNS; a nonrotating
+    unstable TOV model is explicitly a different benchmark. Qualify the
+    nonmagnetic limit before adding a specified weak field and measuring
+    the magnetic contribution to the initial constraint error.
+  TOV control: AsterX, arXiv:2406.11669, section 4.7, Gamma=2, K=100,
+    rho_c=1.28e-3. A field added to an unmagnetized TOV profile is a
+    perturbation, not an exact magnetohydrostatic equilibrium.
+    Independent TOV integration gives M=1.40015973 and areal R=9.58562 for
+    rho_c=1.28e-3. The admission unstable model rho_c=7.993e-3 gives
+    M=1.44759419, R=5.83811, on the descending branch beyond the maximum
+    near rho_c=3.2e-3. Admission uses v_pert=-0.01 and b_norm=1.
+    A short finite run of this model is not yet evidence of BH formation.
+
+Acceptance common to all cases
+  A scheduler exit code or visual appearance alone is not acceptance.
+  Record source/submodule commit, uncommitted diff if any, executable SHA256,
+    actual compiler flags, input, execution command, hardware, rank binding,
+    wall time, cell updates, final physical time and every job identifier.
+  Three physical resolutions, one run per resolution. Record spacings and
+    resolved physical scales, not only root-grid N. Do not demand fourth
+    order at stellar surfaces/shocks; report the measured convergence order.
+  Require finite evolved fields, valid conserved-to-primitive recovery,
+    documented floor/fallback counts and diagnostic masks, and valid horizon
+    residuals. Missing or failed diagnostics remain explicit failures/missing
+    values; never fill them by carrying forward the last successful value.
+  Perform a restart check and a representative boundary/CFL control before
+    declaring the corresponding family accepted. These are numerical controls,
+    not additional physical parameter surveys.
+  Fix acceptance tolerances before inspecting the production comparison.
+    Numerical tolerances below are project targets, not universal standards.
+
+EMS production series (existing 8192-cell pilot can be retained with provenance)
+  One radial block/rank, PG constrained metric, classical RK4, CFL=0.3,
+    KO=0.05, nonlinear constraint iteration tolerance=1e-11.
+  r in [1.1,600], T=1000; N=8192,16384,32768. Report actual h. The scalar
+    seed amplitude is 1e-6, center=10, width=3, P=0. Preserve the original
+    alpha=5 pilot's 12 iterations; use 12 for new production runs.
+  Compare phi and N on the common exterior r in [1.05*r_h,30], using
+    interpolation sufficiently accurate to resolve the measured order.
+  Require: charge relative/absolute residual <1e-12; all nonlinear solves
+    converge; exterior constraint and inter-resolution differences decrease;
+    alpha=5 linear growth agrees with 0.07335 within 1%; highest-resolution
+    exterior phi maximum difference from an independent static ODE <1e-4.
+  The static ODE seeded by measured (r_h,phi_h) checks the remaining exterior
+    equations. It is not an independent prediction of those boundary values.
+  Independently budget finite-radius mass plus its time-integrated flux.
+    Refine history quadrature and compare the residual with its discretization
+    uncertainty. An ADM estimate with only the Coulomb tail excludes scalar
+    energy outside the computational domain.
+  A larger-radius run at the same h checks boundary sensitivity. Radius and
+    extraction windows must also satisfy the characteristic causal estimate.
+  Scalar-hair perturbation runs require a constraint-consistent profile loader
+    and a documented perturbation. No claim of arbitrary-perturbation or
+    nonspherical stability follows from a single spherical perturbation.
+
+Formation / 3D matter admission
+  SC: regular center, initially no trapped surfaces, independent horizon
+    condition, two pulse amplitudes giving dispersion and collapse; then
+    convergence of the BH mass and energy budget. Excision may start only
+    inside a detected trapped region and must remain causally outflowing.
+  NS-HO: constraint-qualified binary fluid initial data, shock-capable thermal
+    EOS, common horizon, remnant mass, GW signal and exterior matter budget.
+  BBH-MHD: magnetic divergence control, single-BH and zero-field limits,
+    qualified binary geometry, matter initialization and stress-energy coupling;
+    horizon accretion rates and EM fluxes at specified extraction radii. A
+    weak-plasma benchmark alone does not establish measurable orbital feedback.
+  NS-C: demonstrate the selected star's unstable branch and controlled inward
+    perturbation; verify AH formation and post-horizon evolution, exterior
+    constraints, mass/flux budget and magnetic divergence.
+  Before large 3D production: measure memory and time per step in a short run,
+    select h and AMR extents from the stellar/horizon scales, then choose GPU
+    count from measured memory. Use existing validated CUDA-aware MPI launch
+    and keep HOST_COMM_BUFFERS=OFF. Default QoS=low; no added wall-time limit.
+
+State transitions
+  planned -> literature_locked -> implemented -> smoke_passed -> formal_running
+    -> completed_pending_analysis -> accepted (or rejected_with_evidence).
+  Remaining unimplemented initial-data families are not submitted as production
+    jobs merely because an input file exists. Each family's diagnostics and
+    limitations must be included in the final error/performance table.

@@ -1,5 +1,10 @@
 # Scalar-field plugin: test fields and coupled spherical EMS
 
+Plugin version: **1.0.0**. This release covers the documented test-field and
+coupled spherical EMS interfaces, including qualified profile import and
+controlled perturbations. Collapse from an initially regular, untrapped center
+is a separate development task and is not provided by this release.
+
 This package evolves actual Klein–Gordon test fields with Parthenon MeshData,
 CUDA kernels, fourth-order finite differences and classical four-stage RK4.
 The `cartesian_flat` and `radial_tortoise` backends retain the fixed-background
@@ -208,6 +213,53 @@ the Gaussian adds a small amount of ADM energy, reported in the history.
 must lie within a trapped region; the code stops if this condition is lost.
 The outer scalar boundary is radiative. The inner region uses outflow
 excision, with no physical data prescribed inside the black hole.
+
+### Relaxed profiles and controlled perturbations
+
+`initial_data=profile` loads an evolved or independently constructed PG profile
+without replacing it by an RN seed. Export a relaxed snapshot with:
+
+```bash
+python3 plugins/scalar_field/export_ems_profile.py run/scalar_field.out1.final.phdf \
+  --input run/input.in --output relaxed.profile
+```
+
+Set `profile_file` to this file and set `amplitude=0` for an unperturbed hold.
+For a perturbation, `amplitude` adds a Gaussian to phi and
+`momentum_amplitude` adds a Gaussian to P; `center` and `width` specify their
+common support. The mass constraint is solved again with the changed scalar
+data. The first active cell retains the imported interior mass, so place the
+perturbation outside the excision boundary. No change is made to the potential
+or Maxwell coupling during this operation.
+
+The file contains four columns `(r,phi,P,m)`, with fourth-order local polynomial
+interpolation. It must cover every target cell center. The loader rejects
+missing coverage, nonfinite data, nonmonotone radii, and mismatched action
+coefficients. In particular, exporting a coarse grid does not authorize
+extrapolation towards the excision boundary when importing a finer grid.
+The first two lines specify the format and model:
+
+```text
+# pangu_ems_profile_v1
+# polynomial exponential 0.9 5 0 0 0 1
+```
+
+The second line lists potential, electromagnetic coupling, Q, alpha, mu^2,
+lambda, nu, and f_a in the action convention above. Profiles imported from a
+relaxed numerical evolution must be described as such; the import operation
+does not turn them into independent exact equilibrium solutions.
+
+The portable CUDA regression checks import/export, action mismatch rejection
+and restart consistency:
+
+```bash
+python3 tst/regression/scalar_profile_import.py \
+  --pangu build-cuda-scalar/src/pangu_scalar --workdir /tmp/ems-profile-check
+```
+
+The work directory must not already exist. Long-time stability and resolution
+convergence remain separate scientific tests under
+`tst/benchmark/matter_suite/BENCHMARKS.txt`.
 
 The coupled fields are:
 

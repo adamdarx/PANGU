@@ -1,6 +1,6 @@
 pangu_register_plugin(
   NAME scalar_field
-  VERSION 0.2.0
+  VERSION 1.0.0
   REQUIRES_PANGU_API 1
   HEADER plugin.h
   TYPE pangu::plugins::scalar_field::Plugin

@@ -5,6 +5,8 @@
 #include "interface/update.hpp"
 #include "pangu/plugin_api/scalar_field.h"
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -30,6 +32,9 @@ struct Model {
   Real cfl = 0.3, dissipation = 0.05, diagnostic_interval = 1;
   bool gaussian = true, axion = false;
   bool constrained_metric = true;
+  // Read-only, action-qualified profile: areal radius, phi, P, m.
+  Kokkos::View<Real **> profile;
+  Real momentum_amplitude = 0;
   int constraint_iterations = 12;
   Real constraint_tolerance = 1.e-11;
   api::PolynomialPotential polynomial;
@@ -43,10 +48,31 @@ struct Model {
                  : polynomial.Gradient(phi, phi * phi);
   }
   KOKKOS_INLINE_FUNCTION Real Phi0(Real r) const {
-    return gaussian ? amplitude * exp(-pow((r - center) / width, 2)) : 0;
+    const Real pulse = (gaussian || profile.extent(0) != 0)
+                           ? amplitude * exp(-pow((r - center) / width, 2)) : 0;
+    return pulse + (profile.extent(0) != 0 ? ProfileValue(r, 1) : 0);
   }
   KOKKOS_INLINE_FUNCTION Real DPhi0(Real r) const {
     return -2 * (r - center) / (width * width) * Phi0(r);
+  }
+  KOKKOS_INLINE_FUNCTION Real ProfileValue(Real r, int component) const {
+    int left = 0, right = static_cast<int>(profile.extent(0)) - 1;
+    while (right - left > 1) {
+      const int middle = (left + right) / 2;
+      if (profile(middle, 0) <= r) left = middle;
+      else right = middle;
+    }
+    const int start = left < 1 ? 0 :
+        (left > static_cast<int>(profile.extent(0)) - 3
+             ? static_cast<int>(profile.extent(0)) - 4 : left - 1);
+    Real value = 0;
+    for (int a = start; a < start + 4; ++a) {
+      Real weight = 1;
+      for (int b = start; b < start + 4; ++b)
+        if (a != b) weight *= (r - profile(b, 0)) / (profile(a, 0) - profile(b, 0));
+      value += weight * profile(a, component);
+    }
+    return value;
   }
   KOKKOS_INLINE_FUNCTION Real MassSource(Real r, Real phi, Real P,
                                         Real dphi, Real m) const {
@@ -57,10 +83,65 @@ struct Model {
   KOKKOS_INLINE_FUNCTION Real InitialMassPerturbationSource(Real r,
                                                            Real dm) const {
     const Real rn = mass - charge * charge / (2 * r);
-    return MassSource(r, Phi0(r), 0, DPhi0(r), rn + dm) -
+    const Real P = momentum_amplitude * exp(-pow((r - center) / width, 2));
+    return MassSource(r, Phi0(r), P, DPhi0(r), rn + dm) -
            charge * charge / (2 * r * r);
   }
 };
+
+void LoadProfile(Model &p, const std::string &path, ParameterInput &pin) {
+  std::ifstream input(path);
+  PARTHENON_REQUIRE(input.good(), "cannot open EMS initial profile");
+  std::string line;
+  std::getline(input, line);
+  PARTHENON_REQUIRE(line == "# pangu_ems_profile_v1",
+                    "EMS profile requires the pangu_ems_profile_v1 format header");
+  // The producer must state the action coefficients, including normalization.
+  std::getline(input, line);
+  std::istringstream metadata(line);
+  std::string marker, potential, coupling;
+  Real charge, alpha, mass_squared, quartic, sextic, decay_constant;
+  PARTHENON_REQUIRE(
+      static_cast<bool>(metadata >> marker >> potential >> coupling >> charge >> alpha >>
+                        mass_squared >> quartic >> sextic >> decay_constant) && marker == "#",
+      "EMS profile metadata must specify potential coupling Q alpha mu_squared lambda nu fa");
+  const auto equal = [](Real a, Real b) {
+    return std::isfinite(a) && fabs(a - b) <= 1.e-13 * (1 + fabs(b));
+  };
+  PARTHENON_REQUIRE(
+      potential == (p.axion ? "axion" : "polynomial") &&
+      coupling == pin.GetString("plugin/scalar_field", "em_coupling") &&
+      equal(charge, p.charge) && equal(alpha, p.electromagnetic.alpha) &&
+      equal(mass_squared, p.polynomial.mass_squared + p.axion_potential.mass_squared) &&
+      equal(quartic, p.polynomial.quartic) && equal(sextic, p.polynomial.sextic) &&
+      equal(decay_constant, p.axion_potential.decay_constant),
+      "EMS initial-profile action coefficients do not match this evolution");
+  std::vector<std::array<Real, 4>> rows;
+  while (std::getline(input, line)) {
+    if (line.empty() || line[0] == '#') continue;
+    std::istringstream stream(line);
+    std::array<Real, 4> row;
+    PARTHENON_REQUIRE(static_cast<bool>(stream >> row[0] >> row[1] >> row[2] >> row[3]),
+                      "invalid EMS initial-profile row");
+    for (Real value : row)
+      PARTHENON_REQUIRE(std::isfinite(value), "nonfinite EMS initial-profile value");
+    PARTHENON_REQUIRE(row[0] > 0 && row[3] > 0 &&
+                          (rows.empty() || row[0] > rows.back()[0]),
+                      "EMS profile requires positive radii/masses and strictly increasing radii");
+    rows.push_back(row);
+  }
+  const Real lo = pin.GetReal("parthenon/mesh", "x1min");
+  const Real hi = pin.GetReal("parthenon/mesh", "x1max");
+  const Real h = (hi - lo) / pin.GetInteger("parthenon/mesh", "nx1");
+  PARTHENON_REQUIRE(rows.size() >= 4 && rows.front()[0] <= lo + h / 2 + 1.e-12 &&
+                        rows.back()[0] >= hi - h / 2 - 1.e-12,
+                    "EMS initial profile does not cover all evolved cell centers");
+  p.profile = Kokkos::View<Real **>("EMS qualified initial profile", rows.size(), 4);
+  auto host = Kokkos::create_mirror_view(p.profile);
+  for (std::size_t i = 0; i < rows.size(); ++i)
+    for (int c = 0; c < 4; ++c) host(i, c) = rows[i][c];
+  Kokkos::deep_copy(p.profile, host);
+}
 
 template <class Value>
 KOKKOS_INLINE_FUNCTION Real D1(const Value &q, int i, int lo, int hi, Real h) {
@@ -232,12 +313,15 @@ void Initialize(Mesh *, ParameterInput *, MeshData<Real> *data) {
       ib.s, ib.e, KOKKOS_LAMBDA(int i) {
         const Real r = u.GetCoords(0).Xc<1>(i);
         u(0, 0, k, j, i) = p.Phi0(r);
-        u(0, 1, k, j, i) = 0;
+        u(0, 1, k, j, i) =
+            (p.profile.extent(0) ? p.ProfileValue(r, 2) : 0) +
+            p.momentum_amplitude * exp(-pow((r - p.center) / p.width, 2));
+        if (p.profile.extent(0)) u(0, 2, k, j, i) = p.ProfileValue(r, 3);
       });
   // Integrate the NONLINEAR Hamiltonian constraint, not an RN metric with
   // scalar energy added afterwards. Subtract its analytic electrovac part
   // during quadrature so an exactly scalar-free RN solution stays exact.
-  Kokkos::parallel_for(
+  if (p.profile.extent(0) == 0) Kokkos::parallel_for(
       "EMS constraint-consistent initial geometry", Kokkos::RangePolicy<DevExecSpace>(0, 1),
       KOKKOS_LAMBDA(int) {
         Real dm = 0;
@@ -552,7 +636,8 @@ InitializeCoupledEMS(plugin::InitContext &context) {
       "quartic", "sextic", "decay_constant", "gb_eta", "em_alpha", "em_linearized",
       "amplitude", "center", "width", "cfl", "initial_data", "em_coupling",
       "dissipation", "diagnostic_interval", "history_file", "metric_evolution",
-      "constraint_iterations", "constraint_tolerance"};
+      "constraint_iterations", "constraint_tolerance", "profile_file",
+      "momentum_amplitude"};
   for (const auto &key : pin.GetParameterNames(block))
     PARTHENON_REQUIRE(keys.count(key) != 0, "unknown spherical_ems parameter: " + key);
   PARTHENON_REQUIRE(pin.GetString("parthenon/job", "problem_id") == "scalar_field",
@@ -565,9 +650,13 @@ InitializeCoupledEMS(plugin::InitContext &context) {
                         !pin.GetOrAddBoolean(block, "em_linearized", false),
                     "full spherical EMS requires one real ell=0 field, gb_eta=0, em_linearized=false");
   Model p;
+  const auto initial = pin.GetOrAddString(block, "initial_data", "gaussian");
+  PARTHENON_REQUIRE(initial == "gaussian" || initial == "zero" || initial == "profile",
+                    "spherical_ems initial_data is gaussian, zero or profile");
   p.mass = pin.GetOrAddReal(block, "bh_mass", 1);
   p.charge = pin.GetOrAddReal(block, "bh_charge", 0.9);
-  p.amplitude = pin.GetOrAddReal(block, "amplitude", 1.e-3);
+  p.amplitude = pin.GetOrAddReal(block, "amplitude", initial == "profile" ? 0 : 1.e-3);
+  p.momentum_amplitude = pin.GetOrAddReal(block, "momentum_amplitude", 0);
   p.center = pin.GetOrAddReal(block, "center", 10);
   p.width = pin.GetOrAddReal(block, "width", 3);
   p.cfl = pin.GetOrAddReal(block, "cfl", 0.3);
@@ -596,12 +685,10 @@ InitializeCoupledEMS(plugin::InitContext &context) {
   PARTHENON_REQUIRE(coupling == "exponential" || coupling == "quadratic", "unknown EMS coupling");
   p.electromagnetic = {pin.GetOrAddReal(block, "em_alpha", 5), false,
                       coupling == "exponential" ? 0 : 1};
-  const auto initial = pin.GetOrAddString(block, "initial_data", "gaussian");
-  PARTHENON_REQUIRE(initial == "gaussian" || initial == "zero", "spherical_ems initial_data is gaussian or zero");
   p.gaussian = initial == "gaussian";
   for (Real value : {p.mass, p.charge, p.amplitude, p.center, p.width, p.cfl,
                      p.dissipation, p.diagnostic_interval, mass, quartic, sextic,
-                     fa, p.electromagnetic.alpha})
+                     fa, p.electromagnetic.alpha, p.momentum_amplitude})
     PARTHENON_REQUIRE(std::isfinite(value), "nonfinite EMS parameter");
   PARTHENON_REQUIRE(p.mass > 0 && fabs(p.charge) < p.mass && p.width > 0 &&
                         p.cfl > 0 && p.cfl <= 0.5 && p.dissipation >= 0 &&
@@ -618,6 +705,14 @@ InitializeCoupledEMS(plugin::InitContext &context) {
                         pin.GetInteger("parthenon/meshblock", "nx1") ==
                             pin.GetInteger("parthenon/mesh", "nx1"),
                     "EMS radial mesh must cover an excised RN horizon and use one block nx1>=16");
+  const auto profile_file = pin.GetOrAddString(block, "profile_file", "");
+  PARTHENON_REQUIRE((initial == "profile") == !profile_file.empty(),
+                    "profile_file must be specified exactly when initial_data=profile");
+  PARTHENON_REQUIRE(initial != "profile" || p.constrained_metric,
+                    "EMS profile initialization requires the constrained metric solver");
+  PARTHENON_REQUIRE(initial != "zero" || p.momentum_amplitude == 0,
+                    "initial_data=zero does not accept a momentum perturbation");
+  if (initial == "profile") LoadProfile(p, profile_file, pin);
   auto package = std::make_shared<StateDescriptor>(label);
   package->AddParam<Model>("ems_model", p);
   package->AddParam<Real>("ems_last_diagnostic", -std::numeric_limits<Real>::max(), true);
