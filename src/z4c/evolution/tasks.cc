@@ -108,6 +108,56 @@ TaskStatus CarrySyncStageStateMeshTask(MeshData<Real>* current, MeshData<Real>* 
   return TaskStatus::complete;
 }
 
+TaskStatus AccumulateSyncRKStateMeshTask(MeshData<Real>* current,
+                                         MeshData<Real>* accumulator, const Real delta,
+                                         const bool initialize) {
+  AccumulateRKStateMeshTask(current, accumulator, delta, initialize);
+  const auto& packages = current->GetParentPointer()->packages;
+  const bool has_mhd = packages.AllPackages().count("mhd") != 0;
+  const bool has_hydro = packages.AllPackages().count("hydro") != 0;
+  if (!has_mhd && !has_hydro)
+    return TaskStatus::complete;
+
+  // The four-stage 2S recurrence uses the accumulated state for EVERY
+  // evolved field. Substituting U^n for this register in the fluid/CT update
+  // does not even preserve a spatially constant solution. Include ghosts:
+  // FOFC also predicts candidates in the first neighboring cell layer.
+  const std::vector<std::string> names{has_mhd ? "mhd.cons" : "hydro.cons"};
+  const auto input = current->PackVariables(names);
+  const auto output = accumulator->PackVariables(names);
+  const auto ib = current->GetBoundsI(IndexDomain::entire);
+  const auto jb = current->GetBoundsJ(IndexDomain::entire);
+  const auto kb = current->GetBoundsK(IndexDomain::entire);
+  host_loops::ParallelFor(
+      DEFAULT_LOOP_PATTERN, "PANGU synchronized fluid RK accumulator", parthenon::DevExecSpace(),
+      0, current->NumBlocks() - 1, 0, input.GetDim(4) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+      KOKKOS_LAMBDA(const int block, const int component, const int k, const int j, const int i) {
+        if (initialize)
+          output(block, component, k, j, i) = input(block, component, k, j, i);
+        else
+          output(block, component, k, j, i) += delta * input(block, component, k, j, i);
+      });
+  if (has_mhd) {
+    using TE = parthenon::TopologicalElement;
+    const auto face_input = current->PackVariables(std::vector<std::string>{"mhd.b_face"});
+    const auto face_output = accumulator->PackVariables(std::vector<std::string>{"mhd.b_face"});
+    for (int direction = 0; direction < 3; ++direction) {
+      const TE face = direction == 0 ? TE::F1 : (direction == 1 ? TE::F2 : TE::F3);
+      host_loops::ParallelFor(
+          DEFAULT_LOOP_PATTERN, "PANGU synchronized CT RK accumulator", parthenon::DevExecSpace(),
+          0, current->NumBlocks() - 1, kb.s, kb.e + (direction == 2), jb.s,
+          jb.e + (direction == 1), ib.s, ib.e + (direction == 0),
+          KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
+            if (initialize)
+              face_output(block, face, 0, k, j, i) = face_input(block, face, 0, k, j, i);
+            else
+              face_output(block, face, 0, k, j, i) += delta * face_input(block, face, 0, k, j, i);
+          });
+    }
+  }
+  return TaskStatus::complete;
+}
+
 void ConfigureSyncIntegrator(Mesh* mesh, parthenon::LowStorageIntegrator& integrator) {
   PARTHENON_REQUIRE(mesh->ndim == 3, "sync Z4c evolution requires a three-dimensional mesh");
   const auto nr = mesh->packages.Get("numerical_relativity");
@@ -312,7 +362,7 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     // kernel.  This mirrors AthenaK's CopyU -> CalcRHS graph and avoids extending
     // the live range of the 22-component accumulator through the RHS evaluation.
     const auto rk_accumulated =
-        accumulator ? tasks.AddTask(matter, AccumulateRKStateMeshTask, current.get(),
+        accumulator ? tasks.AddTask(matter, AccumulateSyncRKStateMeshTask, current.get(),
                                     accumulator.get(), integrator->delta[stage - 1], stage == 1)
                     : matter;
     const Real rhs_time = classical ? tm.time + integrator->c[stage - 1] * dt : tm.time;
@@ -331,8 +381,9 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     if (sync_matter) {
       auto flux_ready = hydro_flux;
       if (sync_grmhd) {
-        const auto corrected = tasks.AddTask(hydro_flux, ApplySyncGRMHDFluxCorrectionMeshTask,
-                                             current.get(), base.get(), gam0, gam1, beta * dt);
+        const auto corrected = tasks.AddTask(hydro_flux | rk_accumulated,
+                                             ApplySyncGRMHDFluxCorrectionMeshTask,
+                                             current.get(), rk_reference, gam0, gam1, beta * dt);
         const auto corner = tasks.AddTask(corrected, mhd::BuildCornerEMFMeshTask, current.get());
         flux_ready = parthenon::AddBoundaryExchangeTasks(
             corner | emf_receive, tasks, emf_boundary, mesh->multilevel,
@@ -342,16 +393,17 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       }
       const auto flux_corrections = parthenon::AddFluxCorrectionTasks(
           flux_ready | hydro_flux_receive, tasks, current, mesh->multilevel);
-      hydro_update = tasks.AddTask(flux_corrections | carried, driver::UpdateCellConservedMeshTask,
-                                   current.get(), base.get(), gam0, gam1, beta * dt, next.get());
+      hydro_update = tasks.AddTask(flux_corrections | carried | rk_accumulated,
+                                   driver::UpdateCellConservedMeshTask,
+                                   current.get(), rk_reference, gam0, gam1, beta * dt, next.get());
       hydro_update = sync_grhd ? tasks.AddTask(hydro_update | matter, ApplySyncGRHDSourcesMeshTask,
                                                current.get(), next.get(), beta * dt)
                                : tasks.AddTask(hydro_update | matter, ApplySyncGRMHDSourcesMeshTask,
                                                current.get(), next.get(), beta * dt);
       if (sync_grmhd)
         magnetic_update =
-            tasks.AddTask(flux_corrections | carried, mhd::UpdateFaceFieldsMeshTask,
-                          current.get(), base.get(), gam0, gam1, beta * dt, next.get());
+            tasks.AddTask(flux_corrections | carried | rk_accumulated, mhd::UpdateFaceFieldsMeshTask,
+                          current.get(), rk_reference, gam0, gam1, beta * dt, next.get());
     }
     const auto boundary_dependency = update | hydro_update | magnetic_update | receive;
     const auto boundaries =
