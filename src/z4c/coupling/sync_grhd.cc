@@ -5,7 +5,9 @@
 
 #include "geometry_assembly.h"
 #include "hydro/hydro_types.h"
+#include "mhd/mhd_types.h"
 #include "z4c/core/finite_difference.h"
+#include "z4c/coupling/sync_grmhd.h"
 #include "reconstruct/hydro_reconstruction.h"
 #include "riemann/registry.h"
 
@@ -107,14 +109,27 @@ template <class Pack> struct FieldDerivativeAccessor {
   }
 };
 
-template <int Order>
+template <int Order, bool Magnetized>
 TaskStatus ApplySyncMatterSources(MeshData<Real>* current, MeshData<Real>* next, const Real dt,
                                   const std::string& conserved_field) {
   const auto z4c = current->PackVariables(std::vector<std::string>{"nr.z4c"});
   const auto adm = current->PackVariables(std::vector<std::string>{"nr.adm"});
-  const auto tmunu = current->PackVariables(std::vector<std::string>{"nr.tmunu"});
+  // Einstein backreaction and the fluid's response to curvature are independent.
+  // nr.tmunu may be zero (test fluid), or include other matter species.  Valencia
+  // sources must always use this fluid's own stage stress-energy instead.
+  const std::string primitive_field = Magnetized ? "mhd.prim" : "hydro.prim";
+  std::vector<std::string> fields{conserved_field, primitive_field};
+  if constexpr (Magnetized) fields.emplace_back("mhd.b_cell");
+  PackIndexMap indices;
+  const auto fluid = current->PackVariables(fields, indices);
+  const int ic = indices.get(conserved_field).first;
+  const int ip = indices.get(primitive_field).first;
+  int ibfield = 0;
+  if constexpr (Magnetized) ibfield = indices.get("mhd.b_cell").first;
   auto conserved = next->PackVariables(std::vector<std::string>{conserved_field});
   const auto mesh = current->GetParentPointer();
+  const auto eos = pangu::eos::ReadRelativistic(
+      *mesh->packages.Get(Magnetized ? "mhd" : "hydro"));
   const auto spacetime = geometry::GetGeometry(mesh->packages);
   const auto ib = current->GetBoundsI(IndexDomain::interior);
   const auto jb = current->GetBoundsJ(IndexDomain::interior);
@@ -124,6 +139,8 @@ TaskStatus ApplySyncMatterSources(MeshData<Real>* current, MeshData<Real>* next,
       DEFAULT_LOOP_PATTERN, "PANGU packed sync GRHD geometric source",
       parthenon::DevExecSpace(), 0, current->NumBlocks() - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
       KOKKOS_LAMBDA(const int block, const int k, const int j, const int i) {
+        // nvcc requires first capture outside an if-constexpr branch.
+        (void)ibfield;
         const auto& coordinates = z4c.GetCoords(block);
         const auto metric = spacetime.MetricAt(geometry::Location::cell_center, block, k, j, i,
                                                coordinates, z4c, adm);
@@ -152,9 +169,31 @@ TaskStatus ApplySyncMatterSources(MeshData<Real>* current, MeshData<Real>* next,
         for (int component = 0; component < 6; ++component)
           derivatives.extrinsic[component] =
               adm(block, Index(ADMComponent::kxx) + component, k, j, i);
+        const relativity::HydroConservedState conserved_state{
+            fluid(block, ic, k, j, i),
+            {fluid(block, ic + 1, k, j, i), fluid(block, ic + 2, k, j, i),
+             fluid(block, ic + 3, k, j, i)},
+            fluid(block, ic + 4, k, j, i)};
+        const Real thermal = fluid(block, ip + 4, k, j, i);
+        const relativity::HydroPrimitiveState primitive_state{
+            fluid(block, ip, k, j, i),
+            {fluid(block, ip + 1, k, j, i), fluid(block, ip + 2, k, j, i),
+             fluid(block, ip + 3, k, j, i)},
+            Magnetized ? eos.PressureFromInternalEnergyDensity(thermal) : thermal};
+        StressEnergy matter{};
+        if constexpr (Magnetized) {
+          const Real inverse_volume = 1.0 / sqrt(metric.spatial_det);
+          const relativity::MHDPrimitiveState magnetic_state{
+              primitive_state,
+              {fluid(block, ibfield, k, j, i) * inverse_volume,
+               fluid(block, ibfield + 1, k, j, i) * inverse_volume,
+               fluid(block, ibfield + 2, k, j, i) * inverse_volume}};
+          matter = BuildSyncGRMHDStressEnergy(magnetic_state, conserved_state, metric);
+        } else {
+          matter = BuildSyncGRHDStressEnergy(primitive_state, conserved_state, metric);
+        }
         Real source[5]{};
-        ComputeSyncGRHDSource(LoadStressEnergy(tmunu, block, k, j, i), metric, derivatives,
-                              source);
+        ComputeSyncGRHDSource(matter, metric, derivatives, source);
         for (int component = 0; component < 5; ++component)
           conserved(block, component, k, j, i) += dt * source[component];
       });
@@ -268,11 +307,17 @@ TaskStatus ApplySyncMatterSourcesMeshTask(MeshData<Real>* current, MeshData<Real
   const int order = current->GetParentPointer()
                         ->packages.Get("numerical_relativity")
                         ->Param<int>("finite_difference_order");
-  if (order == 2)
-    return ApplySyncMatterSources<2>(current, next, dt, conserved_field);
-  if (order == 4)
-    return ApplySyncMatterSources<4>(current, next, dt, conserved_field);
-  return ApplySyncMatterSources<6>(current, next, dt, conserved_field);
+  PARTHENON_REQUIRE(conserved_field == "mhd.cons" || conserved_field == "hydro.cons",
+                    "Valencia geometric sources require a fluid conserved field");
+  auto apply = [&]<bool Magnetized>() {
+    if (order == 2)
+      return ApplySyncMatterSources<2, Magnetized>(current, next, dt, conserved_field);
+    if (order == 4)
+      return ApplySyncMatterSources<4, Magnetized>(current, next, dt, conserved_field);
+    return ApplySyncMatterSources<6, Magnetized>(current, next, dt, conserved_field);
+  };
+  if (conserved_field == "mhd.cons") return apply.template operator()<true>();
+  return apply.template operator()<false>();
 }
 
 void SyncGRHDConservedToPrimitiveBlock(MeshBlockData<Real>* data) {

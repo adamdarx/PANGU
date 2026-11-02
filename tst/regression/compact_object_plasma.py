@@ -8,10 +8,14 @@ import json
 import re
 import resource
 import subprocess
+import sys
 import time
 
 import h5py
 import numpy as np
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from plugins.compact_objects.surface_flux import extract as extract_sphere_flux
 
 _diagnostic_path = Path(__file__).resolve().parents[2] / "plugins/compact_objects/flux_diagnostics.py"
 _spec = importlib.util.spec_from_file_location("plasma_flux_diagnostics", _diagnostic_path)
@@ -69,6 +73,15 @@ def inspect(path):
                     fofc_cells=int(np.count_nonzero(fields["mhd.fofc"])),
                     lorentz_factor_max=max_w, magnetization_max=max_sigma,
                     coordinate_em_energy_flux_density_max=max_em_flux)
+
+
+def check_single_inflow(path):
+    """Reject missing fluid gravity, even when fields remain finite and div B=0."""
+    result = extract_sphere_flux(path, [.6, .8], ntheta=32, nphi=64)
+    assert result["time"] > 0
+    assert all(s["mass_inflow_rate"] > 0 for s in result["spheres"]), \
+        "initially resting single-BH plasma must fall inward outside the horizon"
+    return result
 
 
 def main():
@@ -130,6 +143,9 @@ def main():
             assert divb < 1e-10, divb
             if case == "single_b0":
                 assert final["magnetic_max"] == 0
+            if kind == "single":
+                report["runs"][case]["exterior_flux"] = check_single_inflow(
+                    next(d.glob("*.final.phdf")))
             report["runs"][case].update(status="smoke_passed", initial=first, final=final, max_divb=divb, samples=samples)
             save()
             print(json.dumps({case: report["runs"][case]}), flush=True)

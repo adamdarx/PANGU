@@ -14,6 +14,11 @@ The literature benchmark neglects plasma self-gravity and requires
 `numerical_relativity/matter_source=zero`. The metric still evolves dynamically.
 The initializer rejects using its independently normalized density as a full
 Einstein source. The other stellar-collapse benchmarks test active backreaction.
+Zero backreaction must not remove the fluid's geometric source terms: its
+Valencia update uses its own stress-energy, independently of `nr.tmunu`.
+`tst/regression/sync_test_fluid_gravity.py` checks the initial Schwarzschild
+acceleration against an analytic solution, spatial refinement and a half-time
+control while requiring `nr.tmunu` to remain exactly zero.
 
 `mhd.b_cell` and `mhd.b_face` store the densitized magnetic field. A constant
 densitized field has zero discrete divergence; its physical Eulerian value is
@@ -45,3 +50,27 @@ differs from the `S^z_(1,0)` Poynting proxy in Kelly et al. Equations (4)-(6)
 there use a different placement of the absorbed `4 pi` magnetic normalization.
 Run `python3 tst/regression/compact_object_flux.py` for analytic SR Poynting
 checks, full curved-ADM tensor contractions and sphere-Jacobian checks.
+
+`surface_flux.py` samples these currents on fixed coordinate spheres directly
+from native three-dimensional UniformCartesian PHDF snapshots without ghosts:
+
+```bash
+python3 plugins/compact_objects/surface_flux.py snapshot.phdf \
+  --radii 10 20 30 --center 0 0 0 --ntheta 256 --nphi 512 --output flux.json
+```
+
+The sampler selects the finest leaf, uses tensor cubic interpolation of cell
+values, and integrates with Gauss-Legendre/polar and periodic/azimuthal
+quadrature. Interior stencils become one-sided at block edges, with at most
+half a cell of extrapolation; the report includes these counts. Entire spheres
+must lie inside the mesh. Invalid geometry and uncovered points are rejected.
+Memory use is bounded by a block cache. `--degree 1` selects linear sampling.
+This interpolation order does not upgrade a finite-volume evolution's order.
+Check both spatial and angular convergence of each physical measurement.
+
+`python3 tst/regression/compact_object_surface.py --workdir /tmp/surface-check`
+tests native AMR ownership, curved-metric currents, divergence-theorem surface
+integrals, analytic radial inflow/Poynting flux and spatial/angular convergence.
+Its fixtures are synthetic diagnostics tests, not black-hole evolution data.
+The coordinate-sphere measurement does not supply a moving-horizon accretion
+rate or a gauge-invariant luminosity.

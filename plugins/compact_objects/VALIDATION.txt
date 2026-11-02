@@ -1,0 +1,53 @@
+Compact-object plasma: local qualification, 2026-11-02
+
+Development version 0.1.0. These checks admit short global resource tests;
+they do not qualify production inspiral, horizon accretion or merger results.
+
+Fluid response to curvature is independent of Einstein backreaction. The
+Valencia source reconstructs its own HD/MHD stress from the current stage;
+nr.tmunu remains exactly zero when matter_source=zero.
+
+CUDA qualification on a source tree based on 48b7d21:
+  Initial Schwarzschild acceleration, M=1, alpha=(1+1/(2r))^-2:
+    d(W v^i)/dt = -x^i/[r^3 (1+1/(2r))^7].
+    dx=1/16: relative L2 error 2.396512703e-3.
+    dx=1/32: relative L2 error 5.816277794e-4.
+    Spatial order 2.04277; half-time relative change 5.12686e-8.
+    The unrepaired executable gives outward acceleration and fails.
+  Native TOV initial-force controls, HD and MHD, T=.001:
+    Active-source new/old maximum scaled field difference <=5.1e-21.
+    Passive/active bulk velocity relative difference <=3.8e-9.
+    The bulk is rho>0.1 rhoc, excluding floor-dominated atmosphere.
+    Passive controls restart identical T=0 data; native TOV initialization
+    requires active backreaction and is not changed to allow vacuum stars.
+  RK4 constant HD/MHD, RK3 control and 120-leaf AMR wave:
+    Worst periodic conserved-integral scaled error 1.325e-14.
+    Maximum AMR div B 8.811e-13.
+  Single-BH B=0/B!=0 controls, dx=.03125, T=.02, domain [-1,1]^3:
+    Finite fields, positive primitives, zero Einstein source, identical metric.
+    Maximum div B 6.147e-15. Exterior spheres r=.6,.8 have inward mass flux.
+    Whole-grid baryon inventory includes the protected puncture interior;
+    it is not an exterior conservation budget.
+  Binary-puncture exterior patch, dx=.03125, T=.002:
+    Native two-puncture initialization and fluid evolution complete.
+    Maximum div B 2.598e-15; no recovery mass correction.
+    This local patch does not test either horizon or global boundaries.
+
+Fixed-sphere sampler qualification uses synthetic 120-leaf AMR fixtures:
+  Curved-ADM current and divergence-theorem integrals agree near roundoff.
+  Finest radial mass/EM flux relative errors 8.481e-8 and 7.615e-8.
+  Finest spatial orders 4.114 and 4.014; angular refinement changes
+  1.684e-8 and 9.484e-9, below the spatial errors.
+  These synthetic fixtures are not evolved black-hole data.
+
+Portable checks:
+  tst/regression/sync_test_fluid_gravity.py
+  tst/regression/sync_rk4_conservation.py
+  tst/regression/compact_object_flux.py
+  tst/regression/compact_object_surface.py
+  tst/regression/compact_object_plasma.py
+
+Raw data, binary/source hashes and failed controls are retained under
+validation/formal_matter_20261102 and copied with SHA256 verification to D:.
+LOCAL_FLUID_GRAVITY_ACCEPTANCE.json defines the accepted scope. No GPU timing
+comparison is inferred from overlapping local qualification runs.
