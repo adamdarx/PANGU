@@ -3,7 +3,8 @@
 Plugin version: **1.0.0**. This release covers the documented test-field and
 coupled spherical EMS interfaces, including qualified profile import and
 controlled perturbations. Collapse from an initially regular, untrapped center
-is a separate development task and is not provided by this release.
+is provided by the separate `scalar_collapse` plugin and is not part of this
+package.
 
 This package evolves actual Klein–Gordon test fields with Parthenon MeshData,
 CUDA kernels, fourth-order finite differences and classical four-stage RK4.
@@ -317,3 +318,15 @@ Unavailable growth data are explicitly marked; `log|phi_h|` is not silently
 substituted for that observable. Measured horizon boundary values seed the
 static ODE, so this checks the remaining exterior equations rather than making
 an independent prediction of the horizon values.
+
+Completed three-resolution spherical EMS families can be compared with:
+
+```sh
+python3 plugins/scalar_field/convergence_ems.py /run/n8192 /run/n16384 /run/n32768 --output /results/convergence.json
+```
+
+Run `analyze_ems.py` on each completed directory first. The comparison checks
+matching actions, integrators, domain and final time, then measures both fields
+on the same exterior points using degree-five interpolation. It records each
+observed order; it does not impose fourth order on every observable or replace
+the independent boundary and restart controls.

@@ -12,12 +12,18 @@ As of 2026-11-02 the documented releases are:
   radiation_cooling    1.0.0
   radiation_transport  1.0.0
   scalar_field         1.0.0
+  scalar_collapse      1.0.0
   viscosity            1.0.0
 
 New development plugins, outside the verified release scope above:
-  scalar_collapse      0.1.0 (regular-origin formation and causal excision)
   compact_objects      0.1.0 (puncture-plasma initial data)
 Their qualification results must be recorded before promotion to 1.0.0.
+
+The spherical scalar_collapse release completed analytic massless/massive
+weak-field convergence, massless dispersion/formation, causal excision,
+post-formation restart, strong-field mass convergence and CFL/outer-boundary
+controls. Full-application and standalone final fields agree exactly.
+See scalar_collapse/VALIDATION.txt for the measured scope and evidence.
 
 The plugin API version is independently versioned (currently API 1).
 Physics benchmark acceptance and software interface release are recorded

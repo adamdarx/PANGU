@@ -1,0 +1,38 @@
+Spherical scalar-collapse release qualification, 2026-11-02
+
+Scope: one uniform radial block, regular origin, neutral scalar in the
+documented PG formulation. No seed black hole, electric charge, AMR, critical
+scaling, nonspherical evolution or strong self-interaction claim follows.
+The tested integration is classical RK4 with stage-wise radial constraints.
+
+Completed checks:
+  Exact Minkowski: scalar and mass remain exactly zero.
+  Weak massless pulse through the origin, T20, N256/512/1024:
+    relative radial L2(phi) errors 1.435245362e-3, 9.063023787e-5,
+    5.679811913e-6; measured orders 3.985161 and 3.996077.
+  Weak massive Klein-Gordon pulse, mu0.2, independent Fourier reference:
+    measured orders 3.985095 and 3.996044.
+  A0.02 disperses without a horizon through T40.
+  A0.3 starts untrapped, forms a horizon and uses causal excision through T40.
+    N512: r_h(T40)=4.167054036839, M_irr=2.083527018420.
+  Post-horizon restart from T20 to T40: final active-field difference zero.
+  Strong-field T20 masses, N256/512/1024:
+    2.082012795083905, 2.0827587440840922, 2.0828002586459515.
+    Measured mass-convergence order 4.167388.
+    N1024 relative finite-domain mass-plus-flux residual 3.41414e-7.
+  N512 T20 controls: halve CFL, relative horizon shift 9.84657e-9;
+    double R40 to R80 at fixed spacing, measured horizon shift zero.
+  Full application and standalone, N512 T20:
+    scalar.state, collapse.geometry and collapse.active differences all zero.
+
+Frozen qualification executables:
+  Standalone SHA256 e99291980badf105be9c71824aaf53edd2bdd751db43e9ddfba136edbd615341
+  Full-main SHA256 b6eec8530b5911b95a3e7a1cd34bc3d9eaed69a48181dd91c6a1d93d43e09000
+The version-number promotion changes release metadata, not these equations.
+Timing from overlapping laptop GPU runs is not an isolated speed benchmark.
+
+Evidence directories beneath the archived ScalarField/20261102-formal-qualified:
+  collapse_qualification_v2, collapse_convergence.json,
+  collapse_controls_v1, collapse_full_application,
+  collapse_full_application_status.json, binary hashes and archive manifests.
+Commands and acceptance gates are in tst/regression/scalar_collapse.py.

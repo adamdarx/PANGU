@@ -1,4 +1,4 @@
-Regular-origin Einstein-scalar collapse (development version 0.1.0)
+Regular-origin Einstein-scalar collapse (version 1.0.0)
 
 This independent spherical backend starts with m(0)=0 and no charged or
 puncture black-hole seed. It shares the public scalar potential policy with
@@ -52,9 +52,11 @@ The regression checks exact Minkowski, independent analytic spherical-wave
 convergence through the origin, subcritical dispersion, apparent-horizon
 formation, causal excision and restart. It requires the supplied binary to
 use CUDA. Retain failed runs and their inputs; exit code zero is insufficient.
-Development status persists until those checks and strong-field convergence
-are qualified. Example runs are short admission tests, not production evidence
-of critical exponents or universal scaling.
+Those checks, strong-field convergence and full-application/standalone
+equivalence completed for this release; see VALIDATION.txt. Example runs do
+not establish critical exponents or universal scaling. Strong self-interacting
+formation, AMR and nonspherical evolution are outside the measured release
+qualification; the polynomial potential policy alone does not establish them.
 
 Reference formulation: Ziprick and Kunstatter, arXiv:0812.0993, equations
 (2.21)-(2.24) and (4.2). Their scalar normalization, initial pulse and lapse
