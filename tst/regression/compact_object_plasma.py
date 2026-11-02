@@ -76,9 +76,13 @@ def main():
     p.add_argument("--pangu", required=True, type=Path)
     p.add_argument("--workdir", required=True, type=Path)
     p.add_argument("--time", type=float, default=.02)
+    p.add_argument("--launcher-json", type=json.loads, default=[],
+                   help='MPI launch argv as JSON, e.g. ["mpirun", "-np", "1"]')
     p.add_argument("--cases", nargs="+", choices=["single_b0", "single_b1", "binary_b1"],
                    default=["single_b0", "single_b1", "binary_b1"])
     args = p.parse_args()
+    if not isinstance(args.launcher_json, list) or not all(isinstance(x, str) for x in args.launcher_json):
+        p.error("--launcher-json must be a JSON array of strings")
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     binary, root = args.pangu.resolve(), args.workdir.resolve()
     root.mkdir(parents=True, exist_ok=False)
@@ -103,7 +107,7 @@ def main():
             if case == "single_b0":
                 changes[("plugin/compact_objects", "btilde3")] = 0
             deck.write_text(edit(template, changes))
-            command = [str(binary), "-i", str(deck)]
+            command = args.launcher_json + [str(binary), "-i", str(deck)]
             with (d / "mesh.log").open("w") as out:
                 subprocess.run(command + ["-m", "1"], cwd=d, stdout=out, stderr=subprocess.STDOUT, check=True)
             start = time.monotonic()
