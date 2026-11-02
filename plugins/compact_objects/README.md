@@ -31,6 +31,8 @@ must check the moving protection region against the measured horizons.
 This initial-data plugin does not replace the numerical fluxes, CT algorithm,
 boundary communication, metric evolution or recovery algorithms. Its low
 resolution input is an admission test, not an accepted inspiral/merger result.
+The refinement examples use four ghost cells: Parthenon requires an even
+ghost count with refinement, in addition to the evolution stencil's minimum.
 
 `flux_diagnostics.py` computes pointwise ADM invariants and the coordinate
 currents `sqrt(-g) rho u^i` and `-sqrt(-g) T^i_t(EM)` from native projected

@@ -12,7 +12,7 @@ expected_metric = z4c
 expected_mode = sync
 <parthenon/mesh>
 refinement = static
-nghost = 3
+nghost = 4
 nx1 = 32
 x1min = -32
 x1max = 32
