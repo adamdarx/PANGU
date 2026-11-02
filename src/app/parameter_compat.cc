@@ -11,6 +11,7 @@
 #include "geometry_assembly.h"
 #include "globals.hpp"
 #include "pangu_config.h"
+#include "pangu_provenance.h"
 #include "plugin/registry.h"
 #include "utils/error_checking.hpp"
 

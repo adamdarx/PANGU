@@ -1,0 +1,11 @@
+#ifndef PANGU_PROVENANCE_H_
+#define PANGU_PROVENANCE_H_
+
+// Keep changing source/configuration metadata out of pangu_config.h, which is
+// included by CUDA physics kernels. Only command-line reporting needs this.
+#define PANGU_GIT_COMMIT "@PANGU_GIT_COMMIT@"
+#define PANGU_GIT_DIRTY "@PANGU_GIT_DIRTY@"
+#define PANGU_PARTHENON_COMMIT "@PANGU_PARTHENON_COMMIT@"
+#define PANGU_CONFIGURE_TIME "@PANGU_CONFIGURE_TIME@"
+
+#endif

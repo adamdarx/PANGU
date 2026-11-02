@@ -10,6 +10,7 @@
 #include "geometry_assembly.h"
 #include "pangu.h"
 #include "pangu_config.h"
+#include "pangu_provenance.h"
 #include "plugin/registry.h"
 
 int main(int argc, char** argv) {

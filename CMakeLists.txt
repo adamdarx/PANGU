@@ -29,6 +29,10 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/src/pangu_config.h.in"
   "${CMAKE_CURRENT_BINARY_DIR}/generated/pangu_config.h"
   @ONLY)
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/pangu_provenance.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/generated/pangu_provenance.h"
+  @ONLY)
 
 add_subdirectory(src)
 
