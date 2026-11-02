@@ -1,0 +1,71 @@
+# Fully nonlinear spherical Einstein-Maxwell-scalar: PG slicing, live geometry.
+# r is areal radius (not the tortoise coordinate of the test-field backend).
+<parthenon/job>
+problem_id = scalar_field
+<plugins>
+enabled = scalar_field
+<geometry>
+background = minkowski
+<parthenon/mesh>
+nghost = 2
+refinement = none
+nx1 = 8192
+x1min = 1.1
+x1max = 600.0
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 1
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+<parthenon/meshblock>
+nx1 = 8192
+nx2 = 1
+nx3 = 1
+<parthenon/time>
+integrator = rk4
+tlim = 1000
+nlim = -1
+ncycle_out = 2000
+ncycle_out_mesh = 1000000
+<plugin/scalar_field>
+backend = spherical_ems
+potential = polynomial
+fields = 1
+ell = 0
+bh_mass = 1.0
+bh_charge = 0.9
+mass = 0.0
+quartic = 10.0
+sextic = 0.0
+gb_eta = 0
+em_coupling = exponential
+em_alpha = 5.0
+em_linearized = false
+initial_data = gaussian
+amplitude = 0.000001
+center = 10.0
+width = 3.0
+cfl = 0.3
+dissipation = 0.05
+metric_evolution = constrained
+constraint_iterations = 8
+constraint_tolerance = 1e-11
+diagnostic_interval = 1.0
+history_file = ems_history.csv
+<parthenon/output1>
+file_type = hdf5
+dt = 20
+variables = scalar.phi, scalar.state, scalar.background, ems.geometry, ems.electric, ems.energy, ems.constraints
+ghost_zones = false
+hdf5_compression_level = 0
+<parthenon/output2>
+file_type = rst
+dt = 200
+hdf5_compression_level = 0

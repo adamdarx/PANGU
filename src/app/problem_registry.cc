@@ -9,6 +9,7 @@
 #include "hydro/hydro_package.h"
 #include "mhd/mhd_package.h"
 #include "pangu_config.h"
+#include "plugin/registry.h"
 #include "pgen/hydro_problems.h"
 #include "pgen/mhd_problems.h"
 #include "pgen/numerical_relativity.h"
@@ -368,6 +369,16 @@ const std::map<std::string, ProblemDefinition> &Registry() {
     }
   }(std::bool_constant<geometry::ConfiguredGeometryIsSynchronized()>{},
     registry);
+  // A scalar-only plugin owns its initialization and stage graph. This entry
+  // supplies a package anchor without manufacturing an unused fluid package.
+  if (plugin::IsCompiled("scalar_field")) {
+    registry.try_emplace("scalar_field", ProblemDefinition{
+        [](parthenon::MeshBlock*, parthenon::ParameterInput*) {}, nullptr,
+        nullptr, nullptr, nullptr,
+        [](parthenon::ParameterInput*) {
+          return std::make_shared<parthenon::StateDescriptor>("scalar_background");
+        }});
+  }
   return registry;
 }
 

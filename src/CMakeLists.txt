@@ -616,6 +616,20 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
   endif()
 endif()
 
+if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/scalar_field/plugin.cmake")
+  # Small reproduction driver: build only this target to avoid compiling
+  # unrelated fluid/NR packages when testing scalar equations on a laptop.
+  add_executable(pangu_scalar EXCLUDE_FROM_ALL
+    "${CMAKE_SOURCE_DIR}/plugins/scalar_field/standalone.cc"
+    "${CMAKE_SOURCE_DIR}/plugins/scalar_field/plugin.cc"
+    "${CMAKE_SOURCE_DIR}/plugins/scalar_field/ems_coupled.cc")
+  target_include_directories(pangu_scalar PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}/../generated")
+  target_link_libraries(pangu_scalar PRIVATE Parthenon::parthenon)
+  target_compile_features(pangu_scalar PRIVATE cxx_std_20)
+endif()
+
 find_program(PANGU_CLANG_FORMAT clang-format)
 if(PANGU_CLANG_FORMAT)
   set(PANGU_FORMAT_SOURCES ${PANGU_SOURCES})

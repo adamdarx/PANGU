@@ -1,0 +1,60 @@
+# Scalar-field test backend. x1 is tortoise radius, state=(r phi, d_t(r phi)).
+<parthenon/job>
+problem_id = scalar_field
+<plugins>
+enabled = scalar_field
+<geometry>
+background = minkowski
+<parthenon/mesh>
+nghost = 2
+refinement = none
+numlevel = 1
+nx1 = 2048
+x1min = -60
+x1max = 400
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 1
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+<parthenon/meshblock>
+nx1 = 128
+nx2 = 1
+nx3 = 1
+<parthenon/time>
+integrator = rk4
+tlim = 400
+nlim = -1
+ncycle_out = 1000
+ncycle_out_mesh = 1000000
+<plugin/scalar_field>
+backend = radial_tortoise
+potential = polynomial
+fields = 1
+bh_mass = 1
+bh_charge = 0
+mass = 0
+quartic = 0
+sextic = 0
+gb_eta = 1
+gb_coupling = linear
+em_alpha = 0
+initial_data = zero
+cfl = 0.4
+<parthenon/output1>
+file_type = hdf5
+dt = 20
+variables = scalar.phi, scalar.state, scalar.background
+ghost_zones = false
+hdf5_compression_level = 0
+<parthenon/output2>
+file_type = rst
+dt = 150
+hdf5_compression_level = 0
