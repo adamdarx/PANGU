@@ -1,0 +1,221 @@
+# Low-resolution admission only; not a completed inspiral benchmark.
+<parthenon/job>
+problem_id = plugin_grmhd
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<plugins>
+enabled = compact_objects
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+<parthenon/mesh>
+refinement = static
+nghost = 3
+nx1 = 32
+x1min = -32
+x1max = 32
+ix1_bc = nr_outflow
+ox1_bc = nr_outflow
+nx2 = 32
+x2min = -32
+x2max = 32
+ix2_bc = nr_outflow
+ox2_bc = nr_outflow
+nx3 = 32
+x3min = -32
+x3max = 32
+ix3_bc = nr_outflow
+ox3_bc = nr_outflow
+<parthenon/meshblock>
+nx1 = 8
+nx2 = 8
+nx3 = 8
+<parthenon/time>
+integrator = rk4
+tlim = 0.2
+nlim = -1
+ncycle_out = 10
+ncycle_out_mesh = 1000000
+<numerical_relativity>
+cfl = 0.2
+finite_difference_order = 4
+rk4_variant = athenak
+matter_source = zero
+dissipation = 0.1
+chi_div_floor = 1e-5
+damp_kappa1 = 0.02
+damp_kappa2 = 0
+tracker_enabled = false
+weyl_enabled = false
+waveform_enabled = false
+horizon_enabled = false
+<mhd>
+physics = gr
+eos = ideal
+gamma = 1.3333333333333333
+reconstruct = plm
+rsolver = hlle
+cfl = 0.2
+density_floor = 1e-12
+pressure_floor = 1e-14
+sigma_max = 1e8
+gamma_max = 1000
+fofc = true
+nscalars = 0
+puncture_protection = chi_atmosphere
+puncture_chi_threshold = 0.02
+puncture_density = 1
+puncture_pressure = 0.2
+<plugin/compact_objects>
+model = puncture_plasma
+density = 1
+pressure = 0.2
+btilde1 = 0
+btilde2 = 0
+btilde3 = 0.1
+<problem>
+puncture_spectral_points = 24
+puncture_spectral_scale = 8
+puncture_nonlinear_tolerance = 1e-10
+puncture_linear_tolerance = 1e-11
+puncture_maximum_newton_iterations = 16
+puncture_maximum_linear_iterations = 2000
+puncture_interpolation_points = 8
+initial_lapse_psi_exponent = -2
+constraint_mask_radius = 0.1
+puncture_count = 2
+puncture_0_mass = 0.490224
+puncture_0_center_x = 7.192
+puncture_0_center_y = 0
+puncture_0_center_z = 0
+puncture_0_momentum_x = -0.0002963
+puncture_0_momentum_y = 0.07563734
+puncture_0_momentum_z = 0
+puncture_1_mass = 0.490224
+puncture_1_center_x = -7.192
+puncture_1_center_y = 0
+puncture_1_center_z = 0
+puncture_1_momentum_x = 0.0002963
+puncture_1_momentum_y = -0.07563734
+puncture_1_momentum_z = 0
+
+<parthenon/static_refinement0>
+level = 1
+x1min = -8.808
+x1max = 23.192
+x2min = -16.0
+x2max = 16.0
+x3min = -16.0
+x3max = 16.0
+
+<parthenon/static_refinement1>
+level = 2
+x1min = -0.8079999999999998
+x1max = 15.192
+x2min = -8.0
+x2max = 8.0
+x3min = -8.0
+x3max = 8.0
+
+<parthenon/static_refinement2>
+level = 3
+x1min = 3.192
+x1max = 11.192
+x2min = -4.0
+x2max = 4.0
+x3min = -4.0
+x3max = 4.0
+
+<parthenon/static_refinement3>
+level = 4
+x1min = 5.192
+x1max = 9.192
+x2min = -2.0
+x2max = 2.0
+x3min = -2.0
+x3max = 2.0
+
+<parthenon/static_refinement4>
+level = 5
+x1min = 6.192
+x1max = 8.192
+x2min = -1.0
+x2max = 1.0
+x3min = -1.0
+x3max = 1.0
+
+<parthenon/static_refinement5>
+level = 6
+x1min = 6.692
+x1max = 7.692
+x2min = -0.5
+x2max = 0.5
+x3min = -0.5
+x3max = 0.5
+
+<parthenon/static_refinement6>
+level = 1
+x1min = -23.192
+x1max = 8.808
+x2min = -16.0
+x2max = 16.0
+x3min = -16.0
+x3max = 16.0
+
+<parthenon/static_refinement7>
+level = 2
+x1min = -15.192
+x1max = 0.8079999999999998
+x2min = -8.0
+x2max = 8.0
+x3min = -8.0
+x3max = 8.0
+
+<parthenon/static_refinement8>
+level = 3
+x1min = -11.192
+x1max = -3.192
+x2min = -4.0
+x2max = 4.0
+x3min = -4.0
+x3max = 4.0
+
+<parthenon/static_refinement9>
+level = 4
+x1min = -9.192
+x1max = -5.192
+x2min = -2.0
+x2max = 2.0
+x3min = -2.0
+x3max = 2.0
+
+<parthenon/static_refinement10>
+level = 5
+x1min = -8.192
+x1max = -6.192
+x2min = -1.0
+x2max = 1.0
+x3min = -1.0
+x3max = 1.0
+
+<parthenon/static_refinement11>
+level = 6
+x1min = -7.692
+x1max = -6.692
+x2min = -0.5
+x2max = 0.5
+x3min = -0.5
+x3max = 0.5
+
+<parthenon/output1>
+file_type = hdf5
+dt = 0.1
+variables = nr.z4c,nr.adm,nr.constraints,nr.constraint_mask,nr.tmunu,mhd.prim,mhd.cons,mhd.b_cell,mhd.b_face,mhd.divb,mhd.fofc,mhd.recovery
+hdf5_compression_level = 0
+ghost_zones = false
+<parthenon/output2>
+file_type = rst
+dt = 0.1
+hdf5_compression_level = 0

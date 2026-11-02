@@ -631,6 +631,17 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/scalar_field/plugin.cmake")
 endif()
 
 find_program(PANGU_CLANG_FORMAT clang-format)
+if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/scalar_collapse/plugin.cmake")
+  add_executable(pangu_collapse EXCLUDE_FROM_ALL
+    "${CMAKE_SOURCE_DIR}/plugins/scalar_collapse/standalone.cc"
+    "${CMAKE_SOURCE_DIR}/plugins/scalar_collapse/plugin.cc")
+  target_include_directories(pangu_collapse PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}/../generated")
+  target_link_libraries(pangu_collapse PRIVATE Parthenon::parthenon)
+  target_compile_features(pangu_collapse PRIVATE cxx_std_20)
+endif()
+
 if(PANGU_CLANG_FORMAT)
   set(PANGU_FORMAT_SOURCES ${PANGU_SOURCES})
   # CMake @ONLY placeholders are not valid C++ tokens and clang-format inserts

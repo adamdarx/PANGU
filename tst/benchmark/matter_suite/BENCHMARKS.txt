@@ -28,6 +28,10 @@ Primary references and the precise scope of comparison
     Gundlach, Price, Pullin, arXiv:gr-qc/9307010. Neutral massless scalar
     collapse from a regular, initially untrapped configuration. Initially
     qualify dispersion and black-hole formation, not critical exponents.
+    PG formulation: Ziprick and Kunstatter, arXiv:0812.0993, equations
+    (2.21)-(2.24), horizon condition (4.2). Our even-shell initial data and
+    outer-normalized lapse differ from their pulse and center-normalized
+    lapse; no unconverted critical threshold or coordinate time comparison.
   NS-HO: Miller, Suen, Tobias, arXiv:gr-qc/9904041, PRD 63, 121501.
     Head-on neutron-star collision can promptly collapse for the specified
     EOS and masses. Their specified case has two 1.4 solar-mass stars,

@@ -303,3 +303,17 @@ workspace at `PANGU_NR/validation/scalar_field_20261102/`.
 Run `python3 validation/scalar_field_20261102/validate_local.py` from that
 workspace to reproduce the CUDA suites after building `pangu_scalar`.
 The independent reference scripts require NumPy, SciPy, SymPy, h5py and Matplotlib.
+
+For a completed spherical EMS run whose deck is saved as `input.in`, run
+`python3 plugins/scalar_field/analyze_ems.py /path/to/run`. The script writes
+`analysis_ems.json` and `static_reference_v2.npz`. It reads the actual potential
+and coupling coefficients, compares the exterior with a static ODE in a
+different gauge, and estimates finite-radius mass-plus-flux balance using the
+recorded nonuniform history times. Its Simpson/decimation comparison diagnoses
+history quadrature resolution; it does not replace a denser-output control when
+that comparison is unresolved. The alpha=5, M=1, Q=0.9 massless exponential
+benchmark uses `log|d phi_h/dt|` in a documented linear-amplitude/time window.
+Unavailable growth data are explicitly marked; `log|phi_h|` is not silently
+substituted for that observable. Measured horizon boundary values seed the
+static ODE, so this checks the remaining exterior equations rather than making
+an independent prediction of the horizon values.

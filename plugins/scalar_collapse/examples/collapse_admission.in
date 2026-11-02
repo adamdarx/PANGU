@@ -1,0 +1,56 @@
+# Regular-origin PG Einstein-scalar collapse; no seed black hole.
+<parthenon/job>
+problem_id = scalar_collapse
+<plugins>
+enabled = scalar_collapse
+<parthenon/mesh>
+nghost = 2
+refinement = none
+nx1 = 512
+x1min = 0
+x1max = 40
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 1
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+<parthenon/meshblock>
+nx1 = 512
+nx2 = 1
+nx3 = 1
+<parthenon/time>
+integrator = rk4
+tlim = 40
+nlim = -1
+ncycle_out = 1000
+ncycle_out_mesh = 1000000
+<plugin/scalar_collapse>
+amplitude = 0.3
+center = 8
+width = 1.5
+mass = 0
+quartic = 0
+sextic = 0
+cfl = 0.2
+dissipation = 0.05
+constraint_iterations = 32
+constraint_tolerance = 1e-11
+diagnostic_interval = 0.25
+history_file = collapse_history.csv
+<parthenon/output1>
+file_type = hdf5
+dt = 5
+variables = scalar.state,scalar.phi,collapse.geometry,collapse.constraints,collapse.active
+hdf5_compression_level = 0
+ghost_zones = false
+<parthenon/output2>
+file_type = rst
+dt = 10
+hdf5_compression_level = 0

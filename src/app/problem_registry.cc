@@ -9,6 +9,7 @@
 #include "hydro/hydro_package.h"
 #include "mhd/mhd_package.h"
 #include "pangu_config.h"
+#include "pangu/plugin_api/initial_data.h"
 #include "plugin/registry.h"
 #include "pgen/hydro_problems.h"
 #include "pgen/mhd_problems.h"
@@ -254,6 +255,15 @@ const std::map<std::string, ProblemDefinition> &Registry() {
                                     mhd::ApplySourcesBlockTask, nr::Initialize,
                                     mhd::Initialize})
               .second;
+      static const bool inserted_plugin_grmhd =
+          registry
+              .emplace("plugin_grmhd",
+                       ProblemDefinition{plugin_api::InitializeBlockFromPlugin, nullptr,
+                                         mhd::CalculateFluxesBlockTask,
+                                         mhd::ApplyFirstOrderFluxCorrectionBlockTask,
+                                         mhd::ApplySourcesBlockTask, nr::Initialize,
+                                         mhd::Initialize})
+              .second;
       static const bool inserted_sync_grmhd_tov =
           registry
               .emplace(
@@ -361,7 +371,7 @@ const std::map<std::string, ProblemDefinition> &Registry() {
           inserted_minkowski && inserted_sync_grhd_shock &&
           inserted_sync_grhd_linear_wave && inserted_sync_grhd_tov &&
           inserted_sync_grmhd_tov && inserted_sync_grmhd_boosted_puncture &&
-          inserted_sync_grmhd_linear_wave && inserted_schwarzschild &&
+          inserted_sync_grmhd_linear_wave && inserted_plugin_grmhd && inserted_schwarzschild &&
           inserted_schwarzschild_ks && inserted_boosted_puncture &&
           inserted_puncture && inserted_two_punctures && inserted_linear_wave &&
           inserted_gauge_wave && inserted_shifted_gauge_wave &&
@@ -377,6 +387,14 @@ const std::map<std::string, ProblemDefinition> &Registry() {
         nullptr, nullptr, nullptr,
         [](parthenon::ParameterInput*) {
           return std::make_shared<parthenon::StateDescriptor>("scalar_background");
+        }});
+  }
+  if (plugin::IsCompiled("scalar_collapse")) {
+    registry.try_emplace("scalar_collapse", ProblemDefinition{
+        [](parthenon::MeshBlock*, parthenon::ParameterInput*) {}, nullptr,
+        nullptr, nullptr, nullptr,
+        [](parthenon::ParameterInput*) {
+          return std::make_shared<parthenon::StateDescriptor>("collapse_background");
         }});
   }
   return registry;
