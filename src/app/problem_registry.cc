@@ -257,7 +257,7 @@ const std::map<std::string, ProblemDefinition> &Registry() {
               .second;
       static const bool inserted_plugin_grmhd =
           registry
-              .emplace("plugin_grmhd",
+              .emplace("sync_plugin_grmhd",
                        ProblemDefinition{plugin_api::InitializeBlockFromPlugin, nullptr,
                                          mhd::CalculateFluxesBlockTask,
                                          mhd::ApplyFirstOrderFluxCorrectionBlockTask,

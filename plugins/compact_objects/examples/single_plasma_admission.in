@@ -1,6 +1,6 @@
 # Low-resolution admission only; not a completed inspiral benchmark.
 <parthenon/job>
-problem_id = plugin_grmhd
+problem_id = sync_plugin_grmhd
 <pangu>
 strict_parameters = true
 compatibility_mode = native

@@ -1,7 +1,7 @@
 # Compact-object matter initial data
 
 Development version 0.1.0. This plugin supplies initial data to the native Z4c
-and Valencia GRMHD evolution graph through `problem_id=plugin_grmhd`.
+and Valencia GRMHD evolution graph through `problem_id=sync_plugin_grmhd`.
 It is compiled for `PHYSICS=gr METRIC=z4c MODE=sync`.
 
 The initial `puncture_plasma` model combines the existing native puncture

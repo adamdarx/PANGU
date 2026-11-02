@@ -79,8 +79,8 @@ std::shared_ptr<parthenon::StateDescriptor> Plugin::Initialize(plugin::InitConte
   const std::set<std::string> keys{"model", "density", "pressure", "btilde1", "btilde2", "btilde3"};
   for (const auto &key : input.GetParameterNames(section))
     PARTHENON_REQUIRE(keys.count(key) != 0, "unknown compact_objects parameter: " + key);
-  PARTHENON_REQUIRE(input.GetString("parthenon/job", "problem_id") == "plugin_grmhd",
-                    "compact_objects requires problem_id=plugin_grmhd");
+  PARTHENON_REQUIRE(input.GetString("parthenon/job", "problem_id") == "sync_plugin_grmhd",
+                    "compact_objects requires problem_id=sync_plugin_grmhd");
   PARTHENON_REQUIRE(geometry::ConfiguredGeometryIsSynchronized(),
                     "compact_objects requires METRIC=z4c MODE=sync");
   PARTHENON_REQUIRE(input.GetOrAddString(section, "model", "puncture_plasma") == "puncture_plasma",
