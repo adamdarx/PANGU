@@ -1,6 +1,7 @@
 #include "app/problem_registry.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <map>
 #include <sstream>
 #include <type_traits>
@@ -405,6 +406,11 @@ void ConfigureSynchronizedProblem(
     [[maybe_unused]] const std::string &problem_id,
     [[maybe_unused]] parthenon::ApplicationInput *app_input) {
   if constexpr (Synchronized) {
+    if (std::getenv("AWA_FAMILY"))
+      app_input->PostInitialization = [](parthenon::MeshBlock *block,
+          parthenon::ParameterInput *) {
+        pangu::nr::WriteAwADiagnostics(block->pmy_mesh, 0.0, 0);
+      };
     pgen::RegisterNumericalRelativityReflectingBoundaries(app_input);
     pgen::RegisterNumericalRelativityExtrapolationBoundaries(app_input);
     pgen::RegisterNumericalRelativityOutflowBoundaries(app_input);
@@ -440,11 +446,6 @@ void ConfigureProblem(const std::string &problem_id,
   }
   app_input->ProblemGenerator = it->second.generator;
   app_input->UserWorkAfterLoop = it->second.after_loop;
-  if (std::getenv("AWA_FAMILY"))
-    app_input->PostInitialization = [](parthenon::MeshBlock *block,
-        parthenon::ParameterInput *) {
-      pangu::nr::WriteAwADiagnostics(block->pmy_mesh, 0.0, 0);
-    };
   const bool synchronized_geometry =
       geometry::ConfiguredGeometryIsSynchronized();
   const bool numerical_relativity_problem = problem_id.rfind("nr_", 0) == 0;
