@@ -46,15 +46,20 @@ def inspect(path):
         assert np.max(abs(fields["nr.tmunu"])) == 0, "test plasma must not gravitate"
         rho, energy = fields["mhd.prim"][:, 0], fields["mhd.prim"][:, 4]
         assert np.min(rho) > 0 and np.min(energy) > 0
+        chi_min = float(fields["nr.z4c"][:, 0].min())
+        lapse_min = float(fields["nr.z4c"][:, 18].min())
+        assert chi_min > 0 and lapse_min > 0, "invalid evolved puncture geometry"
         h = {axis: np.diff(f["Locations/" + axis][:], axis=-1) for axis in "xyz"}
         volume = h["z"][:, :, None, None] * h["y"][:, None, :, None] * h["x"][:, None, None, :]
-        max_w, max_sigma, max_em_flux = 1., 0., 0.
+        max_w, max_sigma, max_em_flux, min_det = 1., 0., 0., float("inf")
         # Process blocks separately to avoid duplicating an entire 3D AMR
         # snapshot as 4-tensors in a laptop's host memory.
         for block in range(len(rho)):
             metric = np.empty(rho[block].shape + (3, 3))
             for component, (i, j) in enumerate(((0, 0), (0, 1), (0, 2), (1, 1), (1, 2), (2, 2))):
                 metric[..., i, j] = metric[..., j, i] = fields["nr.adm"][block, component]
+            min_det = min(min_det, float(np.linalg.det(metric).min()))
+            assert min_det > 0, "invalid spatial metric determinant"
             diagnostic = _diagnostics.flux_densities(
                 rho[block], np.moveaxis(fields["mhd.prim"][block, 1:4], 0, -1),
                 np.moveaxis(fields["mhd.b_cell"][block], 0, -1), metric,
@@ -65,6 +70,7 @@ def inspect(path):
         return dict(time=float(f["Info"].attrs["Time"]), blocks=int(f["Info"].attrs["NumMeshBlocks"]),
                     min_dx=float(min(np.min(s) for s in h.values())),
                     rho_min=float(rho.min()), rho_max=float(rho.max()),
+                    chi_min=chi_min, lapse_min=lapse_min, spatial_det_min=min_det,
                     divb_max=float(np.max(abs(fields["mhd.divb"]))),
                     magnetic_max=float(np.max(abs(fields["mhd.b_cell"]))),
                     baryon_mass=float(np.sum(fields["mhd.cons"][:, 0] * volume)),

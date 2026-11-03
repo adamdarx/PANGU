@@ -45,6 +45,10 @@ rk4_variant = athenak
 matter_source = zero
 dissipation = 0.1
 chi_div_floor = 1e-5
+# Keep the evolved conformal factor positive for the GRMHD metric conversion.
+# This is separate from the RHS division floor and fluid protection threshold.
+floor_chi = true
+chi_min_floor = 1e-12
 damp_kappa1 = 0.02
 damp_kappa2 = 0
 tracker_enabled = false

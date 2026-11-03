@@ -51,3 +51,22 @@ Raw data, binary/source hashes and failed controls are retained under
 validation/formal_matter_20261102 and copied with SHA256 verification to D:.
 LOCAL_FLUID_GRAVITY_ACCEPTANCE.json defines the accepted scope. No GPU timing
 comparison is inferred from overlapping local qualification runs.
+
+2026-11-03 longer local puncture admission:
+  The examples now explicitly enable the native Z4c positivity guard,
+  floor_chi=true, chi_min_floor=1e-12. This is distinct from chi_div_floor
+  in the RHS and from the fluid protection threshold chi=0.02.
+  Without this guard the single-BH small-domain run aborts near T=0.4
+  in the synchronized metric conversion. The last saved chi approaches
+  zero at the eight cells nearest the puncture; lapse remains positive.
+  Zero-gradient boundaries and a larger AMR domain do not remove the abort.
+  Enabling the existing guard advances both B=0 and B!=0 to T=1, with
+  finite fields, positive chi/lapse/spatial determinant, and eight cells
+  at the chi floor. The magnetic case has max |div B|=4.471e-14.
+  An additional whole-binary-domain GPU check reaches T=1 on 232 leaves,
+  dx_min=0.25, domain [-16,16]^3; max |div B|=2.463e-15. This coarse
+  check is operability only and does not satisfy production resolution.
+  The exterior-only binary patch remains limited to short admission:
+  extending that patch to T=1 fails and is not accepted as a long test.
+  A large-domain, properly resolved GPU run is still required before
+  accepting plasma inspiral, horizon accretion or merger physics.
