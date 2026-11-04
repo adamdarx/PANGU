@@ -128,8 +128,10 @@ def green_coefficients(r, source_l):
         c = 2*np.pi/(2*ell+1)
         coeff[:, j] = c*(inside/safe**(ell+1)+r**ell*outside)
         moments.append(c*inside[-1])
-    coeff[0, :] = 0
-    coeff[0, 0] = 2*np.pi*simpson(source_l[:, 0]*r, x=r)
+    # Keep the monopole's origin value from the SAME cumulative quadrature
+    # as its neighboring radial nodes. A separate Simpson total differs by
+    # O(dr^4) and creates an artificial central cusp under fine 3D stencils.
+    coeff[0, 1:] = 0
     return coeff, np.asarray(moments)
 
 

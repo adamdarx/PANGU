@@ -86,6 +86,21 @@ def main():
             assert np.isfinite(c).all() and psi.min()>1
             if lmax == 128:
                 assert norm < 1e-4
+                center_checks=[]
+                for h in [.03125,1/48,.015625]:
+                    xyz=np.array([[0.,0.,0.],[h/2,h/2,h/2],[1.5*h,h/2,h/2]])
+                    value=m.evaluate(r,c,mm,*xyz.T)
+                    lap0=np.zeros(len(xyz))
+                    for axis in range(3):
+                        for offset,w in [(-2,-1),(-1,16),(0,-30),(1,16),(2,-1)]:
+                            q=xyz.copy();q[:,axis]+=offset*h
+                            lap0+=w*m.evaluate(r,c,mm,*q.T)/(12*h*h)
+                    # All these points are in the vacuum gap, independently
+                    # of the matter rescaling and outside any constraint mask.
+                    ham0=-8*value**-5*lap0
+                    assert abs(ham0).max()<2e-8,(h,ham0)
+                    center_checks.append(dict(h=h,max_abs_vacuum_hamiltonian=float(abs(ham0).max())))
+                report['fine_center_checks']=center_checks
                 m.write(a.workdir/'bns.dat',profile,24,r,c,mm,s)
         errors = [b['cartesian_hamiltonian_bulk_l2_scaled'] for b in report['binary']]
         assert errors[2] < errors[1] < errors[0]

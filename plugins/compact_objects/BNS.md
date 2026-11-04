@@ -32,6 +32,11 @@ isolated-star limit. Even angular multipoles impose the exact equal-star
 reflection symmetry, but the evolution itself is fully three-dimensional.
 Outside the matter-support sphere the reader uses the exact multipole vacuum
 tail, rather than truncating or clamping the metric at the table edge.
+The origin monopole uses the same cumulative radial quadrature as adjacent
+nodes; an independent test probes the vacuum gap down to h=0.015625 to reject
+small table cusps amplified by fine Cartesian derivatives. Producer and
+evolution-binary commits are recorded separately when a schema-compatible
+table correction does not change the compiled reader.
 
 The default TOV seed has K=100, Gamma=2, rho_c=0.00128 and isolated ADM mass
 about 1.40016. A separation of 24 gives a solved total ADM mass about 2.65489

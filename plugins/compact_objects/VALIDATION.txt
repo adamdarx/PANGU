@@ -90,3 +90,10 @@ comparison is inferred from overlapping local qualification runs.
   Reproducible checks: tst/regression/bns_initial_data.py and
   tst/regression/bns_evolution.py. Detailed method/limits are in BNS.md.
   Reports, source hashes and native data: validation/bns_initial_data_20261104.
+  A fine-center follow-up found that a separate quadrature total at r=0
+  introduced a 5.42e-9 monopole discontinuity. The producer now uses the
+  same cumulative quadrature at r=0 and its neighbors. The corrected table
+  differs at that single coefficient; prior coarse-mesh initial states are
+  unchanged because all their cell radii exceed the affected r<0.0375.
+  Unmasked native GPU vacuum-gap Hamiltonian at dx=0.015625 is 8.73e-10.
+  This changes the initial-data table only; the V1 compiled reader is unchanged.
