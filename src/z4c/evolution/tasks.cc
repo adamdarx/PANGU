@@ -303,6 +303,14 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
           none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, current_boundary);
       current_ready =
           parthenon::AddBoundaryExchangeTasks(current_receive, tasks, current_boundary, true);
+      // Every completed synchronized stage projects the Z4c ghost zones after
+      // prolongation. Startup/restart reconstruction must expose the same
+      // constrained ghosts to the next RHS and to matter primitive recovery.
+      // Otherwise a checkpoint restores identical interior fields but takes a
+      // different first step at coarse/fine interfaces.
+      if (sync_matter)
+        current_ready = tasks.AddTask(current_ready, EnforceAlgebraicConstraintsMeshTask,
+                                      current.get());
       // Vacuum evolution consumes only the canonicalized Z4c state. ADM and
       // constraints are derived outputs and are materialized after the final
       // stage, so rebuilding them here is pure memory traffic.

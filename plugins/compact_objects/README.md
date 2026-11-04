@@ -81,3 +81,11 @@ integrals, analytic radial inflow/Poynting flux and spatial/angular convergence.
 Its fixtures are synthetic diagnostics tests, not black-hole evolution data.
 The coordinate-sphere measurement does not supply a moving-horizon accretion
 rate or a gauge-invariant luminosity.
+
+`python3 tst/regression/sync_puncture_plasma_restart.py --pangu /path/to/pangu
+--workdir /new/path` compares continuous and restarted coupled RK4 evolution
+on a small curved binary AMR grid. Reconstructed coarse/fine ghost zones must
+undergo the same Z4c algebraic projection as a completed stage, before matter
+primitive recovery and the next RHS. The test checks independent restarted
+Z4c, conserved fluid and CT face-field states. It is a technical regression,
+not an inspiral/merger or outer-boundary qualification.
