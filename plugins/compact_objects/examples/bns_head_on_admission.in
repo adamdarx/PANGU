@@ -1,0 +1,87 @@
+# Momentarily static, constraint-solved Gamma=2 TOV pair. Units G=c=M_sun=1.
+# Generate bns.dat with ../bns_data.py. This is not an infall-from-infinity model.
+<parthenon/job>
+problem_id = sync_plugin_grmhd
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<plugins>
+enabled = compact_objects
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+<parthenon/mesh>
+refinement = none
+nghost = 4
+nx1 = 64
+x1min = -32
+x1max = 32
+ix1_bc = nr_outflow
+ox1_bc = nr_outflow
+nx2 = 64
+x2min = -32
+x2max = 32
+ix2_bc = nr_outflow
+ox2_bc = nr_outflow
+nx3 = 64
+x3min = -32
+x3max = 32
+ix3_bc = nr_outflow
+ox3_bc = nr_outflow
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 16
+<parthenon/time>
+integrator = rk4
+tlim = 2
+nlim = -1
+ncycle_out = 10
+ncycle_out_mesh = 1000000
+<numerical_relativity>
+cfl = 0.15
+finite_difference_order = 4
+rk4_variant = athenak
+matter_source = grmhd
+dissipation = 0.1
+chi_div_floor = 1e-5
+floor_chi = true
+chi_min_floor = 1e-12
+damp_kappa1 = 0.02
+damp_kappa2 = 0
+tracker_enabled = false
+weyl_enabled = false
+waveform_enabled = false
+horizon_enabled = false
+<mhd>
+physics = gr
+eos = ideal
+gamma = 2
+reconstruct = plm
+rsolver = hlle
+cfl = 0.15
+density_floor = 1e-14
+pressure_floor = 1e-26
+sigma_max = 1e8
+gamma_max = 1000
+fofc = true
+nscalars = 0
+<plugin/compact_objects>
+model = bns_time_symmetric
+initial_data_file = bns.dat
+<parthenon/output1>
+file_type = hdf5
+dt = 2
+variables = mhd.prim,mhd.cons,mhd.b_cell,mhd.b_face,mhd.divb,mhd.fofc,mhd.recovery,nr.z4c,nr.adm,nr.tmunu,nr.constraints,nr.constraint_mask
+id = bns
+single_precision_output = false
+ghost_zones = false
+<parthenon/output2>
+file_type = hst
+dt = 0.2
+data_format = %20.15e
+<parthenon/output3>
+file_type = rst
+dt = 1
+hdf5_compression_level = 0

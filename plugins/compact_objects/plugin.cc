@@ -1,4 +1,5 @@
 #include "plugin.h"
+#include "bns_initial_data.h"
 
 #include <cmath>
 #include <set>
@@ -76,6 +77,8 @@ void InitializePlasma(MeshBlock *block, ParameterInput *input) {
 std::shared_ptr<parthenon::StateDescriptor> Plugin::Initialize(plugin::InitContext &context) {
   auto &input = context.input;
   const std::string section = "plugin/compact_objects";
+  if (input.GetOrAddString(section, "model", "puncture_plasma") == "bns_time_symmetric")
+    return InitializeBNS(context);
   const std::set<std::string> keys{"model", "density", "pressure", "btilde1", "btilde2", "btilde3"};
   for (const auto &key : input.GetParameterNames(section))
     PARTHENON_REQUIRE(keys.count(key) != 0, "unknown compact_objects parameter: " + key);

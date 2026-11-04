@@ -10,6 +10,13 @@ following Kelly et al., arXiv:1710.02132. One or two punctures are controlled by
 the existing `<problem>` parameters. Plasma parameters are in
 `<plugin/compact_objects>`: `density`, `pressure`, and `btilde1/2/3`.
 
+The separate `bns_time_symmetric` model imports constraint-solved equal-star
+head-on data from rest and uses active GRMHD matter backreaction, with zero
+magnetic field and an ideal Gamma=2 thermal evolution. See [BNS.md](BNS.md)
+for its conformal energy prescription, solver, units, qualification commands
+and distinction from the boosted neutron-star reference problem. Plasma-only
+restrictions below apply to `puncture_plasma`.
+
 The literature benchmark neglects plasma self-gravity and requires
 `numerical_relativity/matter_source=zero`. The metric still evolves dynamically.
 The initializer rejects using its independently normalized density as a full

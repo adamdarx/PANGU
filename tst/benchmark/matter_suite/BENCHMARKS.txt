@@ -40,6 +40,14 @@ Primary references and the precise scope of comparison
     TOV superposition. Preserve shock heating: K is not fixed during evolution.
     A start-at-rest collision is a different case, not this exact benchmark.
     Do not substitute a black-hole--neutron-star collision benchmark.
+    Implemented admission variant NS-HO-REST: equal, cold Gamma=2, K=100 TOV
+    seeds at z=+/-12, zero velocity and K_ij=0, flat conformal metric. Solve
+    Delta psi=-2*pi*Ebar*psi^-3 on all space with Ebar=sum(psi_TOV^8 E_TOV),
+    then recover physical rho/P from E=Ebar/psi^8. The solved total masses
+    differ from the isolated seed sum and must be reported explicitly.
+    Validate the isolated limit, independent Cartesian constraints, import,
+    shock-capable evolution and restart before server formation admission.
+    Do not use its formation time as the boosted paper's collapse time.
   BBH-MHD: Kelly et al., arXiv:1710.02132, homogeneous magnetized plasma
     surrounding an equal-mass binary, orbital-axis-aligned field. Reference
     the full text for EOS, density normalization, magnetization and duration.

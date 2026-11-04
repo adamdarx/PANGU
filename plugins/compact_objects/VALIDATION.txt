@@ -70,3 +70,23 @@ comparison is inferred from overlapping local qualification runs.
   extending that patch to T=1 fails and is not accepted as a long test.
   A large-domain, properly resolved GPU run is still required before
   accepting plasma inspiral, horizon accretion or merger physics.
+
+2026-11-04 BNS from-rest initial-data admission:
+  bns_time_symmetric solves the nonlinear Hamiltonian constraint with
+  conformal TOV energy profiles, Kij=0 and v=0. Momentum constraints vanish
+  analytically. This is not the boosted Miller/Suen/Tobias York dataset.
+  Analytic spherical Poisson normalization and invalid-input controls pass.
+  At dr=0.0125,lmax=128 the isolated TOV mass error is 4.52e-7, and the
+  independent Cartesian bulk Hamiltonian scaled L2 error is 4.33e-5.
+  Native N32/48/64 uniform material Hamiltonian errors decrease from
+  3.14e-3 through 1.96e-3 to 9.60e-4; imported psi error <5e-16 and
+  imported density/stress-energy relative errors <6e-15.
+  Native N64 T2 restart primary-state differences are below 6e-14.
+  A 232-leaf AMR T100 collision operability test is finite, with total
+  baryon drift 2.02e-8 and no converged AH by T100. It is not BH-formation
+  evidence or a production-accuracy result. Finer whole-star-uniform AMR
+  and a larger boundary are required for server formation tests.
+  The existing puncture_plasma single_b0 short GPU regression also passes.
+  Reproducible checks: tst/regression/bns_initial_data.py and
+  tst/regression/bns_evolution.py. Detailed method/limits are in BNS.md.
+  Reports, source hashes and native data: validation/bns_initial_data_20261104.
