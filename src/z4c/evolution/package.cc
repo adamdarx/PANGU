@@ -1914,6 +1914,8 @@ TaskStatus ClassicalRK4UpdateMeshTask(MeshData<Real>* current, MeshData<Real>* i
 
 TaskStatus AccumulateRKStateMeshTask(MeshData<Real>* current, MeshData<Real>* accumulator,
                                      const Real delta, const bool initialize) {
+  if (!initialize && delta == 0.0)
+    return TaskStatus::complete;
   const auto input = current->PackVariables(std::vector<std::string>{"nr.z4c"});
   const auto output = accumulator->PackVariables(std::vector<std::string>{"nr.z4c"});
   const auto ib = current->GetBoundsI(IndexDomain::interior);

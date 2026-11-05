@@ -111,6 +111,8 @@ TaskStatus CarrySyncStageStateMeshTask(MeshData<Real>* current, MeshData<Real>* 
 TaskStatus AccumulateSyncRKStateMeshTask(MeshData<Real>* current,
                                          MeshData<Real>* accumulator, const Real delta,
                                          const bool initialize) {
+  if (!initialize && delta == 0.0)
+    return TaskStatus::complete;
   AccumulateRKStateMeshTask(current, accumulator, delta, initialize);
   const auto& packages = current->GetParentPointer()->packages;
   const bool has_mhd = packages.AllPackages().count("mhd") != 0;
@@ -278,16 +280,21 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     auto& base = mesh->mesh_data.Add("base", partitions[partition]);
     auto& current = mesh->mesh_data.Add(stage_name[stage - 1], base);
     auto& next = mesh->mesh_data.Add(stage_name[stage], base);
-    std::shared_ptr<MeshData<Real>> current_boundary = current;
-    std::shared_ptr<MeshData<Real>> next_boundary = next;
-    if (!sync_matter) {
-      current_boundary = mesh->mesh_data.AddShallow(
-          "nr_z4c_boundary_current_" + stage_name[stage - 1], current,
-          std::vector<std::string>{"nr.z4c"});
-      next_boundary = mesh->mesh_data.AddShallow(
-          "nr_z4c_boundary_next_" + stage_name[stage], next,
-          std::vector<std::string>{"nr.z4c"});
+    std::vector<std::string> boundary_fields{"nr.z4c"};
+    if (sync_matter) {
+      boundary_fields.emplace_back("nr.constraint_mask");
+      boundary_fields.emplace_back(sync_grmhd ? "mhd.cons" : "hydro.cons");
+      if (sync_grmhd)
+        boundary_fields.emplace_back("mhd.b_face");
     }
+    // Exchange only the state needed by the next RHS/CT stage. Diagnostic
+    // Weyl and ADM-derivative fields have their own post-step exchange;
+    // including them here repeats restriction/prolongation every substage.
+    // Edge EMFs likewise use the dedicated exchange before the CT update.
+    auto current_boundary = mesh->mesh_data.AddShallow(
+        "nr_state_boundary_current_" + stage_name[stage - 1], current, boundary_fields);
+    auto next_boundary = mesh->mesh_data.AddShallow(
+        "nr_state_boundary_next_" + stage_name[stage], next, boundary_fields);
     std::shared_ptr<MeshData<Real>> emf_boundary;
     if (sync_grmhd)
       emf_boundary = mesh->mesh_data.AddShallow("sync_mhd_emf_" + stage_name[stage - 1], current,

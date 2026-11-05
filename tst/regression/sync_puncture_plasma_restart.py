@@ -2,6 +2,7 @@
 """Compare continuous and checkpointed coupled RK4 at curved AMR interfaces."""
 from pathlib import Path
 import argparse
+import csv
 import hashlib
 import json
 import resource
@@ -21,6 +22,10 @@ def main():
     p.add_argument('--workdir',type=Path,required=True)
     p.add_argument('--strong-field',action='store_true',
                    help='Resolve chi-atmosphere protection at dx=0.03125 near a puncture')
+    p.add_argument('--diagnostics',action='store_true',
+                   help='Exercise Weyl/AH fields and their independent boundary exchange')
+    p.add_argument('--reference-pangu',type=Path,
+                   help='Also compare against a pre-optimization executable')
     a=p.parse_args();resource.setrlimit(resource.RLIMIT_CORE,(0,0))
     binary=a.pangu.resolve();root=a.workdir.resolve();root.mkdir(exist_ok=False)
     repo=Path(__file__).resolve().parents[2]
@@ -68,16 +73,41 @@ def main():
             for axis in [1,2,3]:
                 c=center if axis==1 else 0.
                 text+=f'x{axis}min = {c-width}\nx{axis}max = {c+width}\n'
+    if a.diagnostics:
+        text=edit(text,{('numerical_relativity','weyl_enabled'):'true',
+                        ('numerical_relativity','waveform_enabled'):'true',
+                        ('numerical_relativity','waveform_dt'):.05,
+                        ('numerical_relativity','waveform_num_radii'):1,
+                        ('numerical_relativity','waveform_radius_1'):4,
+                        ('numerical_relativity','waveform_geodesic_level'):3,
+                        ('numerical_relativity','waveform_interpolation_points'):4,
+                        ('numerical_relativity','horizon_enabled'):'true',
+                        ('numerical_relativity','horizon_count'):2,
+                        ('numerical_relativity','horizon_ntheta'):16,
+                        ('numerical_relativity','horizon_lmax'):4,
+                        ('numerical_relativity','horizon_iterations'):100,
+                        ('numerical_relativity','horizon_dt'):.1,
+                        ('numerical_relativity','horizon_start_time_0'):0,
+                        ('numerical_relativity','horizon_start_time_1'):0,
+                        ('numerical_relativity','horizon_stop_time_0'):1e30,
+                        ('numerical_relativity','horizon_stop_time_1'):1e30,
+                        ('numerical_relativity','diagnostic_directory'):'diagnostics'})
+        variables=re.search(r'(?m)^variables\s*=\s*(.*)$',text).group(1)
+        text=edit(text,{('parthenon/output1','variables'):
+                        variables+',nr.weyl,nr.adm_derivatives'})
     deck=root/'input.in';deck.write_text(text)
     result=dict(status='running',binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
                 acceptance_max_scaled_primary_difference=5e-10,
                 strong_field=a.strong_field,
+                diagnostics=a.diagnostics,
                 scope='Small whole-binary curved-spacetime AMR regression, not production or boundary-error acceptance.')
     def save():(root/'summary.json').write_text(json.dumps(result,indent=2,allow_nan=False)+'\n')
     save()
     try:
-        for name in ['continuous','restart']:
-            folder=root/name;folder.mkdir();command=[str(binary),'-i',str(deck)]
+        runs=['continuous','restart']+(['reference'] if a.reference_pangu else [])
+        for name in runs:
+            executable=a.reference_pangu.resolve() if name=='reference' else binary
+            folder=root/name;folder.mkdir();command=[str(executable),'-i',str(deck)]
             if name=='restart':
                 candidates=[x for x in (root/'continuous').glob('*.rhdf') if '.final.' not in x.name and '.00000.' not in x.name]
                 assert len(candidates)==1,candidates
@@ -92,10 +122,52 @@ def main():
         with h5py.File(left) as x,h5py.File(right) as y:
             assert np.array_equal(x['LogicalLocations'][:],y['LogicalLocations'][:])
             assert np.array_equal(x['Levels'][:],y['Levels'][:])
-            for name in ['nr.z4c','mhd.cons','mhd.b_face']:
-                a=x[name][:];b=y[name][:];delta[name]=float(abs(a-b).max()/max(1.,float(abs(a).max())))
+            for name in ['nr.z4c','mhd.cons','mhd.b_face','mhd.prim']:
+                new=x[name][:];old=y[name][:]
+                delta[name]=float(abs(new-old).max()/max(1.,float(abs(new).max())))
         result['restart_difference']=delta;save()
         assert max(delta.values())<5e-10,delta
+        if a.diagnostics:
+            files=sorted((root/'continuous/diagnostics').glob('*.csv'))
+            assert any(x.name=='nr_waveforms.csv' for x in files),files
+            assert any(x.name.startswith('nr_horizon') for x in files),files
+        if a.reference_pangu:
+            reference=next((root/'reference').glob('*.final.phdf'))
+            delta={}
+            with h5py.File(left) as x,h5py.File(reference) as y:
+                assert np.array_equal(x['LogicalLocations'][:],y['LogicalLocations'][:])
+                assert np.array_equal(x['Levels'][:],y['Levels'][:])
+                names=['nr.z4c','nr.adm','mhd.cons','mhd.b_face','mhd.prim','mhd.divb']
+                if a.diagnostics:names+=['nr.weyl','nr.adm_derivatives']
+                for name in names:
+                    new=x[name][:];old=y[name][:]
+                    assert np.isfinite(new).all() and np.isfinite(old).all(),name
+                    delta[name]=float(abs(new-old).max()/max(1.,float(abs(old).max())))
+            result['reference_difference']=delta;save()
+            assert max(delta.values())<5e-10,delta
+            if a.diagnostics:
+                diagnostic_delta={}
+                for path in sorted((root/'continuous/diagnostics').glob('*.csv')):
+                    def read(p):
+                        with p.open() as stream:
+                            rows=list(csv.DictReader(x for x in stream if not x.startswith('#')))
+                        values=[];labels=[]
+                        for index,row in enumerate(rows):
+                            numeric=[]
+                            for key,value in row.items():
+                                try:numeric.append(float(value))
+                                except ValueError:
+                                    labels.append((index,key,value));numeric.append(0.)
+                            values.append(numeric)
+                        return np.asarray(values),labels
+                    new,new_labels=read(path)
+                    old,old_labels=read(root/'reference/diagnostics'/path.name)
+                    assert new_labels==old_labels,path.name
+                    assert new.shape==old.shape,(path.name,new.shape,old.shape)
+                    assert new.size and np.isfinite(new).all() and np.isfinite(old).all(),path
+                    diagnostic_delta[path.name]=float(abs(new-old).max()/max(1.,float(abs(old).max())))
+                result['reference_diagnostic_difference']=diagnostic_delta;save()
+                assert max(diagnostic_delta.values())<5e-10,diagnostic_delta
         result['status']='passed'
     except BaseException as e:result.update(status='failed',error=repr(e));raise
     finally:save()
