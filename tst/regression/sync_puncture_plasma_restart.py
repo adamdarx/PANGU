@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import resource
+import re
 import subprocess
 import time
 
@@ -18,6 +19,8 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--pangu',type=Path,required=True)
     p.add_argument('--workdir',type=Path,required=True)
+    p.add_argument('--strong-field',action='store_true',
+                   help='Resolve chi-atmosphere protection at dx=0.03125 near a puncture')
     a=p.parse_args();resource.setrlimit(resource.RLIMIT_CORE,(0,0))
     binary=a.pangu.resolve();root=a.workdir.resolve();root.mkdir(exist_ok=False)
     repo=Path(__file__).resolve().parents[2]
@@ -50,9 +53,25 @@ def main():
         for axis in [1,2,3]:
             c=center if axis==1 else 0
             text+=f'x{axis}min = {c-width}\nx{axis}max = {c+width}\n'
+    if a.strong_field:
+        text=re.sub(r'(?ms)^<parthenon/static_refinement\d+>\n.*?(?=^<|\Z)','',text)
+        text=edit(text,{('parthenon/mesh','refinement'):'static',
+                        ('parthenon/mesh','numlevel'):6,
+                        ('numerical_relativity','tracker_enabled'):'false'})
+        # The tiny far-field case never reaches the protection threshold and
+        # therefore misses a post-exchange repair of a neighbor's conserved
+        # state. Refine one puncture without exceeding a laptop GPU's memory.
+        for level in range(1,6):
+            center=0. if level==1 else 3.257
+            width=4. if level==1 else .5/2**(level-2)
+            text+=f'\n<parthenon/static_refinement{level-1}>\nlevel = {level}\n'
+            for axis in [1,2,3]:
+                c=center if axis==1 else 0.
+                text+=f'x{axis}min = {c-width}\nx{axis}max = {c+width}\n'
     deck=root/'input.in';deck.write_text(text)
     result=dict(status='running',binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
                 acceptance_max_scaled_primary_difference=5e-10,
+                strong_field=a.strong_field,
                 scope='Small whole-binary curved-spacetime AMR regression, not production or boundary-error acceptance.')
     def save():(root/'summary.json').write_text(json.dumps(result,indent=2,allow_nan=False)+'\n')
     save()

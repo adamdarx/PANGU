@@ -89,3 +89,9 @@ undergo the same Z4c algebraic projection as a completed stage, before matter
 primitive recovery and the next RHS. The test checks independent restarted
 Z4c, conserved fluid and CT face-field states. It is a technical regression,
 not an inspiral/merger or outer-boundary qualification.
+
+Add `--strong-field` to resolve a puncture at dx=0.03125 and exercise the
+chi-atmosphere protection. Protection and primitive recovery may change
+conserved cells after the stage boundary exchange. The next first stage
+must rebuild the GRMHD boundary state on ordinary steps as well as restarts;
+otherwise identical checkpoint interiors produce different CT updates.

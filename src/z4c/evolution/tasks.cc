@@ -293,12 +293,12 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       emf_boundary = mesh->mesh_data.AddShallow("sync_mhd_emf_" + stage_name[stage - 1], current,
                                                 std::vector<std::string>{"mhd.edge_emf"});
     auto* rk_reference = base.get();
-    // A completed final RK stage has already exchanged the base state's
-    // boundaries. Re-canonicalize only after startup/restart or an AMR/load-
-    // balance topology change; doing it again on every ordinary step was a
-    // redundant fifth multilevel exchange for RK4.
+    // Vacuum final-stage boundaries are already canonical. GRMHD puncture
+    // protection and C2P can repair conserved cells after that exchange. Rebuild
+    // these ghosts at every first stage, just as startup/restart does, so
+    // CT never depends on whether a checkpoint was loaded between steps.
     TaskID current_ready = none;
-    if (stage == 1 && mesh->multilevel && mesh->modified) {
+    if (stage == 1 && mesh->multilevel && (mesh->modified || sync_grmhd)) {
       const auto current_receive = tasks.AddTask(
           none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, current_boundary);
       current_ready =
@@ -314,9 +314,15 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       // Vacuum evolution consumes only the canonicalized Z4c state. ADM and
       // constraints are derived outputs and are materialized after the final
       // stage, so rebuilding them here is pure memory traffic.
-      if (!vacuum || sync_matter)
+      if (sync_grmhd) {
+        const auto adm = tasks.AddTask(current_ready, Z4cToADMFieldsMeshTask, current.get());
+        const auto primitive =
+            tasks.AddTask(adm, SyncGRMHDConservedToPrimitiveMeshTask, current.get());
+        current_ready = tasks.AddTask(primitive, BuildStressEnergyMeshTask, current.get(), tm.time);
+      } else if (!vacuum || sync_matter) {
         current_ready = tasks.AddTask(current_ready, parthenon::Update::FillDerived<MeshData<Real>>,
                                       current.get());
+      }
     }
     TaskID accumulated = current_ready;
     std::shared_ptr<MeshData<Real>> accumulator;
