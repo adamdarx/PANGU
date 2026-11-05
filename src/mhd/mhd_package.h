@@ -33,6 +33,8 @@ parthenon::Real EstimateTimestepBlock(parthenon::MeshBlockData<parthenon::Real>*
 parthenon::Real EstimateTimestepMesh(parthenon::MeshData<parthenon::Real>* data);
 void UpdateAMRSchedule(parthenon::Mesh* mesh, const parthenon::SimTime& time);
 parthenon::AmrTag CheckRefinementBlock(parthenon::MeshBlockData<parthenon::Real>* data);
+void CheckRefinementMesh(parthenon::MeshData<parthenon::Real>* data,
+                         parthenon::ParArray1D<parthenon::AmrTag>& tags);
 
 parthenon::TaskStatus ComputeFaceCurlMeshTask(parthenon::MeshData<parthenon::Real>* current,
                                               parthenon::MeshData<parthenon::Real>* dudt);

@@ -1239,7 +1239,10 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
     package->EstimateTimestepBlock = EstimateTimestepBlock;
     package->EstimateTimestepMesh = EstimateTimestepMesh;
   }
-  package->CheckRefinementBlock = CheckRefinementBlock;
+  if constexpr (geometry::ConfiguredGeometryIsSynchronized())
+    package->CheckRefinementMesh = CheckRefinementMesh;
+  else
+    package->CheckRefinementBlock = CheckRefinementBlock;
   package->UserBoundaryFunctions[parthenon::BoundaryFace::inner_x2].push_back(
       CorrectMKSPolarBoundary<true>);
   package->UserBoundaryFunctions[parthenon::BoundaryFace::outer_x2].push_back(
@@ -1458,6 +1461,76 @@ Real EstimateTimestepMesh(MeshData<Real>* data) {
   for (int b = 0; b < data->NumBlocks(); ++b)
     minimum = std::min(minimum, EstimateTimestepBlock(data->GetBlockData(b).get()));
   return minimum;
+}
+
+void CheckRefinementMesh(MeshData<Real>* data, parthenon::ParArray1D<AmrTag>& amr_tags) {
+  if (data->NumBlocks() == 0)
+    return;
+  const auto package = data->GetMeshPointer()->packages.Get("mhd");
+  auto tags = amr_tags.KokkosView();
+  if (!package->Param<bool>("amr_tag_enabled")) {
+    // Preserve the block callback's `same` vote while the schedule is inactive.
+    parthenon::par_for(
+        DEFAULT_LOOP_PATTERN, "PANGU inactive MHD AMR votes", parthenon::DevExecSpace(),
+        0, data->NumBlocks() - 1, KOKKOS_LAMBDA(const int b) {
+          if (static_cast<int>(tags(b)) < static_cast<int>(AmrTag::same))
+            tags(b) = AmrTag::same;
+        });
+    return;
+  }
+  const int method = package->Param<int>("amr_method");
+  const Real refine = package->Param<Real>("refine_tolerance");
+  const Real derefine = package->Param<Real>("derefine_tolerance");
+  const Real threshold = package->Param<Real>("amr_value_max");
+  const auto primitive = data->PackVariables(std::vector<std::string>{"mhd.prim"});
+  const auto conserved = data->PackVariables(std::vector<std::string>{"mhd.cons"});
+  const auto ib = data->GetBoundsI(IndexDomain::interior);
+  const auto jb = data->GetBoundsJ(IndexDomain::interior);
+  const auto kb = data->GetBoundsK(IndexDomain::interior);
+  const int ni = ib.e - ib.s + 1;
+  const int nj = jb.e - jb.s + 1;
+  const int cells = ni * nj * (kb.e - kb.s + 1);
+  const int ndim = data->GetMeshPointer()->ndim;
+  // One team owns each block's maximum and merges its vote on the device.
+  // Returning one host scalar per block forces one launch and synchronization
+  // per block even though Parthenon already accepts packed refinement tags.
+  parthenon::par_for_outer(
+      DEFAULT_OUTER_LOOP_PATTERN, "PANGU packed MHD AMR", parthenon::DevExecSpace(),
+      0, 0, 0, data->NumBlocks() - 1,
+      KOKKOS_LAMBDA(parthenon::team_mbr_t team, const int b) {
+        Real maximum;
+        parthenon::par_reduce_inner(
+            parthenon::inner_loop_pattern_ttr_tag, team, 0, cells - 1,
+            [&](const int index, Real& local) {
+              const int k = kb.s + index / (nj * ni);
+              const int j = jb.s + (index % (nj * ni)) / ni;
+              const int i = ib.s + index % ni;
+              if (method == 1) {
+                local = fmax(local, conserved(b, IDN, k, j, i));
+              } else {
+                const Real center = fmax(fabs(primitive(b, IDN, k, j, i)), 1.0e-30);
+                Real gradient = fabs(primitive(b, IDN, k, j, i + 1) -
+                                      primitive(b, IDN, k, j, i - 1)) / (2.0 * center);
+                if (ndim >= 2)
+                  gradient = fmax(gradient, fabs(primitive(b, IDN, k, j + 1, i) -
+                                                   primitive(b, IDN, k, j - 1, i)) /
+                                                (2.0 * center));
+                if (ndim >= 3)
+                  gradient = fmax(gradient, fabs(primitive(b, IDN, k + 1, j, i) -
+                                                   primitive(b, IDN, k - 1, j, i)) /
+                                                (2.0 * center));
+                local = fmax(local, gradient);
+              }
+            },
+            Kokkos::Max<Real>(maximum));
+        Kokkos::single(Kokkos::PerTeam(team), [&]() {
+          const auto flag = method == 1 ? (maximum > threshold ? AmrTag::refine : AmrTag::derefine)
+                                       : (maximum > refine ? AmrTag::refine
+                                          : maximum < derefine ? AmrTag::derefine : AmrTag::same);
+          if (static_cast<int>(flag) > static_cast<int>(tags(b)))
+            tags(b) = flag;
+        });
+      });
 }
 
 AmrTag CheckRefinementBlock(MeshBlockData<Real>* data) {
