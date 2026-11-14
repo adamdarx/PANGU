@@ -23,6 +23,7 @@
 #include "z4c/tracking/position_update.h"
 #include "z4c/tracking/interpolation.h"
 #include "z4c/coupling/stress_energy.h"
+#include "pangu/plugin_api/synchronized_matter.h"
 #include "z4c/coupling/sync_grhd.h"
 #include "z4c/coupling/sync_grmhd.h"
 #include "z4c/initial_data/tov.h"
@@ -132,7 +133,14 @@ parthenon::summable_array_t<Real, 24> ConstraintSumsMesh(MeshData<Real>* data) {
   return sums;
 }
 
+void RefreshTrackedConstraintMask(MeshData<Real>* data);
+
 std::vector<Real> ConstraintMaxHistoryMesh(MeshData<Real>* data) {
+  // Parthenon's output hook excludes history-only writes. Refresh here too:
+  // otherwise frequent histories sample the last infrequent 3D field dump.
+  RefreshTrackedConstraintMask(data);
+  ComputeConstraintsMeshTask(data);
+  Kokkos::fence("PANGU fresh constraint history");
   return {MaxConstraintComponentMesh<Index(ConstraintComponent::combined)>(data),
           MaxConstraintComponentMesh<Index(ConstraintComponent::hamiltonian)>(data),
           MaxConstraintComponentMesh<Index(ConstraintComponent::momentum_norm)>(data),
@@ -163,6 +171,43 @@ std::vector<Real> ConstraintNormHistoryMesh(MeshData<Real>* data) {
     history.push_back(sqrt(global_sums[3 * component + 1] * inverse_volume));
   }
   return history;
+}
+
+// Rebuild a geometric diagnostic mask at output time. Advecting/prolongating
+// the initial mask does not keep an exclusion sphere on a moving puncture.
+void RefreshTrackedConstraintMask(MeshData<Real>* data) {
+  const auto package = data->GetBlockData(0)->GetBlockPointer()->packages.Get(
+      "numerical_relativity");
+  if (!package->Param<bool>("constraint_mask_follow_tracker")) return;
+  const auto& position = package->Param<std::vector<Real>>("tracker_position");
+  const int count = package->Param<int>("tracker_count");
+  Kokkos::View<Real*> centers("constraint mask tracker centers", position.size());
+  auto host = Kokkos::create_mirror_view(centers);
+  for (std::size_t n = 0; n < position.size(); ++n) host(n) = position[n];
+  Kokkos::deep_copy(centers, host);
+  const Real inner = package->Param<Real>("tracked_constraint_inner_radius");
+  const Real outer = package->Param<Real>("constraint_mask_outer_radius");
+  const auto mask = data->PackVariables(std::vector<std::string>{"nr.constraint_mask"});
+  const auto block = data->GetBlockData(0)->GetBlockPointer();
+  const auto ib = block->cellbounds.GetBoundsI(IndexDomain::entire);
+  const auto jb = block->cellbounds.GetBoundsJ(IndexDomain::entire);
+  const auto kb = block->cellbounds.GetBoundsK(IndexDomain::entire);
+  host_loops::ParallelFor(DEFAULT_LOOP_PATTERN, "PANGU tracked constraint mask",
+         parthenon::DevExecSpace(), 0, mask.GetDim(5) - 1,
+         kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+         KOKKOS_LAMBDA(const int b, const int k, const int j, const int i) {
+    const auto& coord = mask.GetCoords(b);
+    Real nearest = Kokkos::Experimental::finite_max_v<Real>;
+    for (int n = 0; n < count; ++n) {
+      const Real x = coord.Xc<X1DIR>(k, j, i) - centers(3*n);
+      const Real y = coord.Xc<X2DIR>(k, j, i) - centers(3*n+1);
+      const Real z = coord.Xc<X3DIR>(k, j, i) - centers(3*n+2);
+      nearest = fmin(nearest, x*x + y*y + z*z);
+    }
+    mask(b, 0, k, j, i) = nearest > inner*inner &&
+        (outer == 0.0 || nearest <= outer*outer) ? 1.0 : 0.0;
+  });
+  Kokkos::fence("PANGU tracked constraint mask centers lifetime");
 }
 
 std::vector<Real> ConstraintMaskHistoryMesh(MeshData<Real>* data) {
@@ -586,10 +631,12 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
     matter_options.source = StressEnergySource::grhd;
   } else if (matter_source_name == "grmhd") {
     matter_options.source = StressEnergySource::grmhd;
+  } else if (matter_source_name == "external") {
+    matter_options.source = StressEnergySource::external;
   } else {
     PARTHENON_FAIL(
         "numerical_relativity/matter_source must be vacuum, zero, constant, analytic, grhd, or "
-        "grmhd");
+        "grmhd, or external");
   }
   constexpr const char* matter_component_names[kStressEnergyComponents] = {
       "matter_sxx", "matter_sxy", "matter_sxz", "matter_syy", "matter_syz",
@@ -1070,6 +1117,35 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   package->AddField("nr.weyl", weyl);
   package->AddField("nr.constraint_mask", constraint_mask);
 
+  const bool follow_mask = pin->GetOrAddBoolean(
+      "numerical_relativity", "constraint_mask_follow_tracker", false);
+  const Real inner_mask = pin->DoesParameterExist("problem", "constraint_mask_radius")
+                              ? pin->GetReal("problem", "constraint_mask_radius") : 0.0;
+  const Real outer_mask = pin->GetOrAddReal(
+      "numerical_relativity", "constraint_mask_outer_radius", 0.0);
+  PARTHENON_REQUIRE(!follow_mask || (tracker_enabled && tracker_count > 0),
+                    "tracked constraint mask requires enabled puncture tracking");
+  PARTHENON_REQUIRE(inner_mask >= 0.0 && outer_mask >= 0.0 &&
+                        (outer_mask == 0.0 || outer_mask > inner_mask),
+                    "constraint mask requires 0 <= inner < outer (outer=0 means unlimited)");
+  package->AddParam<bool>("constraint_mask_follow_tracker", follow_mask);
+  package->AddParam<Real>("tracked_constraint_inner_radius", inner_mask);
+  package->AddParam<Real>("constraint_mask_outer_radius", outer_mask);
+
+  // NormHistory performs a single global sum before normalization and sqrt.
+  // Its replicated result must use MAX here, never SUM over MPI ranks.
+  parthenon::HstVec_list history;
+  history.emplace_back(parthenon::UserHistoryOperation::max,
+                       ConstraintMaxHistoryMesh, "nr_constraint_max");
+  history.emplace_back(parthenon::UserHistoryOperation::max,
+                       ConstraintNormHistoryMesh, "nr_constraint_norm");
+  history.emplace_back(parthenon::UserHistoryOperation::sum,
+                       ConstraintMaskHistoryMesh, "nr_constraint_mask_cells");
+  if (tracker_enabled)
+    history.emplace_back(parthenon::UserHistoryOperation::sum,
+                         PunctureTrackerHistoryMesh, "nr_tracker");
+  package->AddParam<>(parthenon::hist_vec_param_key, history);
+
   if constexpr (geometry::ConfiguredGeometryIsSynchronized()) {
     // Parthenon invokes every package's PreFillDerived callbacks before any
     // package FillDerived callback.  Reconstruct the ADM view in that ordered
@@ -1090,7 +1166,8 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       Kokkos::fence("PANGU synchronized ADM pre-fill");
     };
     if (matter_options.source == StressEnergySource::grhd ||
-        matter_options.source == StressEnergySource::grmhd) {
+        matter_options.source == StressEnergySource::grmhd ||
+        matter_options.source == StressEnergySource::external) {
       // Independent restart data contain Z4c and the fluid conserved state,
       // but not Tmunu.  All package FillDerived callbacks run between the
       // pre/post passes, so rebuild stress energy only after hydro/MHD has
@@ -1116,6 +1193,7 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
       auto& data = mesh->mesh_data.Add("base", partition);
       if (data->NumBlocks() == 0)
         continue;
+      RefreshTrackedConstraintMask(data.get());
       ComputeConstraintsMeshTask(data.get());
       if (package->Param<bool>("weyl_enabled"))
         ComputeWeylMeshTask(data.get());
@@ -1303,6 +1381,8 @@ TaskStatus BuildStressEnergyBlockTask(MeshBlockData<Real>* data, const Real time
                            ->Param<StressEnergySourceOptions>("matter_source_options");
   if (!HasStressEnergyField(options.source))
     return TaskStatus::complete;
+  PARTHENON_REQUIRE(options.source != StressEnergySource::external,
+                    "external matter stress energy uses the packed MeshData callback");
   if (options.source == StressEnergySource::grhd)
     return BuildSyncGRHDStressEnergyBlockTask(data);
   if (options.source == StressEnergySource::grmhd)
@@ -1333,6 +1413,11 @@ TaskStatus BuildStressEnergyMeshTask(MeshData<Real>* data, const Real time) {
                            ->Param<StressEnergySourceOptions>("matter_source_options");
   if (!HasStressEnergyField(options.source))
     return TaskStatus::complete;
+  if (options.source == StressEnergySource::external) {
+    const auto* matter = plugin::GetSynchronizedMatter(first->packages);
+    PARTHENON_REQUIRE(matter != nullptr, "external matter source requires a synchronized plugin");
+    return matter->prepare(data, time);
+  }
   if (options.source == StressEnergySource::grhd)
     return BuildSyncGRHDStressEnergyMeshTask(data);
   if (options.source == StressEnergySource::grmhd)

@@ -1,7 +1,6 @@
 #include "ems_coupled.h"
 
 #include "driver/contributor.h"
-#include "geometry_assembly.h"
 #include "interface/update.hpp"
 #include "pangu/plugin_api/scalar_field.h"
 
@@ -300,7 +299,7 @@ void Refresh(MeshData<Real> *data) {
 
 void Initialize(Mesh *, ParameterInput *, MeshData<Real> *data) {
   PARTHENON_REQUIRE(data->NumBlocks() == 1,
-                    "spherical_ems currently requires one radial MeshBlock");
+                    "PG EMS currently requires one radial MeshBlock");
   auto *mesh = data->GetParentPointer();
   const auto p = mesh->packages.Get(label)->Param<Model>("ems_model");
   const auto u = data->PackVariables(std::vector<std::string>{"scalar.state"});
@@ -594,11 +593,11 @@ void PostStep(Mesh *mesh, const parthenon::SimTime &tm) {
 void Configure(Mesh *mesh, parthenon::LowStorageIntegrator &rk) {
   PARTHENON_REQUIRE(mesh->ndim == 1 && mesh->nbtotal == 1 &&
                         parthenon::Globals::nranks == 1 && !mesh->multilevel,
-                    "spherical_ems requires a uniform 1D mesh, one MeshBlock and one rank");
-  PARTHENON_REQUIRE(rk.GetName() == "rk4", "spherical_ems requires classical rk4");
+                    "PG EMS requires a uniform 1D mesh, one MeshBlock and one rank");
+  PARTHENON_REQUIRE(rk.GetName() == "rk4", "PG EMS requires classical rk4");
   PARTHENON_REQUIRE(mesh->mesh_bc_names[0] == "outflow" &&
                         mesh->mesh_bc_names[1] == "outflow",
-                    "spherical_ems uses excision and outer radiative boundaries");
+                    "PG EMS uses excision and outer radiative boundaries");
   rk.nstages = 4;
   rk.nbuffers = 2;
   rk.gam0 = {0, 0, 0, 0};
@@ -628,22 +627,20 @@ TaskCollection Build(driver::StageBuildContext &context) {
 } // namespace
 
 std::shared_ptr<parthenon::StateDescriptor>
-InitializeCoupledEMS(plugin::InitContext &context) {
+InitializePGEMS(plugin::InitContext &context) {
   auto &pin = context.input;
   const std::string block = "plugin/scalar_field";
   const std::set<std::string> keys{
-      "backend", "potential", "fields", "ell", "bh_mass", "bh_charge", "mass",
+      "backend", "coordinates", "potential", "fields", "ell", "bh_mass", "bh_charge", "mass",
       "quartic", "sextic", "decay_constant", "gb_eta", "em_alpha", "em_linearized",
       "amplitude", "center", "width", "cfl", "initial_data", "em_coupling",
       "dissipation", "diagnostic_interval", "history_file", "metric_evolution",
       "constraint_iterations", "constraint_tolerance", "profile_file",
       "momentum_amplitude"};
   for (const auto &key : pin.GetParameterNames(block))
-    PARTHENON_REQUIRE(keys.count(key) != 0, "unknown spherical_ems parameter: " + key);
+    PARTHENON_REQUIRE(keys.count(key) != 0, "unknown PG EMS parameter: " + key);
   PARTHENON_REQUIRE(pin.GetString("parthenon/job", "problem_id") == "scalar_field",
-                    "spherical_ems requires problem_id=scalar_field");
-  PARTHENON_REQUIRE(!geometry::ConfiguredGeometryIsSynchronized(),
-                    "PG EMS uses its own dynamic geometry; build METRIC=cks MODE=dynamic");
+                    "PG EMS requires problem_id=scalar_field");
   PARTHENON_REQUIRE(pin.GetOrAddInteger(block, "fields", 1) == 1 &&
                         pin.GetOrAddInteger(block, "ell", 0) == 0 &&
                         pin.GetOrAddReal(block, "gb_eta", 0) == 0 &&
@@ -651,8 +648,9 @@ InitializeCoupledEMS(plugin::InitContext &context) {
                     "full spherical EMS requires one real ell=0 field, gb_eta=0, em_linearized=false");
   Model p;
   const auto initial = pin.GetOrAddString(block, "initial_data", "gaussian");
-  PARTHENON_REQUIRE(initial == "gaussian" || initial == "zero" || initial == "profile",
-                    "spherical_ems initial_data is gaussian, zero or profile");
+  PARTHENON_REQUIRE(initial == "gaussian" || initial == "zero" || initial == "profile" ||
+                        initial == "reissner_nordstrom",
+                    "PG EMS initial_data is gaussian, zero, reissner_nordstrom or profile");
   p.mass = pin.GetOrAddReal(block, "bh_mass", 1);
   p.charge = pin.GetOrAddReal(block, "bh_charge", 0.9);
   p.amplitude = pin.GetOrAddReal(block, "amplitude", initial == "profile" ? 0 : 1.e-3);
@@ -710,16 +708,17 @@ InitializeCoupledEMS(plugin::InitContext &context) {
                     "profile_file must be specified exactly when initial_data=profile");
   PARTHENON_REQUIRE(initial != "profile" || p.constrained_metric,
                     "EMS profile initialization requires the constrained metric solver");
-  PARTHENON_REQUIRE(initial != "zero" || p.momentum_amplitude == 0,
+  PARTHENON_REQUIRE((initial != "zero" && initial != "reissner_nordstrom") || p.momentum_amplitude == 0,
                     "initial_data=zero does not accept a momentum perturbation");
   if (initial == "profile") LoadProfile(p, profile_file, pin);
   auto package = std::make_shared<StateDescriptor>(label);
+  package->AddParam<std::string>("coordinates", "pg");
   package->AddParam<Model>("ems_model", p);
   package->AddParam<Real>("ems_last_diagnostic", -std::numeric_limits<Real>::max(), true);
   package->AddParam<std::string>("ems_history_file",
       pin.GetOrAddString(block, "history_file", "ems_history.csv"));
   package->AddParam<driver::StageContribution>(std::string(driver::stage_contribution_key),
-      {"spherical_ems", 200, [](const driver::StageBuildContext &) { return true; },
+      {"scalar_ems_pg", 200, [](const driver::StageBuildContext &) { return true; },
        Build, Configure, PostStep});
   const Metadata state({Metadata::Cell, Metadata::Independent, Metadata::Restart},
                        std::vector<int>{3});

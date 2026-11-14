@@ -488,6 +488,11 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     target_compile_features(pangu_nr3_constraints PRIVATE cxx_std_20)
     target_compile_definitions(pangu_nr3_constraints PRIVATE
       KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK)
+    add_executable(pangu_scalar_ems_sources "${CMAKE_SOURCE_DIR}/tst/unit/scalar_ems_sources.cc")
+    target_include_directories(pangu_scalar_ems_sources PRIVATE
+      "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/plugins/scalar_field")
+    target_link_libraries(pangu_scalar_ems_sources PRIVATE Parthenon::parthenon)
+    target_compile_features(pangu_scalar_ems_sources PRIVATE cxx_std_20)
     add_executable(pangu_nr3_schwarzschild
       "${CMAKE_SOURCE_DIR}/tst/unit/nr3_schwarzschild.cc")
     target_include_directories(pangu_nr3_schwarzschild PRIVATE
@@ -622,7 +627,9 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/scalar_field/plugin.cmake")
   add_executable(pangu_scalar EXCLUDE_FROM_ALL
     "${CMAKE_SOURCE_DIR}/plugins/scalar_field/standalone.cc"
     "${CMAKE_SOURCE_DIR}/plugins/scalar_field/plugin.cc"
-    "${CMAKE_SOURCE_DIR}/plugins/scalar_field/ems_coupled.cc")
+    "${CMAKE_SOURCE_DIR}/plugins/scalar_field/ems_coupled.cc"
+    "${CMAKE_SOURCE_DIR}/plugins/scalar_field/ems_coordinates.cc")
+  target_compile_definitions(pangu_scalar PRIVATE PANGU_SCALAR_REPRODUCTION_DRIVER=1)
   target_include_directories(pangu_scalar PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/../generated")

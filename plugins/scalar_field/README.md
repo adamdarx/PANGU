@@ -1,6 +1,6 @@
-# Scalar-field plugin: test fields and coupled spherical EMS
+# Scalar-field plugin: selectable coordinates and coupled EMS
 
-Plugin version: **1.0.0**. This release covers the documented test-field and
+Plugin version: **1.1.0**. This release covers the documented test-field and
 coupled spherical EMS interfaces, including qualified profile import and
 controlled perturbations. Collapse from an initially regular, untrapped center
 is provided by the separate `scalar_collapse` plugin and is not part of this
@@ -9,23 +9,30 @@ package.
 This package evolves actual Klein–Gordon test fields with Parthenon MeshData,
 CUDA kernels, fourth-order finite differences and classical four-stage RK4.
 The `cartesian_flat` and `radial_tortoise` backends retain the fixed-background
-test-field problems. The `spherical_ems` backend evolves the fully nonlinear
-spherically symmetric Einstein–Maxwell–scalar system, including scalar
-self-interaction, a dynamical metric, and the scalar-dependent electric field.
-All backends currently require a uniform mesh. The coupled backend uses one
-radial MeshBlock and one MPI rank. It is not a three-dimensional Z4c matter
-solver and does not implement gravitational backreaction of a GB coupling.
+test-field problems. The `ems` backend selects `coordinates=pg` or `coordinates=cartesian` while
+sharing the scalar potential and Maxwell coupling policies. PG uses the existing
+spherical constraint solver. Cartesian coordinates use general ADM lapse, shift,
+and spatial metric, evolving the scalar and Maxwell fields with the native Z4c
+stage graph and supplying its Einstein sources. All current modes require a
+uniform mesh. PG uses one radial block and one MPI rank; Cartesian EMS uses a
+three-dimensional mesh and supports multiple MPI ranks. GB gravitational
+backreaction is not implemented.
 
 ## Configuration and extension
 
-Enable with `problem_id=scalar_field` and `<plugins> enabled=scalar_field` in a
-fixed-background build (`METRIC=cks`, `MODE=dynamic`).
+All modes use `problem_id=scalar_field` and `<plugins> enabled=scalar_field`.
+A full `METRIC=z4c MODE=sync` executable selects PG or Cartesian EMS at runtime.
+Only Cartesian EMS installs a numerical-relativity package and requires
+`numerical_relativity/matter_source=external`. PG owns its dynamical geometry
+and remains available in fixed-background builds and the minimal `pangu_scalar`
+reproduction driver. Test-field modes retain their independent fixed geometry.
 
 The `<plugin/scalar_field>` namespace contains:
 
 | Parameter | Meaning |
 |---|---|
-| `backend` | `radial_tortoise` or `cartesian_flat` |
+| `backend` | `ems`, `radial_tortoise`, or `cartesian_flat` |
+| `coordinates` | `pg` or `cartesian` for coupled EMS; defaults to `pg` |
 | `fields` | 1 real scalar, or 2 real components of an uncharged complex scalar |
 | `potential` | `polynomial` or `axion` |
 | `mass`, `quartic`, `sextic` | Polynomial potential coefficients below |
@@ -79,8 +86,9 @@ Use the explicit convention
 
 The first two terms follow from L=-1/2(d phi)^2-V+eta g(phi) G. The scalar
 EMS equation agrees with varying [R-2(d phi)^2-f(phi)F^2]/(16 pi) when V=0.
-These actions use different Einstein-source normalizations; a future full
-backreaction interface must keep that normalization explicit.
+For this action the native Z4c convention `G_ab=8 pi T_ab` requires dividing
+the canonical scalar-plus-Maxwell projections by `4 pi`. The Cartesian source
+module applies that normalization to energy, momentum and spatial stress.
 
 In spherical symmetry, Maxwell's Gauss constraint fixes the conserved electric
 charge: E=Q/[r^2 f(phi)]. For f=exp(alpha phi^2), the EMS scalar force is
@@ -158,14 +166,15 @@ backend described below supplies it in spherical symmetry. Full sGB changes the
 gravitational principal part and needs a separate well-posed evolution
 formulation; switching on `gb_eta` in a matter stress tensor would not suffice.
 
-## Fully coupled spherical EMS
+## Coupled EMS in PG coordinates
 
-Use `backend=spherical_ems` with `examples/ems_coupled_rn.in` or
+Use `backend=ems coordinates=pg` with `examples/ems_coupled_rn.in` or
 `examples/ems_coupled_quartic.in`. The coordinate is now **areal radius r**, not
 tortoise radius. The action is the unified EMS action above, with `gb_eta=0`.
-The build remains `METRIC=cks MODE=dynamic` to select the application without
-the unrelated 3D Z4c driver; the PG geometry in `scalar.state`/`ems.geometry`
-is dynamical and is not supplied by the fixed CKS geometry package.
+The PG geometry in `scalar.state`/`ems.geometry` is dynamical and owned by
+this coordinate formulation. It does not use the host build's analytic metric
+or install an unrelated Z4c evolution. The same public plugin selects the
+Cartesian Z4c formulation below when that coordinate mode is requested.
 The potential and its derivative enter both the Einstein and scalar equations
 through the same model policy. `potential=polynomial` and `potential=axion`
 are supported; the current coupled version requires nonnegative polynomial
@@ -330,3 +339,39 @@ matching actions, integrators, domain and final time, then measures both fields
 on the same exterior points using degree-five interpolation. It records each
 observed order; it does not impose fourth order on every observable or replace
 the independent boundary and restart controls.
+
+## Coupled EMS in Cartesian coordinates
+
+Use the full CUDA `pangu` executable built with `PHYSICS=gr METRIC=z4c MODE=sync`:
+
+```ini
+<parthenon/job>
+problem_id = scalar_field
+<plugins>
+enabled = scalar_field
+<plugin/scalar_field>
+backend = ems
+coordinates = cartesian
+<numerical_relativity>
+matter_source = external
+rk4_variant = classical
+```
+
+`examples/ems_cartesian_vacuum.in` is a small verification deck. The evolved
+`scalar.state` components are `(phi, P, D_x, D_y, D_z, C_x, C_y, C_z)`, with
+`P=n^a partial_a phi`, `D^i=sqrt(gamma) f E^i`, and `C^i=sqrt(gamma) B^i`.
+`scalar.phi` provides the physical scalar in both coordinate modes. Cartesian
+initial data include `minkowski`, small `scalar_wave` and `maxwell_wave` fixtures,
+and unperturbed `reissner_nordstrom` data (`zero` is also accepted for the latter).
+PG accepts `reissner_nordstrom` as the corresponding unperturbed RN state.
+Coordinate-specific profile and excision inputs are rejected by the Cartesian
+mode. It currently requires uniform three-dimensional grids; AMR and a
+constraint-solved, scalar-perturbed three-dimensional black hole remain pending.
+
+Geometry and matter right-hand sides are evaluated from the same RK state before
+either is updated. Maxwell's electric and magnetic Gauss constraints are output
+as `ems.gauss`; native NR Hamiltonian and momentum constraints remain in
+`nr.constraints`. No PG radial profile is relabeled as a Cartesian solution.
+The coordinate regression covers PG RN preservation, Cartesian wave convergence,
+backreaction and MPI-repartitioned restart. Passing these short checks is
+separate from validating long scalarized-black-hole evolutions.

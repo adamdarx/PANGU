@@ -49,6 +49,12 @@ struct MaxwellCoupling {
   Real alpha = 0;
   bool linearized = false;
   int kind = 0; // 0: exp(alpha phi^2), 1: 1+alpha phi^2
+  KOKKOS_INLINE_FUNCTION Real Value(Real phi) const {
+    return kind == 0 ? exp(alpha * phi * phi) : 1 + alpha * phi * phi;
+  }
+  KOKKOS_INLINE_FUNCTION Real Derivative(Real phi) const {
+    return 2 * alpha * phi * (kind == 0 ? Value(phi) : 1);
+  }
   KOKKOS_INLINE_FUNCTION Real Inverse(Real phi) const {
     return kind == 0 ? exp(-alpha * phi * phi)
                      : 1 / (1 + alpha * phi * phi);
@@ -146,5 +152,18 @@ KOKKOS_INLINE_FUNCTION RNPoint RNTortoise(Real x, Real mass, Real charge) {
           (48 * mass * mass - 96 * mass * q2 / r + 40 * q2 * q2 / r2) /
               (r2 * r2 * r2),
           f * fp / r, -2 * q2 / (r2 * r2)};
+}
+// Host-side selection is shared by package assembly and the plugin factory.
+inline bool IsCoupledEMS(parthenon::ParameterInput& input) {
+  return input.GetOrAddString("plugin/scalar_field", "backend", "radial_tortoise") == "ems";
+}
+inline std::string CoordinateName(parthenon::ParameterInput& input) {
+  const auto backend = input.GetOrAddString("plugin/scalar_field", "backend", "radial_tortoise");
+  const auto fallback = backend == "ems" ? "pg" :
+                        (backend == "radial_tortoise" ? "tortoise" : "cartesian");
+  return input.GetOrAddString("plugin/scalar_field", "coordinates", fallback);
+}
+inline bool UsesCartesianEMS(parthenon::ParameterInput& input) {
+  return IsCoupledEMS(input) && CoordinateName(input) == "cartesian";
 }
 } // namespace pangu::plugin_api::scalar_field

@@ -358,11 +358,10 @@ std::shared_ptr<parthenon::StateDescriptor>
 Plugin::Initialize(plugin::InitContext &context) {
   auto &pin = context.input;
   const std::string block = "plugin/scalar_field";
-  if (pin.GetOrAddString(block, "backend", "radial_tortoise") ==
-      "spherical_ems")
+  if (api::IsCoupledEMS(pin))
     return InitializeCoupledEMS(context);
   const std::set<std::string> keys{
-      "backend",      "potential",      "fields",        "ell",
+      "backend",      "coordinates",    "potential",    "fields", "ell",
       "bh_mass",      "bh_charge",      "mass",          "quartic",
       "sextic",       "decay_constant", "gb_eta",        "gb_coupling",
       "gb_alpha",     "em_alpha",       "em_linearized", "amplitude",
@@ -372,16 +371,14 @@ Plugin::Initialize(plugin::InitContext &context) {
     PARTHENON_REQUIRE(keys.count(key) != 0, "unknown scalar parameter: " + key);
   PARTHENON_REQUIRE(pin.GetString("parthenon/job", "problem_id") ==
                         "scalar_field",
-                    "scalar_field v0.1 is a standalone test-field problem, not "
-                    "a coupled Z4c matter source");
-  PARTHENON_REQUIRE(!geometry::ConfiguredGeometryIsSynchronized(),
-                    "scalar test-field backend requires a fixed-background "
-                    "build (METRIC=cks MODE=dynamic)");
+                    "scalar test fields require problem_id=scalar_field");
   Parameters p;
   const auto backend = pin.GetOrAddString(block, "backend", "radial_tortoise");
   PARTHENON_REQUIRE(backend == "radial_tortoise" || backend == "cartesian_flat",
                     "unknown scalar backend");
   p.radial = backend == "radial_tortoise";
+  PARTHENON_REQUIRE(api::CoordinateName(pin) == (p.radial ? "tortoise" : "cartesian"),
+                    "scalar test-field coordinates disagree with its selected backend");
   const auto potential = pin.GetOrAddString(block, "potential", "polynomial");
   PARTHENON_REQUIRE(potential == "polynomial" || potential == "axion",
                     "unknown scalar potential");

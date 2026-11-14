@@ -16,7 +16,7 @@ struct StressEnergy {
   parthenon::Real momentum[3]{};
 };
 
-enum class StressEnergySource : int { vacuum = 0, zero, constant, analytic, grhd, grmhd };
+enum class StressEnergySource : int { vacuum = 0, zero, constant, analytic, grhd, grmhd, external };
 
 struct StressEnergySourceOptions {
   StressEnergySource source = StressEnergySource::vacuum;

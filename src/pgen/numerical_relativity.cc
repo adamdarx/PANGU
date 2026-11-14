@@ -790,6 +790,13 @@ void NumericalRelativityExtrapolationBoundary(
 void NumericalRelativityMinkowski(MeshBlock *block, ParameterInput *) {
   InitializeMinkowskiZ4cFields(block);
   auto data = block->meshblock_data.Get();
+  if (block->packages.Get("numerical_relativity")->Param<std::string>("matter_source_name") ==
+      "external") {
+    // The plugin's packed post-generator initializes its independent fields.
+    // Pre/PostFillDerived then reconstruct ADM, Tmunu and constraints in order.
+    nr::Z4cToADMFieldsBlockTask(data.get());
+    return;
+  }
   FinalizeNumericalRelativityInitialData(data.get());
 }
 

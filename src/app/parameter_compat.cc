@@ -189,6 +189,8 @@ const std::map<std::string, std::set<std::string>> kPanguSchema{
       "amr_radius_3",
       "amr_radius_3_refinement_level",
       "tracker_enabled",
+      "constraint_mask_follow_tracker",
+      "constraint_mask_outer_radius",
       "tracker_mode",
       "amr_topology_trace",
       "tracker_count",

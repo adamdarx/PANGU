@@ -11,6 +11,7 @@
 #include "mhd/mhd_package.h"
 #include "pangu_config.h"
 #include "pangu/plugin_api/initial_data.h"
+#include "pangu/plugin_api/scalar_field.h"
 #include "plugin/registry.h"
 #include "pgen/hydro_problems.h"
 #include "pgen/mhd_problems.h"
@@ -384,9 +385,16 @@ const std::map<std::string, ProblemDefinition> &Registry() {
   // supplies a package anchor without manufacturing an unused fluid package.
   if (plugin::IsCompiled("scalar_field")) {
     registry.try_emplace("scalar_field", ProblemDefinition{
-        [](parthenon::MeshBlock*, parthenon::ParameterInput*) {}, nullptr,
+        [](parthenon::MeshBlock* block, parthenon::ParameterInput* pin) {
+          if constexpr (geometry::ConfiguredGeometryIsSynchronized())
+            if (block->packages.AllPackages().count("numerical_relativity"))
+              pgen::NumericalRelativityMinkowski(block, pin);
+        }, nullptr,
         nullptr, nullptr, nullptr,
-        [](parthenon::ParameterInput*) {
+        [](parthenon::ParameterInput* pin) {
+          if constexpr (geometry::ConfiguredGeometryIsSynchronized())
+            if (plugin_api::scalar_field::UsesCartesianEMS(*pin))
+              return nr::Initialize(pin);
           return std::make_shared<parthenon::StateDescriptor>("scalar_background");
         }});
   }
@@ -453,7 +461,7 @@ void ConfigureProblem(const std::string &problem_id,
   const bool synchronized_problem =
       numerical_relativity_problem || synchronized_matter_problem;
   PARTHENON_REQUIRE(
-      synchronized_problem == synchronized_geometry,
+      problem_id == "scalar_field" || synchronized_problem == synchronized_geometry,
       synchronized_problem
           ? "synchronized-spacetime problems require -DMETRIC=z4c -DMODE=sync"
           : "a z4c+sync build accepts only numerical-relativity or "

@@ -436,6 +436,7 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
     set_tests_properties(pangu.nr3.adm_conversion PROPERTIES
       LABELS "numerical-relativity;nr3;unit;gpu;adm;conversion")
     add_test(NAME pangu.nr3.constraints COMMAND $<TARGET_FILE:pangu_nr3_constraints>)
+    add_test(NAME pangu.scalar.ems_sources COMMAND $<TARGET_FILE:pangu_scalar_ems_sources>)
     set_tests_properties(pangu.nr3.constraints PROPERTIES
       LABELS "numerical-relativity;nr3;unit;gpu;constraints")
     add_test(NAME pangu.nr3.schwarzschild

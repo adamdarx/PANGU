@@ -20,8 +20,8 @@ def parameters(path):
         elif section == "plugin/scalar_field" and "=" in line:
             key, value = line.split("=", 1)
             values[key.strip()] = value.strip()
-    if values.get("backend") != "spherical_ems":
-        raise ValueError("profile export requires a spherical_ems input deck")
+    if values.get("backend") != "ems" or values.get("coordinates", "pg") != "pg":
+        raise ValueError("profile export requires an EMS input deck in PG coordinates")
     return values
 
 

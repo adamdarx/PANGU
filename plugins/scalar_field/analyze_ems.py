@@ -34,8 +34,8 @@ def analyze(directory, growth_window=(81., 143.)):
     section = "plugin/scalar_field"
     get = lambda name, default: config.get((section, name), default)
     number = lambda name, default: float(get(name, default))
-    if get("backend", "cartesian_flat") != "spherical_ems":
-        raise ValueError("static comparison requires the nonlinear spherical_ems backend")
+    if get("backend", "cartesian_flat") != "ems" or get("coordinates", "pg") != "pg":
+        raise ValueError("static comparison requires the nonlinear EMS backend in PG coordinates")
     seed_mass, Q, alpha = number("bh_mass", 1), number("bh_charge", .9), number("em_alpha", 5)
     mu, quartic, sextic, fa = (number(k, v) for k, v in (("mass", 0), ("quartic", 0), ("sextic", 0), ("decay_constant", 1)))
     coupling, potential = get("em_coupling", "exponential"), get("potential", "polynomial")

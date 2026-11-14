@@ -17,14 +17,73 @@
 #include "mhd/mhd_package.h"
 #include "z4c/evolution/package.h"
 #include "z4c/evolution/classical_rk4.h"
+#include "z4c/core/component_indices.h"
+#include "z4c/evolution/z4c_rhs.h"
 #include "z4c/coupling/sync_grhd.h"
 #include "z4c/coupling/sync_grmhd.h"
+#include "pangu/plugin_api/synchronized_matter.h"
 
 namespace pangu::nr {
 
 using namespace parthenon::driver::prelude;
 
 namespace {
+
+TaskStatus ProjectRestartGhosts(MeshData<Real>* data) {
+  // Interior restart values are already projected. Only extrapolated physical
+  // and AMR-prolongated ghosts lose that projection when reconstructed.
+  // Reprojecting interiors here would itself perturb an exact restart.
+  const auto mesh = data->GetMeshPointer();
+  using parthenon::X1DIR;
+  using parthenon::X2DIR;
+  using parthenon::X3DIR;
+  const bool multilevel = mesh->multilevel;
+  Kokkos::Array<Real, 6> bounds{mesh->mesh_size.xmin(X1DIR), mesh->mesh_size.xmax(X1DIR),
+                               mesh->mesh_size.xmin(X2DIR), mesh->mesh_size.xmax(X2DIR),
+                               mesh->mesh_size.xmin(X3DIR), mesh->mesh_size.xmax(X3DIR)};
+  Kokkos::Array<int, 6> outflow{};
+  for (int face = 0; face < 6; ++face)
+    outflow[face] = mesh->mesh_bc_names[face] == "nr_outflow";
+  const auto z4c = data->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto ib = data->GetBoundsI(IndexDomain::entire);
+  const auto jb = data->GetBoundsJ(IndexDomain::entire);
+  const auto kb = data->GetBoundsK(IndexDomain::entire);
+  const auto interior_i = data->GetBoundsI(IndexDomain::interior);
+  const auto interior_j = data->GetBoundsJ(IndexDomain::interior);
+  const auto interior_k = data->GetBoundsK(IndexDomain::interior);
+  host_loops::ParallelFor(
+      DEFAULT_LOOP_PATTERN, "PANGU restore projected outflow ghosts", parthenon::DevExecSpace(),
+      0, z4c.GetDim(5) - 1, kb.s, kb.e, jb.s, jb.e, ib.s, ib.e,
+      KOKKOS_LAMBDA(const int b, const int k, const int j, const int i) {
+        if (i >= interior_i.s && i <= interior_i.e && j >= interior_j.s &&
+            j <= interior_j.e && k >= interior_k.s && k <= interior_k.e) return;
+        const auto& coords = z4c.GetCoords(b);
+        const Real x = coords.Xc<X1DIR>(k, j, i), y = coords.Xc<X2DIR>(k, j, i),
+                   z = coords.Xc<X3DIR>(k, j, i);
+        if (!multilevel && !((outflow[0] && x < bounds[0]) || (outflow[1] && x > bounds[1]) ||
+              (outflow[2] && y < bounds[2]) || (outflow[3] && y > bounds[3]) ||
+              (outflow[4] && z < bounds[4]) || (outflow[5] && z > bounds[5]))) return;
+        Real metric[6]{};
+        for (int c = 0; c < 6; ++c) metric[c] = z4c(b, Index(Z4cComponent::gxx) + c, k, j, i);
+        const Real determinant = rhs::SpatialDeterminant(metric);
+        const Real factor = cbrt(1.0 / (determinant > 0.0 ? determinant : 1.0));
+        for (int c = 0; c < 6; ++c) {
+          metric[c] *= factor;
+          z4c(b, Index(Z4cComponent::gxx) + c, k, j, i) = metric[c];
+        }
+        Real inverse[6]{};
+        rhs::SpatialInverse(1.0, metric, inverse);
+        Real trace = 0.0;
+        for (int a = 0; a < 3; ++a)
+          for (int d = 0; d < 3; ++d) {
+            const int c = SpatialSymmetricComponent(a, d);
+            trace += inverse[c] * z4c(b, Index(Z4cComponent::axx) + c, k, j, i);
+          }
+        for (int c = 0; c < 6; ++c)
+          z4c(b, Index(Z4cComponent::axx) + c, k, j, i) -= (1.0 / 3.0) * trace * metric[c];
+      });
+  return TaskStatus::complete;
+}
 
 bool CanUsePackedSyncOutflow(Mesh* mesh) {
   // The multilevel packed implementation passes field equivalence tests,
@@ -163,7 +222,15 @@ TaskStatus AccumulateSyncRKStateMeshTask(MeshData<Real>* current,
 void ConfigureSyncIntegrator(Mesh* mesh, parthenon::LowStorageIntegrator& integrator) {
   PARTHENON_REQUIRE(mesh->ndim == 3, "sync Z4c evolution requires a three-dimensional mesh");
   const auto nr = mesh->packages.Get("numerical_relativity");
+  if (!nr->AllParams().hasKey("restart_outflow_projection_pending"))
+    nr->AddParam<bool>("restart_outflow_projection_pending", parthenon::Globals::is_restart,
+                        parthenon::Params::Mutability::Mutable);
   const bool classical = nr->Param<std::string>("rk4_variant") == "classical";
+  const auto* external = plugin::GetSynchronizedMatter(mesh->packages);
+  PARTHENON_REQUIRE(external == nullptr || classical,
+                    "synchronized non-fluid matter currently requires classical RK4");
+  PARTHENON_REQUIRE(external == nullptr || (!mesh->multilevel && mesh->ndim == 3),
+                    "synchronized non-fluid matter currently supports uniform three-dimensional meshes");
   PARTHENON_REQUIRE(!classical || integrator.GetName() == "rk4",
                     "numerical_relativity/rk4_variant=classical requires time/integrator=rk4");
   if (integrator.GetName() != "rk4")
@@ -172,10 +239,10 @@ void ConfigureSyncIntegrator(Mesh* mesh, parthenon::LowStorageIntegrator& integr
     // Keep the common four-stage driver, but do NOT use its two-register
     // recurrence. ClassicalRK4UpdateMeshTask owns an immutable U^n and a
     // weighted RHS sum, with the classical Butcher abscissae 0,1/2,1/2,1.
-    PARTHENON_REQUIRE(nr->Param<bool>("vacuum") &&
+    PARTHENON_REQUIRE((nr->Param<bool>("vacuum") || external != nullptr) &&
                           mesh->packages.AllPackages().count("hydro") == 0 &&
                           mesh->packages.AllPackages().count("mhd") == 0,
-                      "classical RK4 currently supports vacuum Z4c only");
+                      "classical RK4 supports vacuum or a synchronized non-fluid matter plugin");
     integrator.nstages = 4;
     integrator.nbuffers = 2;
     integrator.gam0 = {0.0, 0.0, 0.0, 0.0};
@@ -266,6 +333,10 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
   const bool vacuum = mesh->packages.Get("numerical_relativity")->Param<bool>("vacuum");
   TaskCollection collection;
   TaskID none(0);
+  const auto nr = mesh->packages.Get("numerical_relativity");
+  const auto* external = plugin::GetSynchronizedMatter(mesh->packages);
+  const bool restart_projection = stage == 1 && (vacuum || external != nullptr) &&
+      nr->Param<bool>("restart_outflow_projection_pending");
 
   // Z4c and Valencia GRHD/GRMHD share one RK-stage graph. Both systems read the
   // same current ADM fields; their conservative updates may proceed in
@@ -281,6 +352,8 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     auto& current = mesh->mesh_data.Add(stage_name[stage - 1], base);
     auto& next = mesh->mesh_data.Add(stage_name[stage], base);
     std::vector<std::string> boundary_fields{"nr.z4c"};
+    if (external != nullptr)
+      boundary_fields.insert(boundary_fields.end(), external->evolved.begin(), external->evolved.end());
     if (sync_matter) {
       boundary_fields.emplace_back("nr.constraint_mask");
       boundary_fields.emplace_back(sync_grmhd ? "mhd.cons" : "hydro.cons");
@@ -305,7 +378,8 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     // these ghosts at every first stage, just as startup/restart does, so
     // CT never depends on whether a checkpoint was loaded between steps.
     TaskID current_ready = none;
-    if (stage == 1 && mesh->multilevel && (mesh->modified || sync_grmhd)) {
+    if (stage == 1 && ((mesh->multilevel && (mesh->modified || sync_grmhd)) ||
+                       restart_projection)) {
       const auto current_receive = tasks.AddTask(
           none, parthenon::StartReceiveBoundBufs<parthenon::BoundaryType::any>, current_boundary);
       current_ready =
@@ -318,6 +392,8 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       if (sync_matter)
         current_ready = tasks.AddTask(current_ready, EnforceAlgebraicConstraintsMeshTask,
                                       current.get());
+      else if (restart_projection)
+        current_ready = tasks.AddTask(current_ready, ProjectRestartGhosts, current.get());
       // Vacuum evolution consumes only the canonicalized Z4c state. ADM and
       // constraints are derived outputs and are materialized after the final
       // stage, so rebuilding them here is pure memory traffic.
@@ -389,8 +465,11 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
     const Real rhs_time = classical ? tm.time + integrator->c[stage - 1] * dt : tm.time;
     const auto rhs =
         tasks.AddTask(rk_accumulated, CalculateRHSMeshTask, current.get(), rhs_time);
+    auto all_rhs = rhs;
+    if (external != nullptr)
+      all_rhs = rhs | tasks.AddTask(rk_accumulated, external->rhs, current.get());
     const auto boundary_rhs =
-        tasks.AddTask(rhs, ApplySommerfeldRHSMeshTask, current.get());
+        tasks.AddTask(all_rhs, ApplySommerfeldRHSMeshTask, current.get());
     auto update = classical
                       ? tasks.AddTask(boundary_rhs | carried, ClassicalRK4UpdateMeshTask,
                                       current.get(), classical_initial.get(),
@@ -399,6 +478,10 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
                                       rk_reference, gam0, gam1, beta * dt, next.get());
     TaskID hydro_update = none;
     TaskID magnetic_update = none;
+    TaskID external_update = none;
+    if (external != nullptr)
+      external_update = tasks.AddTask(boundary_rhs, external->classical_update,
+                                       current.get(), stage, dt);
     if (sync_matter) {
       auto flux_ready = hydro_flux;
       if (sync_grmhd) {
@@ -426,9 +509,9 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
             tasks.AddTask(flux_corrections | carried | rk_accumulated, mhd::UpdateFaceFieldsMeshTask,
                           current.get(), rk_reference, gam0, gam1, beta * dt, next.get());
     }
-    const auto boundary_dependency = update | hydro_update | magnetic_update | receive;
+    const auto boundary_dependency = update | hydro_update | magnetic_update | external_update | receive;
     const auto boundaries =
-        CanUsePackedSyncOutflow(mesh)
+        (external == nullptr && CanUsePackedSyncOutflow(mesh))
             ? parthenon::AddBoundaryExchangeTasks(
                   boundary_dependency, tasks, next_boundary, false,
                   parthenon::BValOnMDFunc_t(ApplyPackedSyncOutflowBoundariesMeshTask))
@@ -458,9 +541,13 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       ready = next_matter;
     } else {
       auto next_matter = projected;
-      if (!vacuum)
-        next_matter =
-            tasks.AddTask(projected, BuildStressEnergyMeshTask, next.get(), next_stage_time);
+      if (!vacuum) {
+        auto matter_geometry = projected;
+        if (external != nullptr)
+          matter_geometry = tasks.AddTask(projected, Z4cToADMFieldsMeshTask, next.get());
+        next_matter = tasks.AddTask(matter_geometry, BuildStressEnergyMeshTask, next.get(),
+                                    next_stage_time);
+      }
       if (vacuum) {
         // No vacuum RHS stage consumes ADM fields. Materialize them only for
         // the completed state, immediately before final diagnostics.
@@ -477,6 +564,8 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       tasks.AddTask(ready, parthenon::Update::EstimateTimestep<MeshData<Real>>, next.get());
     }
   }
+  if (restart_projection)
+    *nr->MutableParam<bool>("restart_outflow_projection_pending") = false;
   return collection;
 }
 

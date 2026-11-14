@@ -35,7 +35,8 @@ nlim = -1
 ncycle_out = 2000
 ncycle_out_mesh = 1000000
 <plugin/scalar_field>
-backend = spherical_ems
+backend = ems
+coordinates = pg
 potential = polynomial
 fields = 1
 ell = 0
