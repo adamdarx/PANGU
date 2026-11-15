@@ -1,8 +1,8 @@
 # Scalar-field plugin: selectable coordinates and coupled EMS
 
 Plugin version: **1.1.0**. This release covers the documented test-field and
-coupled spherical EMS interfaces, including qualified profile import and
-controlled perturbations. Collapse from an initially regular, untrapped center
+selectable-coordinate EMS interfaces, including spherical profile import and
+controlled perturbations in PG coordinates. Collapse from an initially regular, untrapped center
 is provided by the separate `scalar_collapse` plugin and is not part of this
 package.
 
@@ -375,3 +375,25 @@ as `ems.gauss`; native NR Hamiltonian and momentum constraints remain in
 The coordinate regression covers PG RN preservation, Cartesian wave convergence,
 backreaction and MPI-repartitioned restart. Passing these short checks is
 separate from validating long scalarized-black-hole evolutions.
+
+Cartesian initial data apply `problem/constraint_mask_radius` and
+`numerical_relativity/constraint_mask_outer_radius` to the native NR diagnostic
+mask. These select a fixed coordinate shell about the origin; they affect
+constraint statistics, not the evolved fields or excision. The mask is included
+in checkpoints. The standard NR tracker option can refresh a moving mask when
+puncture tracking is enabled.
+
+`examples/ems_cartesian_rn.in` and the following local regression check the
+unperturbed electrovac RN data on three uniform grids, Hamiltonian and electric
+Gauss convergence before and after a short evolution, the analytic electric
+field and energy normalization, history L1/L2/Linf against the actual masked
+field, and restart from one to two MPI ranks:
+
+```sh
+python3 tst/regression/scalar_ems_rn.py \
+  --pangu build-cuda-nr/src/pangu --workdir /tmp/ems-rn-check
+```
+
+The example's grids leave the horizon unresolved. Its convergence shell is
+`1.5 < r <= 3` at `t=0` and `t=0.25M`; passing this test establishes short
+exterior electrovac checks, not a long-time black-hole or scalar-hair result.

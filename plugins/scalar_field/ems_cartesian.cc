@@ -219,8 +219,11 @@ void InitializeFields(Mesh* mesh,ParameterInput*,MeshData<Real>* data) {
   const auto p=data->GetParentPointer()->packages.Get(label)->Param<Parameters>("parameters");
   const auto nr_package=data->GetParentPointer()->packages.Get("numerical_relativity");
   const Real chi_power=nr_package->Param<nr::Z4cOptions>("z4c_options").chi_psi_power;
+  const Real inner_mask=nr_package->Param<Real>("tracked_constraint_inner_radius");
+  const Real outer_mask=nr_package->Param<Real>("constraint_mask_outer_radius");
   const auto u=data->PackVariables(std::vector<std::string>{"scalar.state"});
   const auto z=data->PackVariables(std::vector<std::string>{"nr.z4c"});
+  const auto mask=data->PackVariables(std::vector<std::string>{"nr.constraint_mask"});
   const auto ib=data->GetBoundsI(IndexDomain::entire),jb=data->GetBoundsJ(IndexDomain::entire),
              kb=data->GetBoundsK(IndexDomain::entire);
   // Project Maxwell polarization against the centered derivative's Fourier
@@ -254,6 +257,11 @@ void InitializeFields(Mesh* mesh,ParameterInput*,MeshData<Real>* data) {
       KOKKOS_LAMBDA(int b,int k,int j,int i) {
         const auto& coords=u.GetCoords(b);
         const Real x[3]={coords.Xc<X1DIR>(k,j,i),coords.Xc<X2DIR>(k,j,i),coords.Xc<X3DIR>(k,j,i)};
+        const Real radius_squared=x[0]*x[0]+x[1]*x[1]+x[2]*x[2];
+        // The scalar problem starts from Minkowski's all-active mask. Apply the
+        // configured NR diagnostic shell when replacing those initial fields.
+        mask(b,0,k,j,i)=radius_squared>inner_mask*inner_mask &&
+            (outer_mask==0 || radius_squared<=outer_mask*outer_mask) ? 1.0 : 0.0;
         for(int n=0;n<8;++n) u(b,n,k,j,i)=0;
         Real phase=0; for(int n=0;n<3;++n) phase+=p.wave[n]*x[n];
         if(p.initial==1) {
@@ -267,7 +275,7 @@ void InitializeFields(Mesh* mesh,ParameterInput*,MeshData<Real>* data) {
                                         polarization[second]*cos(phase);
           }
         } else if(p.initial==3) {
-          const Real r=sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]);
+          const Real r=sqrt(radius_squared);
           if (!(r>0)) Kokkos::abort("RN puncture must not coincide with a cell center");
           const Real psi=sqrt(1+p.mass/r+(p.mass*p.mass-p.charge*p.charge)/(4*r*r));
           z(b,0,k,j,i)=pow(psi,chi_power);

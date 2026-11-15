@@ -1,0 +1,73 @@
+# Short local RN constraint check. This uniform grid does not resolve the horizon.
+<parthenon/job>
+problem_id = scalar_field
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<plugins>
+enabled = scalar_field
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+<parthenon/mesh>
+refinement = none
+numlevel = 1
+nghost = 4
+nx1 = 32
+x1min = -4
+x1max = 4
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 32
+x2min = -4
+x2max = 4
+ix2_bc = outflow
+ox2_bc = outflow
+nx3 = 32
+x3min = -4
+x3max = 4
+ix3_bc = outflow
+ox3_bc = outflow
+<parthenon/meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 16
+<parthenon/time>
+integrator = rk4
+tlim = 0.25
+nlim = 1000
+ncycle_out = 10
+<numerical_relativity>
+matter_source = external
+rk4_variant = classical
+finite_difference_order = 4
+cfl = 0.25
+dissipation = 0
+constraint_mask_outer_radius = 3
+<problem>
+constraint_mask_radius = 1.5
+<plugin/scalar_field>
+backend = ems
+coordinates = cartesian
+initial_data = reissner_nordstrom
+bh_mass = 1
+bh_charge = 0.9
+em_coupling = exponential
+em_alpha = 5
+cfl = 0.25
+dissipation = 0
+<parthenon/output1>
+file_type = hdf5
+dt = 0.25
+variables = scalar.state,ems.gauss,nr.z4c,nr.adm,nr.tmunu,nr.constraints,nr.constraint_mask
+id = scalar_ems
+single_precision_output = false
+ghost_zones = false
+<parthenon/output2>
+file_type = hst
+dt = 0.01
+data_format = %24.16e
+<parthenon/output3>
+file_type = rst
+dt = 0.25
