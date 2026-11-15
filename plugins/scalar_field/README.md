@@ -13,9 +13,10 @@ test-field problems. The `ems` backend selects `coordinates=pg` or `coordinates=
 sharing the scalar potential and Maxwell coupling policies. PG uses the existing
 spherical constraint solver. Cartesian coordinates use general ADM lapse, shift,
 and spatial metric, evolving the scalar and Maxwell fields with the native Z4c
-stage graph and supplying its Einstein sources. All current modes require a
-uniform mesh. PG uses one radial block and one MPI rank; Cartesian EMS uses a
-three-dimensional mesh and supports multiple MPI ranks. GB gravitational
+stage graph and supplying its Einstein sources. PG and the test-field modes
+use uniform meshes. Cartesian EMS supports uniform, statically refined and
+adaptive three-dimensional meshes with multiple MPI ranks. PG uses one radial
+block and one MPI rank. GB gravitational
 backreaction is not implemented.
 
 ## Configuration and extension
@@ -365,8 +366,9 @@ initial data include `minkowski`, small `scalar_wave` and `maxwell_wave` fixture
 and unperturbed `reissner_nordstrom` data (`zero` is also accepted for the latter).
 PG accepts `reissner_nordstrom` as the corresponding unperturbed RN state.
 Coordinate-specific profile and excision inputs are rejected by the Cartesian
-mode. It currently requires uniform three-dimensional grids; AMR and a
-constraint-solved, scalar-perturbed three-dimensional black hole remain pending.
+mode. Cartesian EMS requires a three-dimensional mesh and classical RK4.
+Constraint-solved spherical scalar-puncture fixtures are described below;
+a general nonspherical elliptic initial-data solver is separate.
 
 Geometry and matter right-hand sides are evaluated from the same RK state before
 either is updated. Maxwell's electric and magnetic Gauss constraints are output
@@ -375,6 +377,39 @@ as `ems.gauss`; native NR Hamiltonian and momentum constraints remain in
 The coordinate regression covers PG RN preservation, Cartesian wave convergence,
 backreaction and MPI-repartitioned restart. Passing these short checks is
 separate from validating long scalarized-black-hole evolutions.
+
+### Cartesian mesh refinement
+
+`scalar.state` uses the native Z4c high-order point prolongation and restriction;
+the fields are finite-difference point values, including the densitized electric
+and magnetic components. The synchronized stage graph exchanges matter and
+geometry together and reconstructs ADM fields and Einstein sources after mesh
+changes. The fixed coordinate constraint mask is re-evaluated on each level's
+cell centers rather than interpolated as a physical field. Tracker-following
+masks retain the native NR update.
+
+Use `parthenon/mesh/refinement=static` with standard
+`parthenon/static_refinementN` boxes, or `refinement=adaptive` with native NR
+tracker/chi criteria or Parthenon refinement criteria on `scalar.state`.
+Refinement supports `nghost=2` or `4`. The native restriction stencil needs
+three or five interior cells respectively on **every block axis**; because
+AMR blocks have even sizes, the minimum block sizes are four or six.
+An undersized block is rejected before evolution. In particular, FD4 with
+`nghost=4` cannot use four-cell blocks. Sixteen-cell production blocks meet
+this requirement.
+
+The FD4 regression compares volume-weighted scalar/Maxwell wave errors and
+electric/magnetic Gauss residuals across a coarse/fine interface, observes
+actual refinement and derefinement from physical leaf boxes, and checks a
+one-to-two-rank restart. Primary states have their own restart tolerance;
+second-derivative constraint diagnostics use a separate machine-roundoff bound
+proportional to `epsilon/h_min^2`. Gauss residuals at AMR interfaces are measured
+for convergence; they are not assumed to vanish to roundoff.
+
+```sh
+python3 tst/regression/scalar_ems_amr.py \
+  --pangu build-cuda-nr/src/pangu --workdir /tmp/ems-amr
+```
 
 The evolved conformal variable is `chi=psi^-4`. The compatibility input
 `numerical_relativity/chi_psi_power` accepts only `-4`; other values are rejected.

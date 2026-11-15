@@ -229,8 +229,6 @@ void ConfigureSyncIntegrator(Mesh* mesh, parthenon::LowStorageIntegrator& integr
   const auto* external = plugin::GetSynchronizedMatter(mesh->packages);
   PARTHENON_REQUIRE(external == nullptr || classical,
                     "synchronized non-fluid matter currently requires classical RK4");
-  PARTHENON_REQUIRE(external == nullptr || (!mesh->multilevel && mesh->ndim == 3),
-                    "synchronized non-fluid matter currently supports uniform three-dimensional meshes");
   PARTHENON_REQUIRE(!classical || integrator.GetName() == "rk4",
                     "numerical_relativity/rk4_variant=classical requires time/integrator=rk4");
   if (integrator.GetName() != "rk4")
@@ -389,7 +387,7 @@ TaskCollection BuildSyncStage(driver::StageBuildContext& context) {
       // constrained ghosts to the next RHS and to matter primitive recovery.
       // Otherwise a checkpoint restores identical interior fields but takes a
       // different first step at coarse/fine interfaces.
-      if (sync_matter)
+      if (sync_matter || (external != nullptr && mesh->multilevel && mesh->modified))
         current_ready = tasks.AddTask(current_ready, EnforceAlgebraicConstraintsMeshTask,
                                       current.get());
       else if (restart_projection)

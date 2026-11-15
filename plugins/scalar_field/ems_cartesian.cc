@@ -10,6 +10,7 @@
 
 #include "pangu/plugin_api/synchronized_matter.h"
 #include "z4c/core/finite_difference.h"
+#include "z4c/evolution/amr_refinement.h"
 #include "z4c/evolution/classical_rk4.h"
 #include "z4c/evolution/package.h"
 
@@ -149,7 +150,32 @@ template<int Order> TaskStatus PrepareOrder(MeshData<Real>* data,Real) {
   return TaskStatus::complete;
 }
 
+void RefreshAMRConstraintMask(MeshData<Real>* data) {
+  if (!data->GetMeshPointer()->multilevel) return;
+  const auto nr_package=data->GetParentPointer()->packages.Get("numerical_relativity");
+  if (nr_package->Param<bool>("constraint_mask_follow_tracker")) return;
+  const Real inner=nr_package->Param<Real>("tracked_constraint_inner_radius");
+  const Real outer=nr_package->Param<Real>("constraint_mask_outer_radius");
+  const auto mask=data->PackVariables(std::vector<std::string>{"nr.constraint_mask"});
+  const auto ib=data->GetBoundsI(IndexDomain::entire),jb=data->GetBoundsJ(IndexDomain::entire),
+             kb=data->GetBoundsK(IndexDomain::entire);
+  // A coordinate shell is a diagnostic selection, not an advected field.
+  // Re-evaluate it on the new cell centers instead of inheriting fractional
+  // masks from restriction or a parent's selection after prolongation.
+  parthenon::par_for(DEFAULT_LOOP_PATTERN,"EMS AMR coordinate constraint mask",DevExecSpace(),
+      0,data->NumBlocks()-1,kb.s,kb.e,jb.s,jb.e,ib.s,ib.e,
+      KOKKOS_LAMBDA(int b,int k,int j,int i) {
+        const auto& coords=mask.GetCoords(b);
+        const Real x=coords.Xc<X1DIR>(k,j,i),y=coords.Xc<X2DIR>(k,j,i),
+                   z=coords.Xc<X3DIR>(k,j,i);
+        const Real radius_squared=x*x+y*y+z*z;
+        mask(b,0,k,j,i)=radius_squared>inner*inner &&
+            (outer==0 || radius_squared<=outer*outer) ? 1.0 : 0.0;
+      });
+}
+
 TaskStatus Prepare(MeshData<Real>* data,Real time) {
+  RefreshAMRConstraintMask(data);
   const int order=data->GetParentPointer()->packages.Get(label)->Param<Parameters>("parameters").order;
   if(order==2) return PrepareOrder<2>(data,time);
   if(order==4) return PrepareOrder<4>(data,time);
@@ -345,6 +371,19 @@ std::shared_ptr<StateDescriptor> InitializeCartesianEMS(plugin::InitContext& con
                     "Cartesian EMS requires classical RK4");
   Parameters p;
   p.order=nr_package->Param<int>("finite_difference_order");
+  if (pin.GetOrAddString("parthenon/mesh","refinement","none")!="none") {
+    const int ghost=pin.GetOrAddInteger("parthenon/mesh","nghost",2);
+    PARTHENON_REQUIRE(ghost==2 || ghost==4,
+        "Cartesian EMS AMR uses the native high-order transfer with nghost=2 or4");
+    const int points=ghost==2 ? 3 : 5;
+    for (const char* axis:{"nx1","nx2","nx3"}) {
+      const int cells=pin.GetOrAddInteger("parthenon/meshblock",axis,
+                                        pin.GetInteger("parthenon/mesh",axis));
+      PARTHENON_REQUIRE(cells>=points,
+          "Cartesian EMS AMR requires at least "+std::to_string(points)+
+          " interior cells per block axis for its high-order restriction stencil");
+    }
+  }
   const std::set<std::string> keys{"backend","coordinates","fields","ell","gb_eta","em_linearized",
       "potential","mass","quartic","sextic","decay_constant",
       "em_coupling","em_alpha","initial_data","amplitude","wave_x","wave_y","wave_z",
@@ -399,8 +438,14 @@ std::shared_ptr<StateDescriptor> InitializeCartesianEMS(plugin::InitContext& con
   package->AddParam<Parameters>("parameters",p);
   package->AddParam<plugin::SynchronizedMatter>(plugin::synchronized_matter_key,
       {{"scalar.state"},Prepare,RHS,Update});
-  package->AddField("scalar.state",Metadata({Metadata::Cell,Metadata::Independent,Metadata::Restart,
-      Metadata::FillGhost},std::vector<int>{8},std::vector<std::string>{"phi","P","D_x","D_y","D_z","Bdens_x","Bdens_y","Bdens_z"}));
+  Metadata evolved({Metadata::Cell,Metadata::Independent,Metadata::Restart,Metadata::FillGhost},
+      std::vector<int>{8},std::vector<std::string>{"phi","P","D_x","D_y","D_z","Bdens_x","Bdens_y","Bdens_z"});
+  // These are finite-difference point values, like the synchronized Z4c
+  // fields. A slope-limited fluid interpolant would insert derivative kinks
+  // at coarse/fine interfaces in both the scalar wave and Maxwell curls.
+  evolved.RegisterRefinementOps<nr::amr::ProlongateZ4cHighOrder,
+                                nr::amr::RestrictZ4cHighOrder>();
+  package->AddField("scalar.state",evolved);
   for(const char* name:{"scalar.rhs","scalar.initial","scalar.rk_sum"})
     package->AddField(name,Metadata({Metadata::Cell,Metadata::Derived,Metadata::OneCopy},std::vector<int>{8}));
   package->AddField("ems.flux",Metadata({Metadata::Cell,Metadata::Derived,Metadata::OneCopy},std::vector<int>{18}));

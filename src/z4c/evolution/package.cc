@@ -1160,6 +1160,9 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
     // AMR. Register only that pass: a second block callback would repeat the
     // same work and introduce one global CUDA fence per MeshBlock.
     package->PreFillDerivedMesh = [](MeshData<Real>* data) {
+      if (data->GetMeshPointer()->multilevel &&
+          plugin::GetSynchronizedMatter(data->GetParentPointer()->packages) != nullptr)
+        EnforceAlgebraicConstraintsMeshTask(data);
       Z4cToADMFieldsMeshTask(data);
       // Make ADM visible before the next package recovers matter primitives,
       // even when packed kernels use distinct execution-space instances.
