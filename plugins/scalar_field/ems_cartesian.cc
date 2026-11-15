@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -116,7 +117,30 @@ template<int Order> TaskStatus PrepareOrder(MeshData<Real>* data,Real) {
         for(int n=0;n<10;++n) if(!(fabs(tm(b,n,k,j,i))<=largest)) ++bad;
         for(int n=0;n<2;++n) if(!(fabs(constraints(b,n,k,j,i))<=largest)) ++bad;
       },Kokkos::Sum<int>(invalid));
-  PARTHENON_REQUIRE(invalid==0,"nonfinite 3D EMS state, stress energy or Gauss constraint");
+  if(invalid!=0) {
+    // Preserve the failed state. Report geometric causes before a NaN in its
+    // matter projections obscures a puncture positivity failure.
+    Real minimum_chi=largest,minimum_determinant=largest;
+    parthenon::par_reduce(DEFAULT_LOOP_PATTERN,"EMS failed-state minimum conformal variable",DevExecSpace(),
+        0,data->NumBlocks()-1,kb.s,kb.e,jb.s,jb.e,ib.s,ib.e,
+        KOKKOS_LAMBDA(int b,int k,int j,int i,Real& minimum) {
+          const Real value=z(b,nr::Index(nr::Z4cComponent::chi),k,j,i);
+          if(value<minimum) minimum=value;
+        },Kokkos::Min<Real>(minimum_chi));
+    parthenon::par_reduce(DEFAULT_LOOP_PATTERN,"EMS failed-state minimum spatial determinant",DevExecSpace(),
+        0,data->NumBlocks()-1,kb.s,kb.e,jb.s,jb.e,ib.s,ib.e,
+        KOKKOS_LAMBDA(int b,int k,int j,int i,Real& minimum) {
+          Real metric[6];for(int n=0;n<6;++n) metric[n]=a(b,n,k,j,i);
+          const Real value=nr::rhs::SpatialDeterminant(metric);
+          if(value<minimum) minimum=value;
+        },Kokkos::Min<Real>(minimum_determinant));
+    std::ostringstream reason;
+    reason.precision(17);
+    reason<<"nonfinite 3D EMS state, stress energy or Gauss constraint; "
+          <<"minimum conformal variable="<<minimum_chi
+          <<"; minimum spatial metric determinant="<<minimum_determinant;
+    PARTHENON_FAIL(reason.str());
+  }
   return TaskStatus::complete;
 }
 

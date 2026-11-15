@@ -413,3 +413,9 @@ python3 tst/regression/scalar_ems_homogeneous.py \
 This exercises nonlinear scalar–Maxwell energy exchange and anisotropic
 Einstein backreaction. It has no spatial gradients or black hole, and does not
 validate black-hole scalar hair, AMR, or long-time strong-field evolution.
+
+Nonfinite Cartesian EMS states abort with the minimum conformal variable and
+spatial-metric determinant recorded in the error. The check preserves the
+failure rather than replacing invalid geometry with a floor.
+`tst/regression/scalar_ems_invalid_geometry.py` checks this path using an
+explicitly invalid synthetic checkpoint; it is an error-handling test.
