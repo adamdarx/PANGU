@@ -397,3 +397,19 @@ python3 tst/regression/scalar_ems_rn.py \
 The example's grids leave the horizon unresolved. Its convergence shell is
 `1.5 < r <= 3` at `t=0` and `t=0.25M`; passing this test establishes short
 exterior electrovac checks, not a long-time black-hole or scalar-hair result.
+
+The nonlinear homogeneous check uses nonzero scalar momentum and electric
+density together, with `f=exp(5 phi^2)` and a polynomial potential. An explicit
+synthetic restart fixture supplies homogeneous, Hamiltonian-satisfying Bianchi I
+initial data. The test compares the evolved physical metric, extrinsic curvature,
+scalar and momentum against an independent Python integration of the diagonal
+ADM equations in proper time, checking temporal convergence with three CFLs:
+
+```sh
+python3 tst/regression/scalar_ems_homogeneous.py \
+  --pangu build-cuda-nr/src/pangu --workdir /tmp/ems-homogeneous-check
+```
+
+This exercises nonlinear scalar–Maxwell energy exchange and anisotropic
+Einstein backreaction. It has no spatial gradients or black hole, and does not
+validate black-hole scalar hair, AMR, or long-time strong-field evolution.
