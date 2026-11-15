@@ -22,8 +22,8 @@ struct Z4c {
     Parameters parameters{};
     parameters.chi_psi_power = pin->GetOrAddReal(
         "numerical_relativity", "chi_psi_power", parameters.chi_psi_power);
-    PARTHENON_REQUIRE(parameters.chi_psi_power != 0.0,
-                      "numerical_relativity/chi_psi_power must be nonzero");
+    PARTHENON_REQUIRE(parameters.chi_psi_power == -4.0,
+                      "numerical_relativity/chi_psi_power must be -4");
     return parameters;
   }
 

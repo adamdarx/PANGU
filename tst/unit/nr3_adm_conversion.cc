@@ -26,13 +26,12 @@ KOKKOS_INLINE_FUNCTION Real Difference(const Real measured, const Real expected)
 
 int main(int argc, char** argv) {
   Kokkos::ScopeGuard guard(argc, argv);
-  constexpr int kBaseCases = 66;
-  constexpr int kCases = 2 * kBaseCases;
-  Kokkos::View<Real* [5]> errors("NR-3 ADM conversion errors", kCases);
+  constexpr int kCases = 66;
+  Kokkos::View<Real* [2]> errors("NR-3 ADM conversion errors", kCases);
   Kokkos::parallel_for(
       "NR-3 ADM/Z4c round-trip", kCases, KOKKOS_LAMBDA(const int sample) {
-        const int geometry = sample % kBaseCases;
-        const Real power = sample < kBaseCases ? -4.0 : -2.0;
+        const int geometry = sample;
+        constexpr Real power = -4.0;
         ADMState adm{};
         ADMMetricDerivatives derivatives{};
         if (geometry == 0) {
@@ -102,36 +101,30 @@ int main(int argc, char** argv) {
                        pangu::nr::rhs::SymmetricValue(conformal_a, first, second);
         errors(sample, 0) = round_error;
         errors(sample, 1) = fmax(fabs(conformal_det - 1.0), fabs(trace_a));
-        for (int axis = 0; axis < 3; ++axis)
-          errors(sample, 2 + axis) = z4c.values[Index(Z4cComponent::gamx) + axis];
       });
   Kokkos::fence();
   const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), errors);
   Real round_max = 0.0;
   Real algebraic_max = 0.0;
-  Real gamma_max = 0.0;
   for (int sample = 0; sample < kCases; ++sample) {
-    for (int component = 0; component < 5; ++component)
+    for (int component = 0; component < 2; ++component)
       if (!std::isfinite(host(sample, component))) {
         std::cerr << "Nonfinite ADM conversion test output\n";
         return 1;
       }
     round_max = std::max(round_max, host(sample, 0));
     algebraic_max = std::max(algebraic_max, host(sample, 1));
-    if (sample < kBaseCases)
-      for (int axis = 0; axis < 3; ++axis)
-        gamma_max = std::max(gamma_max, Difference(host(sample, 2 + axis),
-                                                  host(sample + kBaseCases, 2 + axis)));
+
   }
   const Real tolerance = 4096.0 * std::numeric_limits<Real>::epsilon();
   if (!(std::isfinite(round_max) && std::isfinite(algebraic_max)) || round_max > tolerance ||
-      algebraic_max > tolerance || !std::isfinite(gamma_max) || gamma_max > tolerance) {
+      algebraic_max > tolerance) {
     std::cerr << "NR-3 ADM conversion failure: round-trip=" << round_max
-              << " algebraic=" << algebraic_max << " gamma=" << gamma_max
+              << " algebraic=" << algebraic_max
               << " tolerance=" << tolerance << '\n';
     return 1;
   }
   std::cout << "NR-3 ADM conversion PASS: round-trip=" << round_max
-            << " algebraic=" << algebraic_max << " gamma=" << gamma_max << '\n';
+            << " algebraic=" << algebraic_max << '\n';
   return 0;
 }

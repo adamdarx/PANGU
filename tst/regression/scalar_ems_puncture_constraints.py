@@ -47,7 +47,7 @@ def main():
     parser.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[2])
     args=parser.parse_args();root=args.root.resolve();exe=args.pangu.resolve()
     work=args.workdir.resolve();work.mkdir(parents=True,exist_ok=False)
-    report=dict(profile_selfcheck=self_check(),resolutions={})
+    report=dict(conformal_power=-4,profile_selfcheck=self_check(),resolutions={})
     profile=Profile()
     report['initial_data']=dict(seed_RN_mass=profile.mass,charge=profile.charge,scalar_amplitude=profile.amplitude,
         pulse_support=[profile.left,profile.right],constraint_solved_ADM_mass=profile.adm_mass,

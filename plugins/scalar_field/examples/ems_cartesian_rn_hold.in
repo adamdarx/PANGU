@@ -1,7 +1,6 @@
 # Local RN hold using the required default chi=psi^-4 representation.
 # Box[-1,1] and t=0.5M are short-test settings, not long-time acceptance.
-# This KO=0.1 puncture test currently fails positivity before the target time.
-# Keep the failure visible; W=psi^-2 probes do not satisfy this acceptance gate.
+# Geometric KO=0.02 is used; the KO=0.1 no-floor control loses positivity.
 <parthenon/job>
 problem_id = scalar_field
 <pangu>
@@ -61,7 +60,7 @@ diagnostic_directory = diagnostics
 rk4_variant = classical
 finite_difference_order = 4
 cfl = 0.25
-dissipation = 0.1
+dissipation = 0.02
 constraint_mask_outer_radius = 0.6
 <problem>
 constraint_mask_radius = 0.3

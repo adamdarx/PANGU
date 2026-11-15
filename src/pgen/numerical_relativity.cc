@@ -1210,13 +1210,11 @@ void NumericalRelativitySchwarzschild(MeshBlock *block, ParameterInput *pin) {
         if (valid) {
           const Real chi = pow(nr::rhs::SpatialDeterminant(initial.adm.metric),
                                options.chi_psi_power / 12.0);
-          const Real conformal_scale = pow(nr::rhs::SpatialDeterminant(initial.adm.metric),
-                                           -1.0 / 3.0);
           z4c(nr::Index(nr::Z4cComponent::chi), k, j, i) = chi;
           z4c(nr::Index(nr::Z4cComponent::alpha), k, j, i) = initial.adm.lapse;
           for (int component = 0; component < 6; ++component)
             z4c(nr::Index(nr::Z4cComponent::gxx) + component, k, j, i) =
-                conformal_scale * initial.adm.metric[component];
+                chi * initial.adm.metric[component];
         } else {
           z4c(nr::Index(nr::Z4cComponent::chi), k, j, i) = 1.0;
           z4c(nr::Index(nr::Z4cComponent::gxx), k, j, i) = 1.0;
@@ -1338,7 +1336,6 @@ void InitializeNumericalRelativityBoostedPuncture(MeshBlock *block,
         const Real determinant =
             nr::rhs::SpatialDeterminant(initial.adm.metric);
         const Real chi = pow(determinant, options.chi_psi_power / 12.0);
-        const Real conformal_scale = pow(determinant, -1.0 / 3.0);
         Real inverse_metric[6]{};
         nr::rhs::SpatialInverse(1.0 / determinant, initial.adm.metric,
                                 inverse_metric);
@@ -1363,11 +1360,11 @@ void InitializeNumericalRelativityBoostedPuncture(MeshBlock *block,
           z4c(nr::Index(nr::Z4cComponent::betax) + axis, k, j, i) =
               initial.adm.shift[axis];
         for (int component = 0; component < 6; ++component) {
-          const Real conformal_metric = conformal_scale * initial.adm.metric[component];
+          const Real conformal_metric = chi * initial.adm.metric[component];
           z4c(nr::Index(nr::Z4cComponent::gxx) + component, k, j, i) =
               conformal_metric;
           z4c(nr::Index(nr::Z4cComponent::axx) + component, k, j, i) =
-              conformal_scale * (initial.adm.extrinsic[component] -
+              chi * (initial.adm.extrinsic[component] -
                      initial.adm.metric[component] * trace_k / 3.0);
         }
       });
@@ -1605,7 +1602,6 @@ void NumericalRelativityPuncture(MeshBlock *block, ParameterInput *pin) {
           continue;
         const Real determinant = nr::rhs::SpatialDeterminant(adm.metric);
         const Real chi = pow(determinant, options.chi_psi_power / 12.0);
-        const Real conformal_scale = pow(determinant, -1.0 / 3.0);
         Real inverse_metric[6]{};
         nr::rhs::SpatialInverse(1.0 / determinant, adm.metric, inverse_metric);
         Real trace_k = 0.0;
@@ -1621,9 +1617,9 @@ void NumericalRelativityPuncture(MeshBlock *block, ParameterInput *pin) {
             pow(determinant, lapse_exponent / 12.0);
         for (int component = 0; component < 6; ++component) {
           host_z4c(nr::Index(nr::Z4cComponent::gxx) + component, k, j, i) =
-              conformal_scale * adm.metric[component];
+              chi * adm.metric[component];
           host_z4c(nr::Index(nr::Z4cComponent::axx) + component, k, j, i) =
-              conformal_scale * (adm.extrinsic[component] -
+              chi * (adm.extrinsic[component] -
                      adm.metric[component] * trace_k / 3.0);
         }
       }
@@ -1956,7 +1952,6 @@ void NumericalRelativityPolarizedGowdy(MeshBlock *block, ParameterInput *pin) {
             (-1.0 + t * dp_dt);
         const Real determinant = nr::rhs::SpatialDeterminant(metric);
         const Real chi = pow(determinant, options.chi_psi_power / 12.0);
-        const Real conformal_scale = pow(determinant, -1.0 / 3.0);
         Real inverse[6]{};
         nr::rhs::SpatialInverse(1.0 / determinant, metric, inverse);
         Real trace_k = 0.0;
@@ -1969,9 +1964,9 @@ void NumericalRelativityPolarizedGowdy(MeshBlock *block, ParameterInput *pin) {
         z4c(nr::Index(nr::Z4cComponent::alpha), k, j, i) = lapse;
         for (int component = 0; component < 6; ++component) {
           z4c(nr::Index(nr::Z4cComponent::gxx) + component, k, j, i) =
-              conformal_scale * metric[component];
+              chi * metric[component];
           z4c(nr::Index(nr::Z4cComponent::axx) + component, k, j, i) =
-              conformal_scale * (extrinsic[component] - metric[component] * trace_k / 3.0);
+              chi * (extrinsic[component] - metric[component] * trace_k / 3.0);
         }
       });
   const int order = block->packages.Get("numerical_relativity")

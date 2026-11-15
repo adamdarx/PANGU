@@ -118,7 +118,7 @@ KOKKOS_INLINE_FUNCTION bool BuildSchwarzschildIsotropic(const parthenon::Real x,
   const Real radius_squared = x * x + y * y + z * z;
   const Real radius = sqrt(radius_squared);
   const Real half_mass = 0.5 * mass;
-  if (!(mass >= 0.0) || !(radius > 0.0) || chi_psi_power == 0.0)
+  if (!(mass >= 0.0) || !(radius > 0.0) || chi_psi_power != -4.0)
     return false;
 
   output = SchwarzschildIsotropicData{};

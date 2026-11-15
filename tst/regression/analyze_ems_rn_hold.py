@@ -54,8 +54,9 @@ def sphere_charge(density,minimum,spacing,radius,polar=24,azimuthal=48):
     return float(radius**2*np.sum(np.sum(interpolated*normal,axis=0)*weights)/(4*np.pi))
 
 
-def inspect(path,inner,outer,radius):
+def inspect(path,inner,outer,radius,chi_floor=1.e-12):
     hamiltonian=[];gauss=[[],[]];active=0;min_variable=np.inf;min_det=np.inf
+    floor_cells=0;floor_radius=0.
     with h5py.File(path) as output:
         size=list(map(int,output['Info'].attrs['RootGridSize']))
         domain=output['Info'].attrs['RootGridDomain'];minimum=domain[[0,3,6]]
@@ -73,6 +74,9 @@ def inspect(path,inner,outer,radius):
             assert min_variable>0
             xyz=[output['VolumeLocations/'+axis][block] for axis in 'xyz']
             x,y,z=xyz;r2=x[None,None,:]**2+y[None,:,None]**2+z[:,None,None]**2
+            at_floor=z4c[0]==chi_floor
+            floor_cells+=int(at_floor.sum())
+            if at_floor.any():floor_radius=max(floor_radius,float(np.sqrt(r2[at_floor].max())))
             mask=(r2>inner*inner)&(r2<=outer*outer)
             np.testing.assert_array_equal(output['nr.constraint_mask'][block,0],mask)
             hamiltonian.extend(constraints[1][mask]);active+=int(mask.sum())
@@ -81,6 +85,7 @@ def inspect(path,inner,outer,radius):
             electric[:,k:k+len(z),j:j+len(y),i:i+len(x)]=state[2:5]
         result=dict(file=path.name,time=float(output['Info'].attrs['Time']),active_cells=active,
                     minimum_conformal_variable=min_variable,minimum_spatial_determinant=min_det,
+                    stored_cells_at_chi_floor=floor_cells,stored_floor_cell_maximum_coordinate_radius=floor_radius,
                     hamiltonian=norms(hamiltonian),electric_gauss=norms(gauss[0]),magnetic_gauss=norms(gauss[1]))
     charge=sphere_charge(electric,minimum,spacing,radius)
     refined=sphere_charge(electric,minimum,spacing,radius,32,64)
@@ -97,9 +102,12 @@ def main():
     args=parser.parse_args();folder=args.run.resolve();parameters=deck(folder/'input.in')
     assert 'Driver completed.' in (folder/'run.log').read_text()
     model=parameters['plugin/scalar_field'];nr=parameters['numerical_relativity']
+    assert float(nr.get('chi_psi_power',-4))==-4,'Only chi=psi^-4 is accepted'
+    floor_enabled=nr.get('floor_chi','false').lower()=='true'
+    chi_floor=float(nr.get('chi_min_floor',1.e-12))
     mass=float(model.get('bh_mass',1));charge=float(model.get('bh_charge',.9))
     inner=float(parameters['problem']['constraint_mask_radius']);outer=float(nr['constraint_mask_outer_radius'])
-    frames=sorted([inspect(path,inner,outer,args.charge_radius) for path in folder.glob('*.phdf')],key=lambda r:r['time'])
+    frames=sorted([inspect(path,inner,outer,args.charge_radius,chi_floor) for path in folder.glob('*.phdf')],key=lambda r:r['time'])
     assert frames[0]['time']==0 and frames[-1]['time']==float(parameters['parthenon/time']['tlim'])
     charges=[r['charge'] for r in frames]
     assert max(abs(value-charge) for value in charges)<args.charge_tolerance
@@ -123,6 +131,8 @@ def main():
         horizons.append(dict(time=time,area_relative_error=relative,scaled_rms=residual,
                              charged_RN_mass=mirr+q*q/(4*mirr)))
     report=dict(status='short_RN_invariant_checks_passed',frames=frames,horizons=horizons,
+                chi_psi_power=-4,geometric_floor_enabled=floor_enabled,chi_min_floor=chi_floor,
+                floor_measurement_scope='Stored output cells only; intermediate RK floor events are not counted',
                 charge_range=max(charges)-min(charges),charge_surface_radius=args.charge_radius,
                 input_sha256=hashlib.sha256((folder/'input.in').read_bytes()).hexdigest(),
                 criteria=dict(charge_tolerance=args.charge_tolerance,area_relative_tolerance=args.area_relative_tolerance),

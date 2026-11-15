@@ -86,7 +86,7 @@ def main():
     parser.add_argument('--pangu',type=Path,required=True)
     parser.add_argument('--workdir',type=Path,required=True)
     parser.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[2])
-    parser.add_argument('--chi-psi-power',type=int,choices=[-4,-2],default=-4)
+    parser.add_argument('--chi-psi-power',type=int,choices=[-4],default=-4)
     args=parser.parse_args()
     root=args.root.resolve();exe=args.pangu.resolve();work=args.workdir.resolve()
     work.mkdir(parents=True,exist_ok=False)

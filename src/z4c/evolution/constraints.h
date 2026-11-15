@@ -304,7 +304,7 @@ ComputeZ4cConstraints(const Z4cPack& values, const ADMPack& adm, const int block
   rhs::PointDerivatives derivatives{};
   rhs::LoadPoint<Order>(values, block, k, j, i, inverse_spacing, state, derivatives);
   ADMConstraintInput input{};
-  if (chi_psi_power == 0.0 || !(state.chi > 0.0)) {
+  if (chi_psi_power != -4.0 || !(state.chi > 0.0)) {
     for (int component = 0; component < kConstraintComponents; ++component)
       output.values[component] = 1.0e300;
     return;

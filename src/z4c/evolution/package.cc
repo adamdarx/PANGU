@@ -1063,8 +1063,8 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   options.gauge.shift_eta = pin->GetOrAddReal(
       "numerical_relativity", "shift_eta", options.gauge.shift_eta);
   options.use_z4c = pin->GetOrAddBoolean("numerical_relativity", "use_z4c", options.use_z4c);
-  PARTHENON_REQUIRE(options.chi_psi_power != 0.0,
-                    "numerical_relativity/chi_psi_power must be nonzero");
+  PARTHENON_REQUIRE(options.chi_psi_power == -4.0,
+                    "numerical_relativity/chi_psi_power must be -4");
   PARTHENON_REQUIRE(options.chi_min_floor > 0.0,
                     "numerical_relativity/chi_min_floor must be positive");
   PARTHENON_REQUIRE(!options.gauge.slow_start_lapse || options.gauge.slow_start_time > 0.0,

@@ -1,7 +1,8 @@
-"""Check physical initial data are invariant under chi=psi^-4 or W=psi^-2."""
+"""Check native initial data satisfy the canonical chi=psi^-4 ADM contract."""
 from pathlib import Path
 import argparse
 import json
+import subprocess
 
 import h5py
 import numpy as np
@@ -58,20 +59,34 @@ variables = nr.z4c,nr.adm
 single_precision_output = false
 ghost_zones = false
 '''
-        source=work/(problem+'.in');source.write_text(text);values=[]
-        for power in [-4,-2]:
-            path=run(args.pangu.resolve(),root,work/(problem+'_'+str(power)),
-                     ['numerical_relativity/chi_psi_power='+str(power)],deck=source)
-            with h5py.File(path) as f:
-                values.append({name:f[name][...] for name in ['nr.adm','nr.z4c']})
-                assert float(f['Info'].attrs['Time'])==0
-        for item in values:
-            assert all(np.isfinite(array).all() for array in item.values())
-        np.testing.assert_allclose(values[0]['nr.adm'],values[1]['nr.adm'],rtol=5.e-12,atol=5.e-12)
-        np.testing.assert_allclose(values[0]['nr.z4c'][:,1:],values[1]['nr.z4c'][:,1:],rtol=5.e-12,atol=5.e-12)
-        np.testing.assert_allclose(np.sqrt(values[0]['nr.z4c'][:,0]),values[1]['nr.z4c'][:,0],rtol=5.e-13,atol=5.e-13)
-        report[problem]=dict(maximum_ADM_absolute_difference=float(np.max(np.abs(values[0]['nr.adm']-values[1]['nr.adm']))))
-    report.update(status='passed',scope='Initial physical ADM and common conformal fields only; not evolution acceptance')
+        source=work/(problem+'.in');source.write_text(text)
+        path=run(args.pangu.resolve(),root,work/problem,
+                 ['numerical_relativity/chi_psi_power=-4'],deck=source)
+        with h5py.File(path) as f:
+            adm=f['nr.adm'][...];z=f['nr.z4c'][...]
+            assert float(f['Info'].attrs['Time'])==0
+        assert np.isfinite(adm).all() and np.isfinite(z).all()
+        chi=z[:,0];g=z[:,1:7];a=z[:,8:14];trace_k=z[:,7]+2*z[:,17]
+        assert chi.min()>0
+        metric=g/chi[:,None]
+        extrinsic=(a+g*trace_k[:,None]/3)/chi[:,None]
+        np.testing.assert_allclose(adm[:,:6],metric,rtol=5.e-12,atol=5.e-12)
+        np.testing.assert_allclose(adm[:,6:12],extrinsic,rtol=5.e-12,atol=5.e-12)
+        determinant=g[:,0]*(g[:,3]*g[:,5]-g[:,4]**2)-g[:,1]*(g[:,1]*g[:,5]-g[:,2]*g[:,4])+g[:,2]*(g[:,1]*g[:,4]-g[:,2]*g[:,3])
+        np.testing.assert_allclose(determinant,1,rtol=5.e-12,atol=5.e-12)
+        report[problem]=dict(conformal_power=-4,
+            maximum_ADM_metric_difference=float(np.max(np.abs(adm[:,:6]-metric))),
+            maximum_ADM_extrinsic_difference=float(np.max(np.abs(adm[:,6:12]-extrinsic))),
+            maximum_conformal_determinant_error=float(np.max(np.abs(determinant-1))))
+    rejected=work/'unsupported_power';rejected.mkdir()
+    with (rejected/'run.log').open('wb') as log:
+        result=subprocess.run(['mpirun','-np','1',str(args.pangu.resolve()),
+            '-i',str(work/'nr_schwarzschild.in'),'numerical_relativity/chi_psi_power=-3'],
+            cwd=rejected,stdout=log,stderr=subprocess.STDOUT)
+    assert result.returncode!=0
+    assert 'chi_psi_power must be -4' in (rejected/'run.log').read_text()
+    report.update(status='passed',unsupported_conformal_power='rejected',
+        scope='Canonical psi^-4 native initial ADM contract and parameter rejection; not evolution acceptance')
     (work/'RESULT.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
 
 

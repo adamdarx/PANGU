@@ -59,7 +59,7 @@ def main():
     parser.add_argument('--pangu',type=Path,required=True)
     parser.add_argument('--workdir',type=Path,required=True)
     parser.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[2])
-    parser.add_argument('--chi-psi-power',type=int,choices=[-4,-2],default=-4)
+    parser.add_argument('--chi-psi-power',type=int,choices=[-4],default=-4)
     args=parser.parse_args(); exe=args.pangu.resolve(); root=args.root.resolve()
     work=args.workdir.resolve(); work.mkdir(parents=True,exist_ok=False)
     geometry=['numerical_relativity/chi_psi_power='+str(args.chi_psi_power)]

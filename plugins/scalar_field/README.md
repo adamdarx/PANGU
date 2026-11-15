@@ -376,20 +376,29 @@ The coordinate regression covers PG RN preservation, Cartesian wave convergence,
 backreaction and MPI-repartitioned restart. Passing these short checks is
 separate from validating long scalarized-black-hole evolutions.
 
-The native NR parameter `chi_psi_power` selects the evolved conformal variable:
-`-4` uses psi^-4 and `-2` uses W=psi^-2. Both retain the same unit-determinant
-conformal metric and physical equations. ADM conversion, connection evolution
-and gauge terms must use the corresponding chain rules. Local puncture tests
-must verify positivity and convergence for their chosen variable and dissipation;
-changing the variable does not establish long-time acceptance.
-The required mainline representation is the native default psi^-4, matching
-the established AthenaK comparison configuration. W probes only diagnose an
-optional representation and cannot replace psi^-4 acceptance.
-The local `ems_cartesian_rn_hold.in` example explicitly selects psi^-4 and
-disables the conformal-variable floor. With KO=0.1 this local charged-puncture
-configuration can lose positivity before0.5M; its acceptance gate remains
-unmet. This new Cartesian EMS fixture does not invalidate the archived vacuum
-NR comparisons. Historical successful W runs remain diagnostic results only.
+The evolved conformal variable is `chi=psi^-4`. The compatibility input
+`numerical_relativity/chi_psi_power` accepts only `-4`; other values are rejected.
+The local `ems_cartesian_rn_hold.in` example explicitly selects `-4`, disables
+the conformal-variable floor, and uses geometric KO=0.02. The KO=0.1 control for
+this local charged-puncture problem loses positivity before0.5M; adding a chi
+floor alone also fails. The smaller geometric coefficient is a problem-specific
+numerical setting, and must still pass charge, constraints, horizon and restart
+checks. It does not change the native solver's defaults or the archived vacuum
+NR comparison configurations.
+
+After the resolved RN hold passes `analyze_ems_rn_hold.py`, the following check
+reuses its N96 result and runs fresh N64/N80 cases with the same numerical
+settings. It checks initial and evolved Hamiltonian/electric Gauss convergence,
+evolved momentum convergence, and fixed-sphere charge at0.5M. The reference
+directory must retain `input.in`, its field outputs and `RN_HOLD_ANALYSIS.json`.
+Strict horizon acceptance applies to the N96 reference; the coarse runs do not
+claim horizon acceptance.
+
+```sh
+python3 tst/regression/scalar_ems_rn_strong.py \
+  --pangu build-cuda-nr/src/pangu --reference-run /tmp/ems-rn-hold \
+  --workdir /tmp/ems-rn-strong-convergence
+```
 
 Cartesian initial data apply `problem/constraint_mask_radius` and
 `numerical_relativity/constraint_mask_outer_radius` to the native NR diagnostic
@@ -454,9 +463,8 @@ python3 tst/regression/scalar_ems_puncture_evolution.py \
 ```
 
 These fixed-parameter checks cover spherical initial data and short coupled
-evolution to0.1M. The fixture inherits the native input's conformal power and
-does not silently select W. Historical W-based passes do not certify the
-required psi^-4 configuration. The checks do not provide a general
+evolution to0.1M. The fixture checks that its native input uses
+the required psi^-4 representation. The checks do not provide a general
 nonspherical initial-data solver or validate long-time scalarized black holes.
 
 Nonfinite Cartesian EMS states abort with the minimum conformal variable and
@@ -465,4 +473,4 @@ failure rather than replacing invalid geometry with a floor.
 `tst/regression/scalar_ems_invalid_geometry.py` checks this path using an
 explicitly invalid synthetic checkpoint; it is an error-handling test.
 Nonpositive conformal variables and non-positive-definite spatial metrics are
-also rejected, even when an even power would reconstruct a finite metric.
+also rejected.

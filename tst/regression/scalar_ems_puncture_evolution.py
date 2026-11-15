@@ -18,6 +18,7 @@ def main():
     args=parser.parse_args();work=args.workdir.resolve();work.mkdir(parents=True,exist_ok=False)
     initial=args.initial_run.resolve();previous=json.loads((initial/'RESULT.json').read_text())
     assert previous['status']=='initial_constraints_and_short_evolution_passed'
+    assert previous.get('conformal_power')==-4,'Initial run must use the required chi=psi^-4 representation'
     report=dict(resolutions={'96':previous['evolved']},initial_run=str(initial))
     for n in [64,80]:
         path=run(args.pangu.resolve(),args.root.resolve(),work/f'n{n}',[
