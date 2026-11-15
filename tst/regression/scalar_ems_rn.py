@@ -86,15 +86,17 @@ def main():
     parser.add_argument('--pangu',type=Path,required=True)
     parser.add_argument('--workdir',type=Path,required=True)
     parser.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[2])
+    parser.add_argument('--chi-psi-power',type=int,choices=[-4,-2],default=-4)
     args=parser.parse_args()
     root=args.root.resolve();exe=args.pangu.resolve();work=args.workdir.resolve()
     work.mkdir(parents=True,exist_ok=False)
     deck=root/'plugins/scalar_field/examples/ems_cartesian_rn.in'
-    report=dict(status='running',resolutions={},mask=dict(inner=1.5,outer=3.,
+    geometry=['numerical_relativity/chi_psi_power='+str(args.chi_psi_power)]
+    report=dict(status='running',conformal_power=args.chi_psi_power,resolutions={},mask=dict(inner=1.5,outer=3.,
                 norm='coordinate-volume L1/L2/Linf in a fixed isotropic-coordinate shell'))
     for n in [32,48,64]:
         folder=work/('n'+str(n))
-        final=run(exe,root,folder,[f'parthenon/mesh/nx{axis}={n}' for axis in [1,2,3]],deck=deck)
+        final=run(exe,root,folder,geometry+[f'parthenon/mesh/nx{axis}={n}' for axis in [1,2,3]],deck=deck)
         initial=next(folder.glob('*.00000.phdf'))
         item=dict(initial=inspect(initial,initial=True),final=inspect(final))
         assert item['initial']['time']==0 and item['final']['time']==0.25
@@ -110,7 +112,7 @@ def main():
             assert min(orders)>3.2,('RN exterior constraints did not converge',phase,field,errors,orders)
     # Check MPI history reductions as well as both evolved fields and the
     # independent, checkpointed mask when repartitioning this curved geometry.
-    common=['parthenon/time/tlim=10']
+    common=geometry+['parthenon/time/tlim=10']
     direct=run(exe,root,work/'direct',common+['parthenon/time/nlim=8'],ranks=2,deck=deck)
     direct_report=dict(initial=inspect(next((work/'direct').glob('*.00000.phdf')),True),final=inspect(direct))
     check_history(work/'direct',direct_report)

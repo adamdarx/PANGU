@@ -18,6 +18,7 @@ using pangu::nr::Z4cComponent;
 using pangu::nr::Z4cState;
 
 KOKKOS_INLINE_FUNCTION Real Difference(const Real measured, const Real expected) {
+  if (!Kokkos::isfinite(measured) || !Kokkos::isfinite(expected)) return 1.0;
   const Real scale = fmax(1.0, fmax(fabs(measured), fabs(expected)));
   return fabs(measured - expected) / scale;
 }
@@ -25,13 +26,16 @@ KOKKOS_INLINE_FUNCTION Real Difference(const Real measured, const Real expected)
 
 int main(int argc, char** argv) {
   Kokkos::ScopeGuard guard(argc, argv);
-  constexpr int kCases = 66;
-  Kokkos::View<Real* [2]> errors("NR-3 ADM conversion errors", kCases);
+  constexpr int kBaseCases = 66;
+  constexpr int kCases = 2 * kBaseCases;
+  Kokkos::View<Real* [5]> errors("NR-3 ADM conversion errors", kCases);
   Kokkos::parallel_for(
       "NR-3 ADM/Z4c round-trip", kCases, KOKKOS_LAMBDA(const int sample) {
+        const int geometry = sample % kBaseCases;
+        const Real power = sample < kBaseCases ? -4.0 : -2.0;
         ADMState adm{};
         ADMMetricDerivatives derivatives{};
-        if (sample == 0) {
+        if (geometry == 0) {
           adm.metric[0] = adm.metric[3] = adm.metric[5] = 1.0;
           adm.extrinsic[0] = 0.2;
           adm.extrinsic[3] = -0.1;
@@ -40,7 +44,7 @@ int main(int argc, char** argv) {
           adm.theta = 0.03;
         } else {
           // Deterministic positive-definite metric; no random device state is used.
-          const Real x = static_cast<Real>(sample);
+          const Real x = static_cast<Real>(geometry);
           const Real l00 = 1.0 + 0.01 * fmod(x * 17.0, 31.0);
           const Real l10 = -0.2 + 0.01 * fmod(x * 13.0, 37.0);
           const Real l11 = 1.1 + 0.01 * fmod(x * 19.0, 29.0);
@@ -68,8 +72,8 @@ int main(int argc, char** argv) {
 
         Z4cState z4c{};
         ADMState round_trip{};
-        const bool forward = ConvertADMToZ4c(adm, derivatives, -4.0, z4c);
-        const bool backward = ConvertZ4cToADM(z4c, -4.0, round_trip);
+        const bool forward = ConvertADMToZ4c(adm, derivatives, power, z4c);
+        const bool backward = ConvertZ4cToADM(z4c, power, round_trip);
         Real round_error = forward && backward ? 0.0 : 1.0;
         for (int component = 0; component < 6; ++component) {
           round_error =
@@ -98,23 +102,36 @@ int main(int argc, char** argv) {
                        pangu::nr::rhs::SymmetricValue(conformal_a, first, second);
         errors(sample, 0) = round_error;
         errors(sample, 1) = fmax(fabs(conformal_det - 1.0), fabs(trace_a));
+        for (int axis = 0; axis < 3; ++axis)
+          errors(sample, 2 + axis) = z4c.values[Index(Z4cComponent::gamx) + axis];
       });
   Kokkos::fence();
   const auto host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), errors);
   Real round_max = 0.0;
   Real algebraic_max = 0.0;
+  Real gamma_max = 0.0;
   for (int sample = 0; sample < kCases; ++sample) {
+    for (int component = 0; component < 5; ++component)
+      if (!std::isfinite(host(sample, component))) {
+        std::cerr << "Nonfinite ADM conversion test output\n";
+        return 1;
+      }
     round_max = std::max(round_max, host(sample, 0));
     algebraic_max = std::max(algebraic_max, host(sample, 1));
+    if (sample < kBaseCases)
+      for (int axis = 0; axis < 3; ++axis)
+        gamma_max = std::max(gamma_max, Difference(host(sample, 2 + axis),
+                                                  host(sample + kBaseCases, 2 + axis)));
   }
   const Real tolerance = 4096.0 * std::numeric_limits<Real>::epsilon();
   if (!(std::isfinite(round_max) && std::isfinite(algebraic_max)) || round_max > tolerance ||
-      algebraic_max > tolerance) {
+      algebraic_max > tolerance || !std::isfinite(gamma_max) || gamma_max > tolerance) {
     std::cerr << "NR-3 ADM conversion failure: round-trip=" << round_max
-              << " algebraic=" << algebraic_max << " tolerance=" << tolerance << '\n';
+              << " algebraic=" << algebraic_max << " gamma=" << gamma_max
+              << " tolerance=" << tolerance << '\n';
     return 1;
   }
   std::cout << "NR-3 ADM conversion PASS: round-trip=" << round_max
-            << " algebraic=" << algebraic_max << '\n';
+            << " algebraic=" << algebraic_max << " gamma=" << gamma_max << '\n';
   return 0;
 }

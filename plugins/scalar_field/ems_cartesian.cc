@@ -113,6 +113,11 @@ template<int Order> TaskStatus PrepareOrder(MeshData<Real>* data,Real) {
   parthenon::par_reduce(DEFAULT_LOOP_PATTERN,"3D EMS finite-state validation",DevExecSpace(),
       0,data->NumBlocks()-1,kb.s,kb.e,jb.s,jb.e,ib.s,ib.e,
       KOKKOS_LAMBDA(int b,int k,int j,int i,int& bad) {
+        const Real conformal=z(b,nr::Index(nr::Z4cComponent::chi),k,j,i);
+        if(!(conformal>0 && conformal<=largest)) ++bad;
+        Real metric[6];for(int n=0;n<6;++n) metric[n]=a(b,n,k,j,i);
+        if(!(metric[0]>0 && metric[0]*metric[3]-metric[1]*metric[1]>0 &&
+             nr::rhs::SpatialDeterminant(metric)>0)) ++bad;
         for(int n=0;n<8;++n) if(!(fabs(u(b,n,k,j,i))<=largest)) ++bad;
         for(int n=0;n<10;++n) if(!(fabs(tm(b,n,k,j,i))<=largest)) ++bad;
         for(int n=0;n<2;++n) if(!(fabs(constraints(b,n,k,j,i))<=largest)) ++bad;
@@ -136,7 +141,7 @@ template<int Order> TaskStatus PrepareOrder(MeshData<Real>* data,Real) {
         },Kokkos::Min<Real>(minimum_determinant));
     std::ostringstream reason;
     reason.precision(17);
-    reason<<"nonfinite 3D EMS state, stress energy or Gauss constraint; "
+    reason<<"invalid 3D EMS state, geometry, stress energy or Gauss constraint; "
           <<"minimum conformal variable="<<minimum_chi
           <<"; minimum spatial metric determinant="<<minimum_determinant;
     PARTHENON_FAIL(reason.str());

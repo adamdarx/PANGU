@@ -69,9 +69,12 @@ KOKKOS_INLINE_FUNCTION bool ConvertADMToZ4c(const ADMState& input,
   const Real chi = pow(determinant, chi_psi_power / 12.0);
   if (!(chi > 0.0))
     return false;
+  // The evolved variable may be psi^-4 or W=psi^-2. The unit-determinant
+  // conformal metric always scales with psi^-4, independently of that choice.
+  const Real conformal_scale = pow(determinant, -1.0 / 3.0);
   Real conformal_metric[6]{};
   for (int component = 0; component < 6; ++component)
-    conformal_metric[component] = chi * input.metric[component];
+    conformal_metric[component] = conformal_scale * input.metric[component];
   const Real conformal_determinant = rhs::SpatialDeterminant(conformal_metric);
   if (!(conformal_determinant > 0.0))
     return false;
@@ -98,7 +101,7 @@ KOKKOS_INLINE_FUNCTION bool ConvertADMToZ4c(const ADMState& input,
   for (int component = 0; component < 6; ++component) {
     output.values[Index(Z4cComponent::gxx) + component] = conformal_metric[component];
     output.values[Index(Z4cComponent::axx) + component] =
-        chi * (input.extrinsic[component] - input.metric[component] * trace_k / 3.0);
+        conformal_scale * (input.extrinsic[component] - input.metric[component] * trace_k / 3.0);
   }
 
   // Gamma-tilde^i = -d_j gamma-tilde^{ij}. Deriving it from the physical
@@ -113,10 +116,10 @@ KOKKOS_INLINE_FUNCTION bool ConvertADMToZ4c(const ADMState& input,
                              rhs::SymmetricValue(derivatives.dmetric[derivative], first, second);
       }
     }
-    const Real dchi = chi * (chi_psi_power / 12.0) * d_log_determinant;
+    const Real dscale = -conformal_scale * d_log_determinant / 3.0;
     for (int component = 0; component < 6; ++component) {
       d_conformal_metric[component] =
-          dchi * input.metric[component] + chi * derivatives.dmetric[derivative][component];
+          dscale * input.metric[component] + conformal_scale * derivatives.dmetric[derivative][component];
     }
     for (int first = 0; first < 3; ++first) {
       for (int second = first; second < 3; ++second) {

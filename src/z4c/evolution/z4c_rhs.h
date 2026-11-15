@@ -428,7 +428,8 @@ KOKKOS_INLINE_FUNCTION void ComputeVacuum(const PointState& state,
   for (int first = 0; first < 3; ++first) {
     for (int second = 0; second < 3; ++second) {
       divergence_a[first] -=
-          1.5 * SymmetricValue(a_upper, first, second) * derivatives.dchi[second] / chi_guarded;
+          (-6.0 / options.chi_psi_power) * SymmetricValue(a_upper, first, second) *
+          derivatives.dchi[second] / chi_guarded;
       divergence_a[first] -= (1.0 / 3.0) * SymmetricValue(inverse_metric, first, second) *
                              (2.0 * derivatives.dkhat[second] + derivatives.dtheta[second]);
     }
@@ -533,16 +534,24 @@ KOKKOS_INLINE_FUNCTION void ComputeVacuum(const PointState& state,
       options.gauge, state.alpha, state.khat, derivatives.lie_alpha, derivatives.dalpha);
   if (options.gauge.slow_start_lapse) {
     const Real w2 = state.chi > options.chi_min_floor ? state.chi : options.chi_min_floor;
-    const Real w = sqrt(w2);
+    const Real w = options.chi_psi_power == -4.0 ? sqrt(w2) :
+                       pow(w2, -2.0 / options.chi_psi_power);
     const Real time_ratio = time / options.gauge.slow_start_time;
     output[Index(Z4cComponent::alpha)] += options.gauge.slow_start_amplitude * (w - state.alpha) *
                                           pow(w, options.gauge.slow_start_index) *
                                           exp(-0.5 * time_ratio * time_ratio);
   }
+  // Gauge policies are defined using the canonical chi=psi^-4 even when a
+  // different power is evolved. Convert its gradient by the chain rule.
+  const Real gauge_chi = options.chi_psi_power == -4.0 ? chi_guarded : inverse_psi4;
+  Real gauge_dchi[3];
+  for (int first = 0; first < 3; ++first)
+    gauge_dchi[first] = options.chi_psi_power == -4.0 ? derivatives.dchi[first] :
+        (-4.0 / options.chi_psi_power) * inverse_psi4 * derivatives.dchi[first] / chi_guarded;
   for (int first = 0; first < 3; ++first) {
     output[Index(Z4cComponent::betax) + first] = gauge::ShiftRhs(
-        options.gauge, first, state.alpha, chi_guarded, state.gamma, state.beta,
-        derivatives.lie_beta, derivatives.dalpha, derivatives.dchi, inverse_metric,
+        options.gauge, first, state.alpha, gauge_chi, state.gamma, state.beta,
+        derivatives.lie_beta, derivatives.dalpha, gauge_dchi, inverse_metric,
         [](const Real values[6], const int a, const int b) {
           return SymmetricValue(values, a, b);
         });

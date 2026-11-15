@@ -59,9 +59,11 @@ def main():
     parser.add_argument('--pangu',type=Path,required=True)
     parser.add_argument('--workdir',type=Path,required=True)
     parser.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[2])
+    parser.add_argument('--chi-psi-power',type=int,choices=[-4,-2],default=-4)
     args=parser.parse_args(); exe=args.pangu.resolve(); root=args.root.resolve()
     work=args.workdir.resolve(); work.mkdir(parents=True,exist_ok=False)
-    report={}
+    geometry=['numerical_relativity/chi_psi_power='+str(args.chi_psi_power)]
+    report={'conformal_power':args.chi_psi_power}
     pg=run(exe,root,work/'pg-rn',[
         'plugin/scalar_field/initial_data=reissner_nordstrom',
         'parthenon/mesh/nx1=512','parthenon/meshblock/nx1=512',
@@ -76,7 +78,7 @@ def main():
                        (1-0.9**2/(2*radius[:,None,None,:])))))
         assert error<1.e-11,('PG RN mass preservation',error)
     report['pg']={'coordinates':'pg','RN_mass_maximum_error':error,'status':'passed'}
-    vacuum=fields(run(exe,root,work/'vacuum',[]))
+    vacuum=fields(run(exe,root,work/'vacuum',geometry))
     assert np.max(np.abs(vacuum['scalar.state']))==0
     assert np.max(np.abs(vacuum['nr.tmunu']))==0
     assert np.max(np.abs(vacuum['nr.constraints']))<1.e-14
@@ -84,7 +86,7 @@ def main():
     for model in ['scalar_wave','maxwell_wave']:
         values=[]
         for n in [16,32]:
-            path=run(exe,root,work/(model+'-'+str(n)),[
+            path=run(exe,root,work/(model+'-'+str(n)),geometry+[
                 'plugin/scalar_field/initial_data='+model,
                 *['parthenon/mesh/nx'+str(axis)+'='+str(n) for axis in [1,2,3]]])
             result=fields(path); error=wave_error(result,model); values.append(error)
@@ -94,7 +96,7 @@ def main():
                 assert np.max(np.abs(result['ems.gauss']))<1.e-11
         order=float(np.log2(values[0]/values[1])); assert order>3.2,(model,values,order)
         report[model]={'relative_rms_errors':values,'observed_order':order,'geometric_backreaction':True}
-    common=['plugin/scalar_field/initial_data=maxwell_wave','parthenon/time/tlim=10']
+    common=geometry+['plugin/scalar_field/initial_data=maxwell_wave','parthenon/time/tlim=10']
     direct=fields(run(exe,root,work/'direct',common+['parthenon/time/nlim=8'],ranks=2))
     run(exe,root,work/'first',common+['parthenon/time/nlim=4'])
     restart=next((work/'first').glob('*.final.rhdf'))

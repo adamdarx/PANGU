@@ -48,6 +48,8 @@ bool CheckPointPackStorage() {
 }
 
 Real ScaledDifference(const Real measured, const Real expected) {
+  if (!std::isfinite(measured) || !std::isfinite(expected))
+    return std::numeric_limits<Real>::infinity();
   return std::abs(measured - expected) / std::max({1.0, std::abs(measured), std::abs(expected)});
 }
 } // namespace
@@ -237,6 +239,63 @@ int main(int argc, char* argv[]) {
   const Real harmonic_expected[3] = {9.7, 7.6, 15.7};
   for (int axis = 0; axis < 3; ++axis)
     maximum = std::max(maximum, ScaledDifference(harmonic_host(axis), harmonic_expected[axis]));
+  // Changing the evolved conformal variable must preserve the physical RHS.
+  // Transform exact first/second derivatives by the chain rule, independently
+  // of the implementation's log-conformal-factor intermediates.
+  Kokkos::View<Real* [pangu::nr::kZ4cComponents]> variable_errors("chi/W RHS invariance", 4);
+  Kokkos::parallel_for("chi/W RHS invariance", 4, KOKKOS_LAMBDA(const int test) {
+    pangu::nr::rhs::PointState chi{};
+    pangu::nr::rhs::PointDerivatives d{};
+    pangu::nr::Z4cOptions options{};
+    chi.chi=0.73;chi.alpha=0.91;chi.khat=0.17;chi.theta=-0.03;
+    chi.metric[0]=chi.metric[3]=chi.metric[5]=1;
+    chi.a[0]=0.07;chi.a[3]=-0.07;
+    options.gauge.slow_start_lapse=true;
+    options.gauge.shift= test==0 ? pangu::nr::gauge::Shift::gamma_driver :
+        (test==1 ? pangu::nr::gauge::Shift::harmonic :
+         (test==2 ? pangu::nr::gauge::Shift::legacy : pangu::nr::gauge::Shift::frozen));
+    options.gauge.shift_harmonic=0.8;
+    d.lie_chi=0.04;d.lie_alpha=-0.02;
+    for(int axis=0;axis<3;++axis) {
+      chi.gamma[axis]=0.04*(axis+1);chi.beta[axis]=-0.02*(axis+1);
+      d.dchi[axis]=0.08-0.03*axis;d.dalpha[axis]=0.02*(axis+1);
+      d.lie_beta[axis]=0.01*(axis+1);
+      for(int other=0;other<3;++other) {
+        d.dbeta[axis][other]=0.003*(1+axis+other);
+        d.dgamma[axis][other]=0.004*(1+axis-other);
+      }
+    }
+    for(int pair=0;pair<6;++pair) d.ddchi[pair]=0.017*(pair+1);
+    auto w=chi;auto dw=d;auto w_options=options;
+    w.chi=sqrt(chi.chi);w_options.chi_psi_power=-2;
+    dw.lie_chi=d.lie_chi/(2*w.chi);
+    for(int first=0;first<3;++first) {
+      dw.dchi[first]=d.dchi[first]/(2*w.chi);
+      for(int second=first;second<3;++second) {
+        const int pair=SpatialSymmetricComponent(first,second);
+        dw.ddchi[pair]=d.ddchi[pair]/(2*w.chi)-
+            d.dchi[first]*d.dchi[second]/(4*w.chi*w.chi*w.chi);
+      }
+    }
+    Real chi_rhs[pangu::nr::kZ4cComponents]{},w_rhs[pangu::nr::kZ4cComponents]{};
+    pangu::nr::rhs::ComputeVacuum(chi,d,options,0.37,chi_rhs);
+    pangu::nr::rhs::ComputeVacuum(w,dw,w_options,0.37,w_rhs);
+    pangu::nr::StressEnergy matter{};
+    matter.energy=0.17;matter.stress[0]=0.2;matter.stress[3]=0.1;matter.stress[5]=-0.03;
+    matter.momentum[0]=0.003;matter.momentum[1]=-0.002;
+    pangu::nr::rhs::ApplyMatterSources(chi,options,matter,chi_rhs);
+    pangu::nr::rhs::ApplyMatterSources(w,w_options,matter,w_rhs);
+    for(int component=0;component<pangu::nr::kZ4cComponents;++component) {
+      const Real expected=component==Index(Z4cComponent::chi) ?
+          chi_rhs[component]/(2*w.chi) : chi_rhs[component];
+      variable_errors(test,component)=Kokkos::isfinite(w_rhs[component]) && Kokkos::isfinite(expected) ?
+          fabs(w_rhs[component]-expected)/fmax(1.0,fabs(expected)) : 1.0;
+    }
+  });
+  const auto variable_host=Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),variable_errors);
+  for(int test=0;test<4;++test)
+    for(int component=0;component<pangu::nr::kZ4cComponents;++component)
+      maximum=std::max(maximum,variable_host(test,component));
   for (int test = 0; test < cases; ++test) {
     for (int component = 0; component < pangu::nr::kZ4cComponents; ++component)
       maximum =

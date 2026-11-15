@@ -76,9 +76,11 @@ def main():
     parser.add_argument('--pangu',type=Path,required=True)
     parser.add_argument('--workdir',type=Path,required=True)
     parser.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[2])
+    parser.add_argument('--chi-psi-power',type=int,choices=[-4,-2],default=-4)
     args=parser.parse_args();exe=args.pangu.resolve();root=args.root.resolve()
     work=args.workdir.resolve();work.mkdir(parents=True,exist_ok=False)
     model=['plugin/scalar_field/initial_data=minkowski','plugin/scalar_field/em_alpha='+str(ALPHA),
+           'numerical_relativity/chi_psi_power='+str(args.chi_psi_power),
            'plugin/scalar_field/mass='+str(MASS),'plugin/scalar_field/quartic='+str(QUARTIC),
            'plugin/scalar_field/sextic='+str(SEXTIC),'numerical_relativity/lapse_gauge=frozen',
            'numerical_relativity/shift_gauge=frozen','parthenon/output1/dt=2',
@@ -104,7 +106,8 @@ def main():
     exact=reference(final_time,8192);fine=reference(final_time,16384)
     reference_error=float(np.max(np.abs(exact-fine)))
     assert reference_error<1.e-11,('ODE reference unresolved',reference_error)
-    report=dict(reference_state=fine.tolist(),reference_refinement_error=reference_error,cases=[])
+    report=dict(reference_state=fine.tolist(),reference_refinement_error=reference_error,
+                conformal_power=args.chi_psi_power,cases=[])
     for cfl in [.45,.225,.1125]:
         folder=work/('cfl-'+str(cfl))
         output=run(exe,root,folder,['parthenon/time/tlim=2','parthenon/time/nlim=-1',

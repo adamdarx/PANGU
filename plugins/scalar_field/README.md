@@ -376,6 +376,17 @@ The coordinate regression covers PG RN preservation, Cartesian wave convergence,
 backreaction and MPI-repartitioned restart. Passing these short checks is
 separate from validating long scalarized-black-hole evolutions.
 
+The native NR parameter `chi_psi_power` selects the evolved conformal variable:
+`-4` uses psi^-4 and `-2` uses W=psi^-2. Both retain the same unit-determinant
+conformal metric and physical equations. ADM conversion, connection evolution
+and gauge terms must use the corresponding chain rules. Local puncture tests
+must verify positivity and convergence for their chosen variable and dissipation;
+changing the variable does not establish long-time acceptance.
+The local `ems_cartesian_rn_hold.in` example explicitly selects W and disables
+the conformal-variable floor. The corresponding psi^-4 configuration with
+KO=0.1 can lose positivity before0.5M on this grid, and is retained as a failed
+control rather than advertised as a stable charged-puncture setup.
+
 Cartesian initial data apply `problem/constraint_mask_radius` and
 `numerical_relativity/constraint_mask_outer_radius` to the native NR diagnostic
 mask. These select a fixed coordinate shell about the origin; they affect
@@ -414,8 +425,38 @@ This exercises nonlinear scalar–Maxwell energy exchange and anisotropic
 Einstein backreaction. It has no spatial gradients or black hole, and does not
 validate black-hole scalar hair, AMR, or long-time strong-field evolution.
 
+`tst/regression/scalar_ems_puncture_constraints.py` also constructs an independent
+time-symmetric, spherical scalar-pulse initial condition on an isotropic ADM
+slice. With `F=r psi`, zero potential, `P=K_ij=B=0`, and
+`D^i=Q x^i/r^3`, the Hamiltonian equation is
+
+    F'' = -F (phi')^2/4 - Q^2/[4 F^3 exp(alpha phi^2)].
+
+The fixture matches analytic electrovac inner and outer regions and shoots for
+`psi(infinity)=1`. It uses a native restart file solely as a container for these
+explicitly constructed initial fields. Its radial constraint solve is separate
+from the subsequent three-dimensional scalar/Maxwell/Z4c evolution; no PG data
+are imported. An RN limit, radial integration refinement, three-dimensional
+constraint convergence and an unsolved-RN-plus-scalar control check the initial
+condition. The added scalar energy changes the ADM mass; the seed mass is not
+silently treated as the final ADM mass.
+
+```sh
+python3 tst/regression/scalar_ems_puncture_constraints.py \
+  --pangu build-cuda-nr/src/pangu --workdir /tmp/ems-scalar-puncture
+python3 tst/regression/scalar_ems_puncture_evolution.py \
+  --pangu build-cuda-nr/src/pangu --initial-run /tmp/ems-scalar-puncture \
+  --workdir /tmp/ems-scalar-puncture-evolution
+```
+
+These fixed-parameter checks cover spherical initial data and short coupled
+evolution to0.1M. They do not provide a general nonspherical initial-data solver
+or validate long-time scalarized black holes.
+
 Nonfinite Cartesian EMS states abort with the minimum conformal variable and
 spatial-metric determinant recorded in the error. The check preserves the
 failure rather than replacing invalid geometry with a floor.
 `tst/regression/scalar_ems_invalid_geometry.py` checks this path using an
 explicitly invalid synthetic checkpoint; it is an error-handling test.
+Nonpositive conformal variables and non-positive-definite spatial metrics are
+also rejected, even when an even power would reconstruct a finite metric.

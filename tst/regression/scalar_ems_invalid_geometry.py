@@ -12,6 +12,7 @@ def main():
     parser.add_argument('--pangu',type=Path,required=True)
     parser.add_argument('--seed',type=Path,required=True)
     parser.add_argument('--workdir',type=Path,required=True)
+    parser.add_argument('--chi-psi-power',type=int,choices=[-4,-2],default=-4)
     args=parser.parse_args()
     folder=args.workdir.resolve();folder.mkdir(parents=True,exist_ok=False)
     fixture=folder/'invalid-negative-chi.rhdf'
@@ -20,11 +21,14 @@ def main():
         state=output['nr.z4c'][...];state[:,0]=-1;output['nr.z4c'][...]=state
     with (folder/'run.log').open('wb') as log:
         result=subprocess.run(['mpirun','-np','1',str(args.pangu.resolve()),'-r',str(fixture),
-                               'parthenon/time/nlim=1'],cwd=folder,stdout=log,stderr=subprocess.STDOUT)
+                               'parthenon/time/nlim=1',
+                               'numerical_relativity/chi_psi_power='+str(args.chi_psi_power)],
+                              cwd=folder,stdout=log,stderr=subprocess.STDOUT)
     text=(folder/'run.log').read_text()
     assert result.returncode!=0,'Negative geometric state was accepted'
     assert 'minimum conformal variable=-1' in text,'Missing conformal-variable evidence'
-    assert 'minimum spatial metric determinant=-1' in text,'Missing spatial-metric evidence'
+    determinant='-1' if args.chi_psi_power==-4 else '1'
+    assert 'minimum spatial metric determinant='+determinant in text,'Missing spatial-metric evidence'
     print('PASS: invalid geometry aborts with evidence; failed state is not floored.')
 
 
