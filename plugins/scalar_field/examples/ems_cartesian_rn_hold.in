@@ -1,5 +1,7 @@
-# Local RN hold in W=psi^-2, with a resolved horizon.
+# Local RN hold using the required default chi=psi^-4 representation.
 # Box[-1,1] and t=0.5M are short-test settings, not long-time acceptance.
+# This KO=0.1 puncture test currently fails positivity before the target time.
+# Keep the failure visible; W=psi^-2 probes do not satisfy this acceptance gate.
 <parthenon/job>
 problem_id = scalar_field
 <pangu>
@@ -41,7 +43,7 @@ nlim = 1000
 ncycle_out = 10
 <numerical_relativity>
 matter_source = external
-chi_psi_power = -2
+chi_psi_power = -4
 floor_chi = false
 lapse_gauge = one_plus_log
 shift_gauge = gamma_driver

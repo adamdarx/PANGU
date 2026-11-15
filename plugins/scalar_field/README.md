@@ -382,10 +382,14 @@ conformal metric and physical equations. ADM conversion, connection evolution
 and gauge terms must use the corresponding chain rules. Local puncture tests
 must verify positivity and convergence for their chosen variable and dissipation;
 changing the variable does not establish long-time acceptance.
-The local `ems_cartesian_rn_hold.in` example explicitly selects W and disables
-the conformal-variable floor. The corresponding psi^-4 configuration with
-KO=0.1 can lose positivity before0.5M on this grid, and is retained as a failed
-control rather than advertised as a stable charged-puncture setup.
+The required mainline representation is the native default psi^-4, matching
+the established AthenaK comparison configuration. W probes only diagnose an
+optional representation and cannot replace psi^-4 acceptance.
+The local `ems_cartesian_rn_hold.in` example explicitly selects psi^-4 and
+disables the conformal-variable floor. With KO=0.1 this local charged-puncture
+configuration can lose positivity before0.5M; its acceptance gate remains
+unmet. This new Cartesian EMS fixture does not invalidate the archived vacuum
+NR comparisons. Historical successful W runs remain diagnostic results only.
 
 Cartesian initial data apply `problem/constraint_mask_radius` and
 `numerical_relativity/constraint_mask_outer_radius` to the native NR diagnostic
@@ -450,8 +454,10 @@ python3 tst/regression/scalar_ems_puncture_evolution.py \
 ```
 
 These fixed-parameter checks cover spherical initial data and short coupled
-evolution to0.1M. They do not provide a general nonspherical initial-data solver
-or validate long-time scalarized black holes.
+evolution to0.1M. The fixture inherits the native input's conformal power and
+does not silently select W. Historical W-based passes do not certify the
+required psi^-4 configuration. The checks do not provide a general
+nonspherical initial-data solver or validate long-time scalarized black holes.
 
 Nonfinite Cartesian EMS states abort with the minimum conformal variable and
 spatial-metric determinant recorded in the error. The check preserves the

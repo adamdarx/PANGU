@@ -100,7 +100,7 @@ class Profile:
         return f,phi
 
 
-def inject(seed,output,profile,power=-2,solve_constraint=True):
+def inject(seed,output,profile,power=None,solve_constraint=True):
     """Write a labeled synthetic test restart; retain the native input model."""
     import shutil
     shutil.copyfile(seed,output)
@@ -119,7 +119,10 @@ def inject(seed,output,profile,power=-2,solve_constraint=True):
         assert float(model['bh_mass'])==profile.mass
         assert float(model['bh_charge'])==profile.charge and float(model['em_alpha'])==profile.alpha
         assert all(float(model.get(key,0))==0 for key in ['mass','quartic','sextic'])
-        assert float(parameters['numerical_relativity']['chi_psi_power'])==power
+        recorded_power=float(parameters['numerical_relativity'].get('chi_psi_power',-4))
+        if power is not None:
+            assert recorded_power==power,'Fixture power differs from the native input'
+        power=recorded_power
         for block in range(target['scalar.state'].shape[0]):
             x,y,z=[target['VolumeLocations/'+axis][block] for axis in 'xyz']
             xyz=np.broadcast_arrays(x[None,None,:],y[None,:,None],z[:,None,None])
