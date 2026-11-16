@@ -19,6 +19,17 @@ adaptive three-dimensional meshes with multiple MPI ranks. PG uses one radial
 block and one MPI rank. GB gravitational
 backreaction is not implemented.
 
+The scalar-hair reproduction scope is **spherical symmetry**. Coordinate choice
+and physical symmetry are independent: a non-PG slicing or Cartesian spatial
+coordinates can describe a spherical solution. The Guo–Wang–Zhang EMS study
+uses spherical PG-like evolution in Sec. II.3 of
+[arXiv:2403.02089](https://arxiv.org/html/2403.02089v2).
+Its spherical reproduction does not require nonspherical perturbations.
+The existing Cartesian implementation evolves all three-dimensional components;
+radial initial fields are spherical in the continuum, while the mesh introduces
+discretization errors. General three-dimensional qualification is a separate
+extension, and is not a prerequisite for the archived spherical PG reproduction.
+
 ## Configuration and extension
 
 All modes use `problem_id=scalar_field` and `<plugins> enabled=scalar_field`.
