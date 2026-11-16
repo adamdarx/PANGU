@@ -378,6 +378,44 @@ The coordinate regression covers PG RN preservation, Cartesian wave convergence,
 backreaction and MPI-repartitioned restart. Passing these short checks is
 separate from validating long scalarized-black-hole evolutions.
 
+### Maxwell constraint cleaning
+
+Cartesian EMS optionally enables covariant generalized-Lagrange-multiplier
+cleaning with `maxwell_cleaning=true` in `<plugin/scalar_field>` and
+`cleaning_damping=1` (a nonnegative inverse-time coefficient). The default is
+`false`, retaining the eight-component layout and existing restart files.
+Enabling it appends `psi_D,psi_B`; generate a fresh ten-component initial
+checkpoint rather than changing the layout of an eight-component restart.
+The scalar potential, Maxwell coupling, stress energy and NR representation
+`chi=psi^-4` do not change.
+
+For `g=sqrt(det(gamma))`, the additions to the existing antisymmetric-flux
+Maxwell RHS are
+
+```
+d_t D^i += beta^i partial_j D^j - alpha g gamma^ij partial_j psi_D
+d_t C^i += beta^i partial_j C^j - alpha g gamma^ij partial_j psi_B
+d_t psi_D = beta^i partial_i psi_D - alpha (partial_i D^i/g + kappa psi_D)
+d_t psi_B = beta^i partial_i psi_B - alpha (partial_i C^i/g + kappa psi_B)
+```
+
+The electric extension applies to the action's tensor `f(phi) F`, matching
+the stored `D=g f E`; `psi_D` is not the unweighted electric-field multiplier.
+The magnetic multiplier has the opposite sign to the `Phi` convention in
+[Hirschmann et al.](https://arxiv.org/abs/1706.09875). These are numerical
+constraint-control variables with no physical stress energy. They vanish on
+the Maxwell constraint surface. Both propagate at light speed; the timestep
+also bounds the explicit damping rate. RK4, ghost exchange, high-order AMR
+transfer and native restart include both variables.
+
+This follows the divergence-cleaning approach used for Einstein-Maxwell
+evolution and in [three-dimensional EMS simulations](https://arxiv.org/abs/2606.21549),
+adapted to this plugin's densitized variables. It does not by itself establish
+long-time strong-field stability. The regression
+`tst/regression/scalar_ems_cleaning.py` checks electric and magnetic longitudinal
+damped waves, nonunit coupling, constant-shift transport, transverse-wave
+equivalence and restart with a change in MPI rank count.
+
 ### Cartesian mesh refinement
 
 `scalar.state` uses the native Z4c high-order point prolongation and restriction;

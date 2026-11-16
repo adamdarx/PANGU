@@ -21,7 +21,9 @@ namespace {
 constexpr const char* label = "plugin.scalar_field";
 struct Parameters {
   Model model;
-  int order=4, initial=0;
+  int order=4, initial=0, components=8;
+  bool cleaning=false;
+  Real cleaning_damping=1;
   Real amplitude=0, wave[3]{1,1,1}, polarization[3]{1,-1,0};
   Real mass=1, charge=0, cfl=0.25, dissipation=0;
 };
@@ -119,7 +121,7 @@ template<int Order> TaskStatus PrepareOrder(MeshData<Real>* data,Real) {
         Real metric[6];for(int n=0;n<6;++n) metric[n]=a(b,n,k,j,i);
         if(!(metric[0]>0 && metric[0]*metric[3]-metric[1]*metric[1]>0 &&
              nr::rhs::SpatialDeterminant(metric)>0)) ++bad;
-        for(int n=0;n<8;++n) if(!(fabs(u(b,n,k,j,i))<=largest)) ++bad;
+        for(int n=0;n<p.components;++n) if(!(fabs(u(b,n,k,j,i))<=largest)) ++bad;
         for(int n=0;n<10;++n) if(!(fabs(tm(b,n,k,j,i))<=largest)) ++bad;
         for(int n=0;n<2;++n) if(!(fabs(constraints(b,n,k,j,i))<=largest)) ++bad;
       },Kokkos::Sum<int>(invalid));
@@ -234,7 +236,37 @@ template<int Order> TaskStatus RHSOrder(MeshData<Real>* data) {
             value+=nr::fd::First<Order>(axis,h[axis],Value<decltype(flux)>{flux,b,3*n+axis,k,j,i});
           rhs(b,2+n,k,j,i)=value;
         }
-        if(p.dissipation!=0) for(int n=0;n<8;++n) {
+        if(p.cleaning) {
+          // Covariant GLM applied to f(phi) F and to the dual Maxwell
+          // tensor. psi_D cleans div(D)/sqrt(gamma); psi_B is minus the
+          // magnetic Phi convention in Hirschmann et al., PRD97,064032.
+          // Both auxiliary scalars therefore obey the same damped-wave
+          // sign convention. They carry no physical stress energy.
+          Real divd=0,divb=0,grad_psi_d[3],grad_psi_b[3];
+          Real adv_psi_d=0,adv_psi_b=0;
+          for(int axis=0;axis<3;++axis) {
+            divd+=nr::fd::First<Order>(axis,h[axis],Value<decltype(u)>{u,b,2+axis,k,j,i});
+            divb+=nr::fd::First<Order>(axis,h[axis],Value<decltype(u)>{u,b,5+axis,k,j,i});
+            grad_psi_d[axis]=nr::fd::First<Order>(axis,h[axis],Value<decltype(u)>{u,b,8,k,j,i});
+            grad_psi_b[axis]=nr::fd::First<Order>(axis,h[axis],Value<decltype(u)>{u,b,9,k,j,i});
+            adv_psi_d+=g.shift[axis]*grad_psi_d[axis];
+            adv_psi_b+=g.shift[axis]*grad_psi_b[axis];
+          }
+          for(int n=0;n<3;++n) {
+            // The antisymmetric shift flux contains -beta^i div(D).
+            // Restore the Lie derivative off the constraint surface so
+            // cleaning waves have speeds -beta^i +/- alpha sqrt(gamma^ii).
+            rhs(b,2+n,k,j,i)+=g.shift[n]*divd;
+            rhs(b,5+n,k,j,i)+=g.shift[n]*divb;
+            for(int axis=0;axis<3;++axis) {
+              rhs(b,2+n,k,j,i)-=g.lapse*g.sqrt_det*g.Inv(n,axis)*grad_psi_d[axis];
+              rhs(b,5+n,k,j,i)-=g.lapse*g.sqrt_det*g.Inv(n,axis)*grad_psi_b[axis];
+            }
+          }
+          rhs(b,8,k,j,i)=adv_psi_d-g.lapse*(divd/g.sqrt_det+p.cleaning_damping*u(b,8,k,j,i));
+          rhs(b,9,k,j,i)=adv_psi_b-g.lapse*(divb/g.sqrt_det+p.cleaning_damping*u(b,9,k,j,i));
+        }
+        if(p.dissipation!=0) for(int n=0;n<p.components;++n) {
           Real ko=0;
           for(int axis=0;axis<3;++axis)
             ko+=nr::fd::KreissOliger<Order>(axis,h[axis],Value<decltype(u)>{u,b,n,k,j,i});
@@ -252,6 +284,7 @@ TaskStatus RHS(MeshData<Real>* data) {
 }
 
 TaskStatus Update(MeshData<Real>* data,int stage,Real dt) {
+  const int components=data->GetParentPointer()->packages.Get(label)->Param<Parameters>("parameters").components;
   const auto u=data->PackVariables(std::vector<std::string>{"scalar.state"});
   const auto rhs=data->PackVariables(std::vector<std::string>{"scalar.rhs"});
   const auto initial=data->PackVariables(std::vector<std::string>{"scalar.initial"});
@@ -259,7 +292,7 @@ TaskStatus Update(MeshData<Real>* data,int stage,Real dt) {
   const auto ib=data->GetBoundsI(IndexDomain::interior),jb=data->GetBoundsJ(IndexDomain::interior),
              kb=data->GetBoundsK(IndexDomain::interior);
   parthenon::par_for(DEFAULT_LOOP_PATTERN,"3D EMS classical RK4 update",DevExecSpace(),
-      0,data->NumBlocks()-1,0,7,kb.s,kb.e,jb.s,jb.e,ib.s,ib.e,
+      0,data->NumBlocks()-1,0,components-1,kb.s,kb.e,jb.s,jb.e,ib.s,ib.e,
       KOKKOS_LAMBDA(int b,int n,int k,int j,int i) {
         if(stage==1) initial(b,n,k,j,i)=u(b,n,k,j,i);
         const Real r=rhs(b,n,k,j,i);
@@ -317,7 +350,7 @@ void InitializeFields(Mesh* mesh,ParameterInput*,MeshData<Real>* data) {
         // configured NR diagnostic shell when replacing those initial fields.
         mask(b,0,k,j,i)=radius_squared>inner_mask*inner_mask &&
             (outer_mask==0 || radius_squared<=outer_mask*outer_mask) ? 1.0 : 0.0;
-        for(int n=0;n<8;++n) u(b,n,k,j,i)=0;
+        for(int n=0;n<p.components;++n) u(b,n,k,j,i)=0;
         Real phase=0; for(int n=0;n<3;++n) phase+=p.wave[n]*x[n];
         if(p.initial==1) {
           u(b,0,k,j,i)=p.amplitude*cos(phase);
@@ -353,6 +386,7 @@ Real Timestep(MeshData<Real>* data) {
         const auto g=GetGeometry(a,z,b,k,j,i);
         Real h[3],rate=0; Spacing(a,b,k,j,i,h);
         for(int n=0;n<3;++n) rate+=(fabs(g.shift[n])+g.lapse*sqrt(g.Inv(n,n)))*h[n];
+        if(p.cleaning) rate=fmax(rate,fabs(g.lapse)*p.cleaning_damping);
         if(rate>maxrate) maxrate=rate;
       },Kokkos::Max<Real>(maximum));
   return p.cfl/maximum;
@@ -387,7 +421,8 @@ std::shared_ptr<StateDescriptor> InitializeCartesianEMS(plugin::InitContext& con
   const std::set<std::string> keys{"backend","coordinates","fields","ell","gb_eta","em_linearized",
       "potential","mass","quartic","sextic","decay_constant",
       "em_coupling","em_alpha","initial_data","amplitude","wave_x","wave_y","wave_z",
-      "polarization_x","polarization_y","polarization_z","bh_mass","bh_charge","cfl","dissipation"};
+      "polarization_x","polarization_y","polarization_z","bh_mass","bh_charge","cfl","dissipation",
+      "maxwell_cleaning","cleaning_damping"};
   for(const auto& key:pin.GetParameterNames(block))
     PARTHENON_REQUIRE(keys.count(key)!=0,"unknown Cartesian EMS parameter: "+key);
   PARTHENON_REQUIRE(pin.GetOrAddInteger(block,"fields",1)==1 &&
@@ -411,6 +446,9 @@ std::shared_ptr<StateDescriptor> InitializeCartesianEMS(plugin::InitContext& con
   p.amplitude=pin.GetOrAddReal(block,"amplitude",1.e-6);
   p.mass=pin.GetOrAddReal(block,"bh_mass",1); p.charge=pin.GetOrAddReal(block,"bh_charge",0.9);
   p.cfl=pin.GetOrAddReal(block,"cfl",0.25); p.dissipation=pin.GetOrAddReal(block,"dissipation",0);
+  p.cleaning=pin.GetOrAddBoolean(block,"maxwell_cleaning",false);
+  p.cleaning_damping=pin.GetOrAddReal(block,"cleaning_damping",1);
+  p.components=p.cleaning ? 10 : 8;
   const char* axis[3]={"x","y","z"};
   for(int n=0;n<3;++n) {
     p.wave[n]=pin.GetOrAddReal(block,std::string("wave_")+axis[n],1);
@@ -418,7 +456,8 @@ std::shared_ptr<StateDescriptor> InitializeCartesianEMS(plugin::InitContext& con
   }
   PARTHENON_REQUIRE(mass>=0 && p.model.alpha>=0 && p.model.polynomial.quartic>=0 &&
       p.model.polynomial.sextic>=0 && p.model.axion.decay_constant>0 && p.cfl>0 && p.cfl<=0.5 &&
-      p.dissipation>=0 && p.dissipation<=1,"invalid EMS model or stability parameters");
+      p.dissipation>=0 && p.dissipation<=1 && p.cleaning_damping>=0,
+      "invalid EMS model or stability parameters");
   PARTHENON_REQUIRE(!p.model.use_axion ||
       (p.model.polynomial.quartic==0 && p.model.polynomial.sextic==0),"axion potential excludes polynomial coefficients");
   PARTHENON_REQUIRE(p.initial!=1 || (!p.model.use_axion && p.model.polynomial.quartic==0 &&
@@ -430,7 +469,7 @@ std::shared_ptr<StateDescriptor> InitializeCartesianEMS(plugin::InitContext& con
   for(int n=0;n<3;++n) { const Real value=p.polarization[n]-p.wave[n]*dot/norm; polnorm+=value*value; }
   PARTHENON_REQUIRE(polnorm>0,"Maxwell polarization must not be parallel to wave vector");
   for(Real value:{mass,p.model.alpha,p.model.polynomial.quartic,p.model.polynomial.sextic,
-      p.model.axion.decay_constant,p.amplitude,p.mass,p.charge,p.cfl,p.dissipation,
+      p.model.axion.decay_constant,p.amplitude,p.mass,p.charge,p.cfl,p.dissipation,p.cleaning_damping,
       p.wave[0],p.wave[1],p.wave[2],p.polarization[0],p.polarization[1],p.polarization[2]})
     PARTHENON_REQUIRE(std::isfinite(value),"EMS parameters must be finite");
   auto package=std::make_shared<StateDescriptor>(label);
@@ -438,8 +477,10 @@ std::shared_ptr<StateDescriptor> InitializeCartesianEMS(plugin::InitContext& con
   package->AddParam<Parameters>("parameters",p);
   package->AddParam<plugin::SynchronizedMatter>(plugin::synchronized_matter_key,
       {{"scalar.state"},Prepare,RHS,Update});
+  std::vector<std::string> components{"phi","P","D_x","D_y","D_z","Bdens_x","Bdens_y","Bdens_z"};
+  if(p.cleaning) { components.emplace_back("psi_D");components.emplace_back("psi_B"); }
   Metadata evolved({Metadata::Cell,Metadata::Independent,Metadata::Restart,Metadata::FillGhost},
-      std::vector<int>{8},std::vector<std::string>{"phi","P","D_x","D_y","D_z","Bdens_x","Bdens_y","Bdens_z"});
+      std::vector<int>{p.components},components);
   // These are finite-difference point values, like the synchronized Z4c
   // fields. A slope-limited fluid interpolant would insert derivative kinks
   // at coarse/fine interfaces in both the scalar wave and Maxwell curls.
@@ -447,7 +488,7 @@ std::shared_ptr<StateDescriptor> InitializeCartesianEMS(plugin::InitContext& con
                                 nr::amr::RestrictZ4cHighOrder>();
   package->AddField("scalar.state",evolved);
   for(const char* name:{"scalar.rhs","scalar.initial","scalar.rk_sum"})
-    package->AddField(name,Metadata({Metadata::Cell,Metadata::Derived,Metadata::OneCopy},std::vector<int>{8}));
+    package->AddField(name,Metadata({Metadata::Cell,Metadata::Derived,Metadata::OneCopy},std::vector<int>{p.components}));
   package->AddField("ems.flux",Metadata({Metadata::Cell,Metadata::Derived,Metadata::OneCopy},std::vector<int>{18}));
   package->AddField("ems.gauss",Metadata({Metadata::Cell,Metadata::Derived,Metadata::OneCopy},std::vector<int>{2}));
   package->AddField("scalar.phi",Metadata({Metadata::Cell,Metadata::Derived,Metadata::OneCopy},std::vector<int>{1}));
