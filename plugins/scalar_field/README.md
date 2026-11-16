@@ -130,6 +130,24 @@ the coarse-grid tail qualification are distinct findings. These runs address
 the RN scalarization branch; symmetry-broken-background accretion channels and
 the different axion model require their own inputs and comparisons.
 
+Continuing the same frozen baseline to `t/Q=300` gives the following tail
+comparison. Each range covers `280<=t/Q<=300` and is divided by its time mean:
+
+| Radial points | Mean horizon `abs(Phi)` | Relative scalar range | Final exterior Hamiltonian RMS |
+| --- | --- | --- | --- |
+| 128 | 0.14223787 | 3.936% | 5.00851e-6 |
+| 192 | 0.14187912 | 0.7103% | 1.68929e-6 |
+| 256 | 0.14194003 | 0.1323% | 7.05918e-7 |
+
+The tail oscillations decrease strongly with radial refinement, but all three
+ranges exceed the explicitly selected 0.1% pilot stationarity tolerance.
+Thus the agreement observed at200Q does not establish a long-time stationary
+endpoint. The N256 irreducible-mass range over the same20Q is 0.00227%, and
+all three histories still have zero exterior chi/lapse floor cells. Increasing
+only the N128 KO coefficient from0.05 to0.2 leaves a2.364% scalar range; this
+change alone does not qualify the tail. A separate puncture-floor control is
+being evaluated with the same equations and `chi=psi^-4`.
+
 All modes use `problem_id=scalar_field` and `<plugins> enabled=scalar_field`.
 A full `METRIC=z4c MODE=sync` executable selects PG, spherical or Cartesian EMS at runtime.
 Only Cartesian EMS installs a numerical-relativity package and requires
