@@ -98,6 +98,38 @@ the code does not trace a dynamical event horizon. The example's `tlim=200`
 in Q=1 units is an initial bounded run, with stationarity and radial convergence
 to be assessed from the actual output.
 
+For a frozen three-resolution run with its binary and `n128`, `n192`, `n256`
+history directories beside `SERIES.json`, summarize the common physical time:
+
+```sh
+python3 tst/regression/analyze_ems_spherical.py \
+  --series /path/to/SERIES.json --output /path/to/comparison --plot
+```
+
+The analyzer uses NumPy/SciPy; `--plot` additionally uses Matplotlib. It verifies
+the frozen binary hash and writes JSON/CSV plus PNG/PDF figures. An optional
+`--reference-json` accepts a separately documented PDF plateau estimate.
+It reports incomplete runs without accepting them. Cubic time interpolation
+aligns native diagnostic samples; a selected relative tail tolerance is an
+explicit analysis choice, not a criterion attributed to the paper.
+
+One local CUDA series reached `t/Q=200` with the following native observables:
+
+| Radial points | Horizon `abs(Phi)` | Exterior Hamiltonian RMS |
+| --- | --- | --- |
+| 128 | 0.14199310 | 4.17045e-6 |
+| 192 | 0.14201110 | 1.41305e-6 |
+| 256 | 0.14197458 | 4.25145e-7 |
+
+The constraint region is `1.1*r_AH < r <50`, weighted by `r^2 dr`. No chi/lapse
+floor cells lay outside the measured horizon in these histories. The two finer
+endpoints differ by 0.0257%; their means over `180<=t/Q<=200` differ by 0.00865%.
+The coarsest horizon scalar retains a 0.393% sampled tail range, compared with
+0.0508% and 0.0302% on the finer grids. Thus the common endpoint comparison and
+the coarse-grid tail qualification are distinct findings. These runs address
+the RN scalarization branch; symmetry-broken-background accretion channels and
+the different axion model require their own inputs and comparisons.
+
 All modes use `problem_id=scalar_field` and `<plugins> enabled=scalar_field`.
 A full `METRIC=z4c MODE=sync` executable selects PG, spherical or Cartesian EMS at runtime.
 Only Cartesian EMS installs a numerical-relativity package and requires
