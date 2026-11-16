@@ -9,4 +9,6 @@ std::shared_ptr<parthenon::StateDescriptor>
 InitializePGEMS(plugin::InitContext &context);
 std::shared_ptr<parthenon::StateDescriptor>
 InitializeCartesianEMS(plugin::InitContext &context);
+std::shared_ptr<parthenon::StateDescriptor>
+InitializeSphericalEMS(plugin::InitContext &context);
 } // namespace pangu::plugins::scalar_field

@@ -9,7 +9,7 @@ package.
 This package evolves actual Klein–Gordon test fields with Parthenon MeshData,
 CUDA kernels, fourth-order finite differences and classical four-stage RK4.
 The `cartesian_flat` and `radial_tortoise` backends retain the fixed-background
-test-field problems. The `ems` backend selects `coordinates=pg` or `coordinates=cartesian` while
+test-field problems. The `ems` backend selects `coordinates=pg`, `coordinates=spherical`, or `coordinates=cartesian` while
 sharing the scalar potential and Maxwell coupling policies. PG uses the existing
 spherical constraint solver. Cartesian coordinates use general ADM lapse, shift,
 and spatial metric, evolving the scalar and Maxwell fields with the native Z4c
@@ -18,6 +18,13 @@ use uniform meshes. Cartesian EMS supports uniform, statically refined and
 adaptive three-dimensional meshes with multiple MPI ranks. PG uses one radial
 block and one MPI rank. GB gravitational
 backreaction is not implemented.
+
+`coordinates=spherical` is the non-PG radial3+1 option. It evolves the existing
+native Einstein point operator in its BSSN limit with 1+log lapse and a
+Gamma-driver shift. Cartesian tensor components are represented along a radial
+axis; rotational symmetry supplies their transverse derivatives analytically.
+Only one radial MeshBlock is stored and evolved. This mode also runs in the
+minimal `pangu_scalar` executable and keeps `chi=psi^-4`.
 
 The scalar-hair reproduction scope is **spherical symmetry**. Coordinate choice
 and physical symmetry are independent: a non-PG slicing or Cartesian spatial
@@ -32,8 +39,67 @@ extension, and is not a prerequisite for the archived spherical PG reproduction.
 
 ## Configuration and extension
 
+For the first spherical non-PG reproduction, use the RN scalarization branch
+of [Garcia-Saenz, Guo, Wang and Wang](https://arxiv.org/html/2409.13184v2),
+whose Fig.6 specifies `Q/M=0.5` and `em_alpha=160`:
+
+```sh
+cmake --build build-cuda-nr --target pangu_scalar pangu_scalar_spherical_geometry -j2
+build-cuda-nr/src/pangu_scalar_spherical_geometry
+mpirun -np 1 build-cuda-nr/src/pangu_scalar \
+  -i plugins/scalar_field/examples/ems_spherical_rn_scalarization.in
+python3 tst/regression/scalar_ems_spherical.py \
+  --pangu build-cuda-nr/src/pangu_scalar --workdir /tmp/ems-spherical-check
+```
+
+This example uses `Q=1`, `M=2`, two real components with the paper's convention
+`Phi=phi1+i phi2`, zero scalar potential, and `f=exp(160 |Phi|^2)`.
+The Gaussian amplitude is `1e-6`; its center4 and width1 refer to the initial
+isotropic radial coordinate. Initial geometry is time-symmetric isotropic RN,
+with positive precollapsed lapse, and the perturbation changes its initial
+constraints at order amplitude squared. The paper does not fully specify the
+Gaussian center or initial gauge; these choices are recorded for reproducibility.
+
+The computational coordinate is `0<=x<=1`, mapped to
+`r=outer_radius*sinh(x/radial_map_a)/sinh(1/radial_map_a)`.
+The example uses the paper's outer radius30000 and stretch parameter0.07;
+zero offset permits parity conditions at the puncture. The paper's inner-offset
+notation is ambiguous, so exact equality of the computational grid is not claimed.
+Setting `radial_map_a=0` selects a uniform radial grid.
+
+As in the native puncture evolution, `numerical_relativity/floor_chi=true`
+applies `chi_min_floor` after every RK substage (native default `1e-12`, with
+`1e-4` selected explicitly in this stretched-grid example). This regularizes the
+unresolved puncture while retaining `chi=psi^-4`; nonfinite states still abort
+with a diagnostic CSV. The history records the minimum chi, number of cells
+at its floor, and number outside the measured apparent horizon. Exterior
+constraints and horizon convergence must qualify every long reproduction.
+The lapse has a separate positive `plugin/scalar_field/lapse_min_floor=1e-10`; its active-cell
+counts inside and outside the horizon are recorded in the same history.
+The short regression suite verifies tensor derivatives, RN constraints, a
+bounded RN evolution, internal U(1) rotation, restart and legacy PG evolution.
+These checks do not establish the late-time nonlinear endpoint; that requires
+the separate long-run horizon and exterior-constraint comparison.
+
+The spherical Maxwell equations fix the conserved charge algebraically:
+`E^r=Q/[r^2 sqrt(g_rr) g_T f]`, where `g_T=g_theta_theta/r^2`; the magnetic
+field vanishes. This is the symmetry-reduced Maxwell system, with no angular
+or magnetic perturbations. Charge conservation is built into this reduction.
+The lapse, shift, spatial metric, extrinsic curvature, scalar field and scalar
+momentum evolve dynamically; no PG metric constraints are solved during it.
+
+Outputs include the native `nr.constraints` ADM Hamiltonian/momentum residuals,
+`nr.z4c`, `nr.adm` and `nr.tmunu`. The components of `ems.radial` are physical
+radial coordinate, areal radius, radial electric field, charge, outgoing null
+expansion, charged Misner-Sharp mass estimate, and radial-map Jacobian.
+`ems_spherical_history.csv` records apparent-horizon area/mass/scalar values and
+exterior constraints. Compare the stationary horizon scalar with Fig.6;
+the code does not trace a dynamical event horizon. The example's `tlim=200`
+in Q=1 units is an initial bounded run, with stationarity and radial convergence
+to be assessed from the actual output.
+
 All modes use `problem_id=scalar_field` and `<plugins> enabled=scalar_field`.
-A full `METRIC=z4c MODE=sync` executable selects PG or Cartesian EMS at runtime.
+A full `METRIC=z4c MODE=sync` executable selects PG, spherical or Cartesian EMS at runtime.
 Only Cartesian EMS installs a numerical-relativity package and requires
 `numerical_relativity/matter_source=external`. PG owns its dynamical geometry
 and remains available in fixed-background builds and the minimal `pangu_scalar`
@@ -44,7 +110,7 @@ The `<plugin/scalar_field>` namespace contains:
 | Parameter | Meaning |
 |---|---|
 | `backend` | `ems`, `radial_tortoise`, or `cartesian_flat` |
-| `coordinates` | `pg` or `cartesian` for coupled EMS; defaults to `pg` |
+| `coordinates` | `pg`, `spherical` (radial non-PG3+1), or `cartesian`; defaults to `pg` |
 | `fields` | 1 real scalar, or 2 real components of an uncharged complex scalar |
 | `potential` | `polynomial` or `axion` |
 | `mass`, `quartic`, `sextic` | Polynomial potential coefficients below |

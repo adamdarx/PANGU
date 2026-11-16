@@ -628,13 +628,21 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/plugins/scalar_field/plugin.cmake")
     "${CMAKE_SOURCE_DIR}/plugins/scalar_field/standalone.cc"
     "${CMAKE_SOURCE_DIR}/plugins/scalar_field/plugin.cc"
     "${CMAKE_SOURCE_DIR}/plugins/scalar_field/ems_coupled.cc"
-    "${CMAKE_SOURCE_DIR}/plugins/scalar_field/ems_coordinates.cc")
+    "${CMAKE_SOURCE_DIR}/plugins/scalar_field/ems_coordinates.cc"
+    "${CMAKE_SOURCE_DIR}/plugins/scalar_field/ems_spherical.cc")
   target_compile_definitions(pangu_scalar PRIVATE PANGU_SCALAR_REPRODUCTION_DRIVER=1)
   target_include_directories(pangu_scalar PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/../generated")
   target_link_libraries(pangu_scalar PRIVATE Parthenon::parthenon)
   target_compile_features(pangu_scalar PRIVATE cxx_std_20)
+  add_executable(pangu_scalar_spherical_geometry EXCLUDE_FROM_ALL
+    "${CMAKE_SOURCE_DIR}/tst/unit/scalar_spherical_geometry.cc")
+  target_include_directories(pangu_scalar_spherical_geometry PRIVATE
+    "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/../generated")
+  target_link_libraries(pangu_scalar_spherical_geometry PRIVATE Parthenon::parthenon)
+  target_compile_features(pangu_scalar_spherical_geometry PRIVATE cxx_std_20)
 endif()
 
 find_program(PANGU_CLANG_FORMAT clang-format)

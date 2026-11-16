@@ -1,4 +1,4 @@
-set(scalar_field_sources plugin.cc ems_coupled.cc ems_coordinates.cc)
+set(scalar_field_sources plugin.cc ems_coupled.cc ems_coordinates.cc ems_spherical.cc)
 if(PHYSICS STREQUAL "gr" AND METRIC STREQUAL "z4c" AND MODE STREQUAL "sync")
   list(APPEND scalar_field_sources ems_cartesian.cc)
 endif()

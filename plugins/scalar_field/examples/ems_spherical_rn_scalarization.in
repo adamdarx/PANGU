@@ -1,0 +1,79 @@
+# Non-PG spherical3+1 reproduction: RN branch in arXiv2409.13184, Fig6.
+# Q=1, M=2, alpha=160. All fields depend only on(t,r); Phi=phi1+i*phi2.
+# x in[0,1] is computational; r=outer_radius*sinh(x/a)/sinh(1/a).
+# This uses the existing native Einstein point operator in its BSSN limit.
+<parthenon/job>
+problem_id = scalar_field
+<plugins>
+enabled = scalar_field
+<geometry>
+background = minkowski
+<parthenon/mesh>
+refinement = none
+nghost = 4
+nx1 = 256
+x1min = 0
+x1max = 1
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 1
+x2min = -0.5
+x2max = 0.5
+ix2_bc = periodic
+ox2_bc = periodic
+nx3 = 1
+x3min = -0.5
+x3max = 0.5
+ix3_bc = periodic
+ox3_bc = periodic
+<parthenon/meshblock>
+nx1 = 256
+nx2 = 1
+nx3 = 1
+<parthenon/time>
+integrator = rk4
+tlim = 200
+nlim = -1
+ncycle_out = 1000
+<numerical_relativity>
+chi_psi_power = -4
+floor_chi = true
+# Puncture regularization; verify no floor cells lie outside the measured AH.
+chi_min_floor = 1e-4
+use_z4c = false
+shift_gamma = 0.75
+shift_eta = 1
+damp_kappa1 = 0
+<plugin/scalar_field>
+backend = ems
+coordinates = spherical
+lapse_min_floor = 1e-10
+fields = 2
+bh_mass = 2
+bh_charge = 1
+em_coupling = exponential
+em_alpha = 160
+initial_data = gaussian
+amplitude = 1e-6
+center = 4
+width = 1
+phase = 0
+outer_radius = 30000
+radial_map_a = 0.07
+cfl = 0.2
+dissipation = 0.05
+diagnostic_interval = 0.5
+diagnostic_outer_radius = 50
+history_file = ems_spherical_history.csv
+<parthenon/output1>
+file_type = hdf5
+dt = 10
+variables = scalar.state,scalar.phi,nr.z4c,nr.adm,nr.tmunu,nr.constraints,ems.radial
+single_precision_output = false
+ghost_zones = false
+id = spherical_ems
+hdf5_compression_level = 0
+<parthenon/output2>
+file_type = rst
+dt = 50
+hdf5_compression_level = 0
