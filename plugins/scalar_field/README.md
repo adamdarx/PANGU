@@ -540,6 +540,31 @@ evolution to0.1M. The fixture checks that its native input uses
 the required psi^-4 representation. The checks do not provide a general
 nonspherical initial-data solver or validate long-time scalarized black holes.
 
+`tst/regression/ems_static_fixture.py` reconstructs a static, zero-potential
+EMS reference with exponential coupling from specified horizon boundary data.
+It transforms the diagonal static slice to isotropic radius using
+`d(log rho)/dR=1/(R sqrt(N))`, including the time-symmetric inner extension.
+The resulting fields have `chi=(rho/R)^2=psi^-4`, `K_ij=P=0`, and
+`D^i=Q x^i/rho^3`. The physical ADM mass is computed from the solution;
+`bh_mass` in the native carrier deck remains its seed parameter.
+
+The following check uses the measured horizon values of the archived
+`paper5_n32768` PG reference at1000M, together with an analytic RN control.
+It checks the coordinate map and independent radial Hamiltonian operator,
+then reads the constructed fields through native3D restarts and checks
+Hamiltonian/electric Gauss convergence on N32/N48/N64 uniform grids at t=0.
+SciPy is required for this initial-data test.
+
+```sh
+python3 tst/regression/scalar_ems_static_coordinates.py \
+  --pangu build-cuda-nr/src/pangu --workdir /tmp/ems-static-coordinates
+```
+
+The horizon boundary values select the reference and are not independently
+predicted. This checks the transformed initial constraints. Subsequent
+moving-puncture evolution, horizon invariants, and long-time convergence
+require separate tests; coordinate profiles can change with the lapse and shift.
+
 Nonfinite Cartesian EMS states abort with the minimum conformal variable and
 spatial-metric determinant recorded in the error. The check preserves the
 failure rather than replacing invalid geometry with a floor.
