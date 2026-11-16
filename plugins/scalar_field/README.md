@@ -145,8 +145,22 @@ Thus the agreement observed at200Q does not establish a long-time stationary
 endpoint. The N256 irreducible-mass range over the same20Q is 0.00227%, and
 all three histories still have zero exterior chi/lapse floor cells. Increasing
 only the N128 KO coefficient from0.05 to0.2 leaves a2.364% scalar range; this
-change alone does not qualify the tail. A separate puncture-floor control is
-being evaluated with the same equations and `chi=psi^-4`.
+change alone does not qualify the tail.
+
+A fresh N128 control with `chi_min_floor=1e-7` completed300Q and retained
+a3.936% scalar tail range. Its final exterior scalar-state maximum difference
+from the baseline is3.28e-12, and its exterior constraint difference is1.29e-12;
+this comparison does not support the floor as the cause of that tail.
+Keeping BSSN and setting only the existing `damp_kappa1=0.02` gives a3.910%
+tail range, so Gamma-only damping is also insufficient in this control.
+Neither setting has been adopted as a correction to the baseline example.
+
+The existing `numerical_relativity/use_z4c=true` option also evolves Theta
+through the same native Einstein core; `damp_kappa1` supplies its constraint
+damping. A bounded spherical comparison using this option is under evaluation.
+The different constraint propagation of BSSN and Z4c motivates this comparison
+([Bernuzzi and Hilditch](https://arxiv.org/abs/0912.2920)); it does not establish
+the cause of the observed scalar oscillation or acceptance of that candidate.
 
 All modes use `problem_id=scalar_field` and `<plugins> enabled=scalar_field`.
 A full `METRIC=z4c MODE=sync` executable selects PG, spherical or Cartesian EMS at runtime.
