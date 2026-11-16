@@ -1,0 +1,185 @@
+{
+  "id": "compact-physical-v1-20261116",
+  "tolerance_origin": "Explicit project accuracy budget fixed before N128 completion. Not universal thresholds from the cited papers. Existing pre-AH baryon and AH-solver limits are retained; all new accuracy budgets are stated here and versioned.",
+  "references": [
+    "https://arxiv.org/abs/2409.10383",
+    "https://arxiv.org/abs/2409.10384",
+    "https://arxiv.org/abs/1111.3344"
+  ],
+  "common": {
+    "physical_setup_verified": {
+      "min": 1,
+      "max": 1,
+      "meaning": "EOS, units, perturbations, initial-data hash, gauge and physical mesh hierarchy are recorded and verified."
+    },
+    "target_completed": {
+      "min": 1,
+      "max": 1,
+      "meaning": "Full originally requested physical target, not merely an allocated probe."
+    },
+    "AH_scaled_residual_max": {
+      "max": 0.0001,
+      "meaning": "Finder quality prerequisite; not physical validation by itself.",
+      "min": 0
+    },
+    "exterior_H_M2_rms": {
+      "max": 0.001,
+      "meaning": "Proper-volume RMS H times initial ADM mass squared; agreed common exterior region, excluding mask/AH interiors.",
+      "min": 0
+    },
+    "exterior_M_M2_rms": {
+      "max": 0.001,
+      "meaning": "Proper-volume RMS metric-contracted momentum constraint times initial ADM mass squared.",
+      "min": 0
+    },
+    "mass_energy_balance_relative_residual": {
+      "max": 0.01,
+      "meaning": "Consistent asymptotic ADM/Bondi or controlled finite-worldtube energy balance. Include measured outgoing radiation and matter/EM flux; missing terms cannot be zero-filled.",
+      "min": 0
+    },
+    "boundary_mass_relative_change": {
+      "max": 0.005,
+      "meaning": "Matched inner resolution, doubled outer-boundary control, same physical mass window.",
+      "min": 0
+    },
+    "time_step_mass_relative_change": {
+      "max": 0.005,
+      "meaning": "Matched space/time interval, half-CFL control.",
+      "min": 0
+    }
+  },
+  "cases": {
+    "tov": {
+      "remnant_mass_relative_uncertainty": {
+        "max": 0.01,
+        "meaning": "Three matched resolutions and positive observed order; finest Richardson mass error <=1%.",
+        "min": 0
+      },
+      "remnant_mass_tail_relative_range": {
+        "max": 0.005,
+        "meaning": "Common late-time horizon-mass window; residual accretion must be resolved or reported.",
+        "min": 0
+      },
+      "remnant_dimensionless_spin_abs_max": {
+        "max": 0.001,
+        "meaning": "Nonrotating initial data: abs(J_AH)/M_Christodoulou^2, not the dimensional spin field.",
+        "min": 0
+      },
+      "collapse_detection_relative_uncertainty": {
+        "max": 0.05,
+        "meaning": "Resolution plus first-reliable-AH detection cadence uncertainty; same gauge and units. Not an exact universal collapse time.",
+        "min": 0
+      },
+      "exterior_constraint_observed_order": {
+        "min": 0.8,
+        "meaning": "Matched common exterior region, three resolutions; first-order shock-limited convergence allowed. No fourth-order assumption."
+      },
+      "initial_TOV_mass_relative_error": {
+        "max": 0.001,
+        "meaning": "Compare unperturbed progenitor TOV mass with an independent high-accuracy ODE solution.",
+        "min": 0
+      },
+      "initial_TOV_areal_radius_relative_error": {
+        "max": 0.01,
+        "meaning": "Areal, not isotropic, stellar radius against independent TOV ODE.",
+        "min": 0
+      },
+      "pre_AH_baryon_relative_drift": {
+        "max": 1e-05,
+        "meaning": "Existing collapse protocol limit before first reliable AH; perturbations, boundary flux and any source corrections documented.",
+        "min": 0
+      }
+    },
+    "bns": {
+      "remnant_mass_relative_uncertainty": {
+        "max": 0.01,
+        "meaning": "Three matched resolutions and positive observed order; finest Richardson mass error <=1%.",
+        "min": 0
+      },
+      "remnant_mass_tail_relative_range": {
+        "max": 0.005,
+        "meaning": "Common late-time horizon-mass window; residual accretion must be resolved or reported.",
+        "min": 0
+      },
+      "remnant_dimensionless_spin_abs_max": {
+        "max": 0.001,
+        "meaning": "Nonrotating initial data: abs(J_AH)/M_Christodoulou^2, not the dimensional spin field.",
+        "min": 0
+      },
+      "collapse_detection_relative_uncertainty": {
+        "max": 0.05,
+        "meaning": "Resolution plus first-reliable-AH detection cadence uncertainty; same gauge and units. Not an exact universal collapse time.",
+        "min": 0
+      },
+      "exterior_constraint_observed_order": {
+        "min": 0.8,
+        "meaning": "Matched common exterior region, three resolutions; first-order shock-limited convergence allowed. No fourth-order assumption."
+      },
+      "initial_ADM_mass_relative_error": {
+        "max": 0.01,
+        "meaning": "Constraint-solved pair actual ADM mass, not twice the isolated seed mass.",
+        "min": 0
+      },
+      "pre_AH_baryon_relative_drift": {
+        "max": 0.001,
+        "meaning": "Existing BNS protocol minimum; full pre-AH prefix including any restart joins required.",
+        "min": 0
+      },
+      "waveform_relative_uncertainty": {
+        "max": 0.05,
+        "meaning": "Three-resolution dominant l2,m0 complex waveform uncertainty for this head-on-from-rest model.",
+        "min": 0
+      },
+      "extraction_radius_relative_spread": {
+        "max": 0.03,
+        "meaning": "Same retarded-time signal after finite-radius/extrapolation analysis; not raw coordinate-time differences.",
+        "min": 0
+      }
+    },
+    "bbh": {
+      "reference_setup_verified": {
+        "min": 1,
+        "max": 1,
+        "meaning": "Actual matched AthenaK/PANGU initial data and normalizations; a similar scenario is insufficient."
+      },
+      "reference_target_completed": {
+        "min": 1,
+        "max": 1,
+        "meaning": "Both matched trajectories cover the declared comparison interval, including validated restart joins."
+      },
+      "reference_remnant_mass_relative_difference": {
+        "max": 0.01,
+        "meaning": "Matched late-time Christodoulou mass.",
+        "min": 0
+      },
+      "reference_dimensionless_spin_absolute_difference": {
+        "max": 0.02,
+        "meaning": "Absolute difference in J/M^2.",
+        "min": 0
+      },
+      "reference_waveform_relative_L2": {
+        "max": 0.03,
+        "meaning": "Dominant complex M*r*Psi4 at common retarded times with fixed, documented tetrad/sign conventions.",
+        "min": 0
+      },
+      "reference_peak_time_difference_M": {
+        "max": 1.0,
+        "meaning": "Peak retarded-time difference in units of actual initial total ADM mass; no unrestricted fit.",
+        "min": 0
+      },
+      "extraction_radius_relative_spread": {
+        "max": 0.03,
+        "meaning": "Three extraction radii, common retarded interval, controlled finite-radius error.",
+        "min": 0
+      }
+    }
+  },
+  "waveform_phase_additional_requirement": {
+    "cases": [
+      "bbh_quasicircular",
+      "bbh_aligned_spin"
+    ],
+    "max_radians": 0.1,
+    "scope": "Report phase only where amplitude >1% peak; real head-on signals use a declared nonzero quadrupole mode with complex L2 and peak time instead. Current x-axis BBH uses m2; z-axis BNS uses m0. Use continuously unwrapped phases; wrapped-angle previews are not physical phase gates."
+  }
+}
