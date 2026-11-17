@@ -1,0 +1,91 @@
+{
+  "reason": "Closed failed, superseded resource-only admissions; original inputs/binaries, logs, GPU traces and diagnosis retained; user authorizes discard without archive",
+  "removed": [
+    {
+      "path": "runs/d200_stationary_n96/17372841/bin/stationary_n96.z4c.00000.bin",
+      "bytes": 1370047280
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/bin/stationary_n96.con.00001.bin",
+      "bytes": 436159056
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/bin/stationary_n96.z4c.00001.bin",
+      "bytes": 1370047217
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/bin/stationary_n96.adm.00001.bin",
+      "bytes": 809714323
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/bin/stationary_n96.con.00000.bin",
+      "bytes": 436159151
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/bin/stationary_n96.adm.00000.bin",
+      "bytes": 809714402
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/rst/rank_00000001/stationary_n96.00001.rst",
+      "bytes": 2311459097
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/rst/rank_00000001/stationary_n96.00000.rst",
+      "bytes": 2311459121
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/rst/rank_00000000/stationary_n96.00001.rst",
+      "bytes": 2311459097
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/rst/rank_00000000/stationary_n96.00000.rst",
+      "bytes": 2311459121
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/rst/rank_00000003/stationary_n96.00001.rst",
+      "bytes": 2311459097
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/rst/rank_00000003/stationary_n96.00000.rst",
+      "bytes": 2311459121
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/rst/rank_00000002/stationary_n96.00001.rst",
+      "bytes": 2311459097
+    },
+    {
+      "path": "runs/d200_stationary_n96/17372841/rst/rank_00000002/stationary_n96.00000.rst",
+      "bytes": 2311459121
+    },
+    {
+      "path": "runs/d200_spinning_n96/17372835/bin/spinning_n96.con.00000.bin",
+      "bytes": 436160405
+    },
+    {
+      "path": "runs/d200_spinning_n96/17372835/bin/spinning_n96.adm.00000.bin",
+      "bytes": 809715656
+    },
+    {
+      "path": "runs/d200_spinning_n96/17372835/bin/spinning_n96.z4c.00000.bin",
+      "bytes": 1370048534
+    },
+    {
+      "path": "runs/d200_spinning_n96/17372835/rst/rank_00000003/spinning_n96.00000.rst",
+      "bytes": 2311460375
+    },
+    {
+      "path": "runs/d200_spinning_n96/17372835/rst/rank_00000002/spinning_n96.00000.rst",
+      "bytes": 2311460375
+    },
+    {
+      "path": "runs/d200_spinning_n96/17372835/rst/rank_00000000/spinning_n96.00000.rst",
+      "bytes": 2311460375
+    },
+    {
+      "path": "runs/d200_spinning_n96/17372835/rst/rank_00000001/spinning_n96.00000.rst",
+      "bytes": 2311460375
+    }
+  ],
+  "raw_logical_bytes": 35585280396,
+  "utc": "2026-11-17T11:41:56.863151Z"
+}

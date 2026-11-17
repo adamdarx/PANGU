@@ -37,13 +37,14 @@ try:
   memory={}
   for rank in range(case['ranks']):
    rows=list(csv.reader((work/('gpu-memory-%d.csv'%rank)).read_text().splitlines()));vals=[(float(r[0]),float(r[1])) for r in rows if len(r)==2];assert vals
-   peak=max(v[0] for v in vals);total=vals[-1][1];assert peak<.8*total and total-peak>8192,'Measured memory reserve insufficient'
+   peak=max(v[0] for v in vals);total=vals[-1][1]
    assert exe.name in (work/('gpu-apps-%d.csv'%rank)).read_text(),'Actual GPU process missing on rank%d'%rank
    memory[str(rank)]=dict(peak_MiB=peak,total_MiB=total)
   samples=[(float(a),int(b),float(c)) for a,b,c in re.findall(r'elapsed=([\deE+.\-]+) cycle=(\d+) time=([\deE+.\-]+)',text)]
   tail=samples[-17:];assert len(tail)>=8 and tail[-1][2]>tail[0][2]
   projected=(tail[-1][0]-tail[0][0])*500/(tail[-1][2]-tail[0][2])/3600
   report.update(gpu_memory=memory,projected500M_hours=projected,projection_scope='Early32 cycles with full native initial/final I/O; margin required for later dynamics')
+  save();assert all(v['peak_MiB']<.8*v['total_MiB'] and v['total_MiB']-v['peak_MiB']>8192 for v in memory.values()),'Measured memory reserve insufficient'
   assert projected<110,'Measured throughput exceeds five-day budget; increase allocation before formal run'
   report['status']='admission_passed'
  else:

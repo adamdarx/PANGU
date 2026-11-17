@@ -1,20 +1,36 @@
 {
   "admission": {
-    "d200_spinning_n96": "17372835",
+    "d200_spinning_n96": "17373953",
     "d200_spinning_n128": "17372837",
     "d200_spinning_n192": "17372839",
-    "d200_stationary_n96": "17372841",
+    "d200_stationary_n96": "17373951",
     "d200_stationary_n128": "17372843",
     "d200_stationary_n192": "17372845"
   },
   "formal": {
-    "d200_spinning_n96": "17372836",
+    "d200_spinning_n96": "17373954",
     "d200_spinning_n128": "17372838",
     "d200_spinning_n192": "17372840",
-    "d200_stationary_n96": "17372842",
+    "d200_stationary_n96": "17373952",
     "d200_stationary_n128": "17372844",
     "d200_stationary_n192": "17372846"
   },
   "target": 500,
-  "policy": "Independent of PANGU; formal depends only on own GPU acceptance"
+  "policy": "Independent of PANGU; formal depends only on own GPU acceptance",
+  "N96_resource_retry": {
+    "previous": {
+      "d200_stationary_n96": {
+        "admission": "17372841",
+        "formal": "17372842"
+      },
+      "d200_spinning_n96": {
+        "admission": "17372835",
+        "formal": "17372836"
+      }
+    },
+    "new_ranks": 16,
+    "new_nodes": 4,
+    "gate_policy": "Unchanged frozen binary/input; actual per-rank GPU evidence, memory reserve and 500M throughput<110hours mandatory",
+    "updated_utc": "2026-11-17T11:39:50.288565Z"
+  }
 }

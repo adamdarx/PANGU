@@ -1,9 +1,9 @@
 {
-  "updated_utc": "2026-11-17T10:35:33.351401+00:00",
+  "updated_utc": "2026-11-17T11:42:41.169440+00:00",
   "cohorts": {
     "single-coarse-20261117": {
       "target_M": 500,
-      "status": "all_six_formal500M_queued_with_success_dependencies",
+      "status": "all_six_admissions_passed_formals_pending",
       "admission": {
         "stationary_n32": "17371935",
         "stationary_n48": "17371936",
@@ -33,9 +33,7 @@
           "reason": "Measured GPU40G memory admission failed; same input/program, one80G GPU"
         }
       },
-      "formal_dependencies": [
-        "17372871"
-      ],
+      "formal_dependencies": [],
       "GPU80_timing_retry": {
         "previous_job": "17372619",
         "retry_job": "17372871",
@@ -57,23 +55,39 @@
     },
     "single-athenak-parallel-20261117": {
       "admission": {
-        "d200_spinning_n96": "17372835",
+        "d200_spinning_n96": "17373953",
         "d200_spinning_n128": "17372837",
         "d200_spinning_n192": "17372839",
-        "d200_stationary_n96": "17372841",
+        "d200_stationary_n96": "17373951",
         "d200_stationary_n128": "17372843",
         "d200_stationary_n192": "17372845"
       },
       "formal": {
-        "d200_spinning_n96": "17372836",
+        "d200_spinning_n96": "17373954",
         "d200_spinning_n128": "17372838",
         "d200_spinning_n192": "17372840",
-        "d200_stationary_n96": "17372842",
+        "d200_stationary_n96": "17373952",
         "d200_stationary_n128": "17372844",
         "d200_stationary_n192": "17372846"
       },
       "target": 500,
-      "policy": "Independent of PANGU; formal depends only on own GPU acceptance"
+      "policy": "Independent of PANGU; formal depends only on own GPU acceptance",
+      "N96_resource_retry": {
+        "previous": {
+          "d200_stationary_n96": {
+            "admission": "17372841",
+            "formal": "17372842"
+          },
+          "d200_spinning_n96": {
+            "admission": "17372835",
+            "formal": "17372836"
+          }
+        },
+        "new_ranks": 16,
+        "new_nodes": 4,
+        "gate_policy": "Unchanged frozen binary/input; actual per-rank GPU evidence, memory reserve and 500M throughput<110hours mandatory",
+        "updated_utc": "2026-11-17T11:39:50.288565Z"
+      }
     },
     "bbh-convergence-20261117": {
       "resource_gate": "17369148",
@@ -122,8 +136,34 @@
       },
       "reason": "Time-zero initializer failed independently checked PANGU match; adapter-stage diagnostic rebuild; all new runs gated",
       "queued_utc": "2026-11-17T10:27:42.464233Z"
+    },
+    "et-vacuum-reference-20261117": {
+      "admission": {
+        "stationary_n64": "17373901",
+        "spinning_n64": "17373902",
+        "quasicircular_n32": "17373933"
+      },
+      "formal": {
+        "stationary_n64": "17373867",
+        "spinning_n64": "17373869",
+        "quasicircular_n32": "17373934"
+      },
+      "status": "native_GPU_vacuum_gates_and_formal_dependencies_queued",
+      "physics_acceptance": false,
+      "queued_utc": "2026-11-17T11:08:23.508030Z",
+      "superseded_admission": {
+        "stationary_n64": "17373866",
+        "spinning_n64": "17373868",
+        "quasicircular_n32": "17373870"
+      },
+      "native_default_interpolation_retry": "Live gdb confirmed serial full-spectral interpolation before evolution; use native Taylor interpolation with separately assessed initial-data error; preserve formal queue IDs",
+      "qc_native_default_retry": {
+        "old_admission": "17373903",
+        "old_formal": "17373871",
+        "reason": "Native QC floors/dissipation and off-vertex grid; initial horizons were found but beta invalid by step4; no PANGU changes"
+      }
     }
   },
-  "formal_jobs": 17,
-  "notes": "17 current formal GPU jobs; all six coarse single admissions passed; BNS N64 adapter fixed and validated; N96 pending. Superseded IDs are historical only."
+  "formal_jobs": 20,
+  "notes": "Current tracked new cohorts:20 formal jobs; original ET TOV64/96 and original PANGU production are separate. GPU admission gates are technical only."
 }

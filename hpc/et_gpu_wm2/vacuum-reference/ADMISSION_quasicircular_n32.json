@@ -1,0 +1,20 @@
+{
+  "status": "admission_failed",
+  "job_id": "17373903",
+  "case": "quasicircular_n32",
+  "mode": "admission",
+  "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/vacuum-reference/runs/quasicircular_n32/17373903",
+  "target": 300.0,
+  "binary_sha256": "64f3b5e9b7edd80efc00f3f8a971f976bbb7927be489bb5e3c8332cef41898a2",
+  "input_sha256": "2db28f3a2ff92ac36ea825104f9647ad048d96f3f3ce509e7f928b5145b9a3c4",
+  "physical_acceptance": false,
+  "comparison_differences": [
+    "Native ET gauge has no PANGU slow-start lapse term; waveform time/phase alignment and initial-data error budget required",
+    "Independent native spectral initial data and AMR boxes; no identical-grid performance claim"
+  ],
+  "free_GiB": 396.42662048339844,
+  "returncode": 1,
+  "actual_GPU_process_observed": true,
+  "wall_seconds": 62.08259394299239,
+  "error": "AssertionError()"
+}

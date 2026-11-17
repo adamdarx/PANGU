@@ -1,0 +1,38 @@
+{
+  "status": "admission_passed",
+  "job_id": "17373902",
+  "case": "spinning_n64",
+  "mode": "admission",
+  "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/vacuum-reference/runs/spinning_n64/17373902",
+  "target": 500.0,
+  "binary_sha256": "64f3b5e9b7edd80efc00f3f8a971f976bbb7927be489bb5e3c8332cef41898a2",
+  "input_sha256": "3b85a16133fbe8383fbc0afc62dd8e5ff60b8a0b94f642e06723306d366e1e5b",
+  "physical_acceptance": false,
+  "comparison_differences": [
+    "Native ET gauge has no PANGU slow-start lapse term; waveform time/phase alignment and initial-data error budget required",
+    "Independent native spectral initial data and AMR boxes; no identical-grid performance claim",
+    "Outer box shifted by half finest cell to keep isolated puncture off vertex points",
+    "Zero-mass secondary spectral focus, center_offset shifts physical puncture to origin"
+  ],
+  "free_GiB": 395.1724510192871,
+  "returncode": 0,
+  "actual_GPU_process_observed": true,
+  "wall_seconds": 394.0777549369959,
+  "final_time": 0.3125,
+  "final_cycle": 64,
+  "horizon_diagnostic_files": [
+    {
+      "file": "output/BH_diagnostics.ah1.gp",
+      "rows": 3
+    }
+  ],
+  "GPU_memory": {
+    "0": {
+      "peak_MiB": 32883.0,
+      "total_MiB": 81920.0
+    }
+  },
+  "projected_target_hours": 90.44791500894009,
+  "limitations": "64 steps verify GPU, allocation, finite norm diagnostics and initial AH/wave output. Initial-data/gauge/AMR differences require independent quantitative review.",
+  "finished_utc": "2026-11-17T11:31:27.443555+00:00"
+}

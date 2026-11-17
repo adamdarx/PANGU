@@ -1,0 +1,1 @@
+Unique archive owner for completed ET native TOV and vacuum formal run directories. Pending/running output is retained. On completion, files are compressed and verified on D. Individual files above64MiB may then be removed after fresh destination and source SHA/stat verification. Short-test raw output is excluded from this owner.

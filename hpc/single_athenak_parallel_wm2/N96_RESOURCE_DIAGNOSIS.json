@@ -1,0 +1,58 @@
+{
+  "d200_stationary_n96": {
+    "job_id": "17372841",
+    "measured_4GPU_projected500M_hours": 478.3177965976045,
+    "sample_cycles": [
+      16,
+      32
+    ],
+    "memory": {
+      "gpu-memory-0.csv": {
+        "peak_MiB": 69921.0,
+        "total_MiB": 81920.0
+      },
+      "gpu-memory-1.csv": {
+        "peak_MiB": 70039.0,
+        "total_MiB": 81920.0
+      },
+      "gpu-memory-2.csv": {
+        "peak_MiB": 69963.0,
+        "total_MiB": 81920.0
+      },
+      "gpu-memory-3.csv": {
+        "peak_MiB": 69869.0,
+        "total_MiB": 81920.0
+      }
+    },
+    "new_16GPU_scaling_unverified": true,
+    "diagnosis": "Spin initial data took1322s before cycle0; cap1500s killed step17. Stationary reached32 but exceeded memory reserve. Both have throughput incompatible with five-day500M at4GPUs."
+  },
+  "d200_spinning_n96": {
+    "job_id": "17372835",
+    "measured_4GPU_projected500M_hours": 437.03734452148973,
+    "sample_cycles": [
+      1,
+      17
+    ],
+    "memory": {
+      "gpu-memory-3.csv": {
+        "peak_MiB": 69869.0,
+        "total_MiB": 81920.0
+      },
+      "gpu-memory-2.csv": {
+        "peak_MiB": 69963.0,
+        "total_MiB": 81920.0
+      },
+      "gpu-memory-0.csv": {
+        "peak_MiB": 69921.0,
+        "total_MiB": 81920.0
+      },
+      "gpu-memory-1.csv": {
+        "peak_MiB": 70039.0,
+        "total_MiB": 81920.0
+      }
+    },
+    "new_16GPU_scaling_unverified": true,
+    "diagnosis": "Spin initial data took1322s before cycle0; cap1500s killed step17. Stationary reached32 but exceeded memory reserve. Both have throughput incompatible with five-day500M at4GPUs."
+  }
+}

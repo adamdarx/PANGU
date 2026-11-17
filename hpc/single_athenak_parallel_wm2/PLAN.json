@@ -10,9 +10,9 @@
       "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/inputs/d200_spinning_n96.in",
       "input_sha256": "9bff58b1726d69a6b5b8c526e08b8752651eda03639aa3c29a3bb5040774b577",
       "target": 500,
-      "nodes": 2,
-      "gpus_per_node": 2,
-      "ranks": 4,
+      "nodes": 4,
+      "gpus_per_node": 4,
+      "ranks": 16,
       "original_ranks": 2
     },
     {
@@ -52,9 +52,9 @@
       "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/inputs/d200_stationary_n96.in",
       "input_sha256": "b4a1bfe0d6abf0465c46db38d0ebdd769126dc1825cd6bd8aa223f5cd004af0a",
       "target": 500,
-      "nodes": 2,
-      "gpus_per_node": 2,
-      "ranks": 4,
+      "nodes": 4,
+      "gpus_per_node": 4,
+      "ranks": 16,
       "original_ranks": 2
     },
     {
@@ -86,5 +86,11 @@
       "original_ranks": 4
     }
   ],
-  "policy": "Independent scheduler jobs, no dependency on PANGU. Original frozen binaries and500M inputs. New runs begin from initial data, not stopped partial data."
+  "policy": "Independent scheduler jobs, no dependency on PANGU. Original frozen binaries and500M inputs. New runs begin from initial data, not stopped partial data.",
+  "resource_retry": {
+    "reason": "4 GPU N96 measured ~70GiB per rank and ~10s per step; 500M would exceed 5 day budget. Retry 16 GPUs with measured scaling gate, unchanged input/binary. No formal run without GPU memory and throughput pass.",
+    "previous_N96_nodes": 2,
+    "previous_N96_ranks": 4,
+    "ideal_scaling_is_not_acceptance": true
+  }
 }

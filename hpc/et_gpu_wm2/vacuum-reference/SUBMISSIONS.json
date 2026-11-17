@@ -1,0 +1,26 @@
+{
+  "admission": {
+    "stationary_n64": "17373901",
+    "spinning_n64": "17373902",
+    "quasicircular_n32": "17373933"
+  },
+  "formal": {
+    "stationary_n64": "17373867",
+    "spinning_n64": "17373869",
+    "quasicircular_n32": "17373934"
+  },
+  "status": "native_GPU_vacuum_gates_and_formal_dependencies_queued",
+  "physics_acceptance": false,
+  "queued_utc": "2026-11-17T11:08:23.508030Z",
+  "superseded_admission": {
+    "stationary_n64": "17373866",
+    "spinning_n64": "17373868",
+    "quasicircular_n32": "17373870"
+  },
+  "native_default_interpolation_retry": "Live gdb confirmed serial full-spectral interpolation before evolution; use native Taylor interpolation with separately assessed initial-data error; preserve formal queue IDs",
+  "qc_native_default_retry": {
+    "old_admission": "17373903",
+    "old_formal": "17373871",
+    "reason": "Native QC floors/dissipation and off-vertex grid; initial horizons were found but beta invalid by step4; no PANGU changes"
+  }
+}

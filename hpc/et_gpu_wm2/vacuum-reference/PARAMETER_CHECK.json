@@ -1,0 +1,21 @@
+{
+  "results": [
+    {
+      "input": "quasicircular_n32_admission.par",
+      "returncode": 6,
+      "scope": "Cactus -P: parameter check only; no evolution"
+    },
+    {
+      "input": "spinning_n64_admission.par",
+      "returncode": 6,
+      "scope": "Cactus -P: parameter check only; no evolution"
+    },
+    {
+      "input": "stationary_n64_admission.par",
+      "returncode": 6,
+      "scope": "Cactus -P: parameter check only; no evolution"
+    }
+  ],
+  "UTC": "2026-11-17T11:01:32.822149Z",
+  "status": "Cactus parameter check reaches AMReX CUDA startup; login lacks GPU; full check deferred to queued GPU admission; no CPU evolution executed"
+}

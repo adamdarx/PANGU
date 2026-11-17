@@ -1,0 +1,88 @@
+{
+  "cases": [
+    {
+      "id": "stationary_n64",
+      "kind": "stationary",
+      "n": 64,
+      "domain_half_extent": 200.0,
+      "finest_h": 0.0244140625,
+      "expected_dt": 0.0048828125,
+      "target": 500.0,
+      "J": 0.0,
+      "required_initial_horizons": 1,
+      "physics": "Isolated Bowen-York puncture bare mass1, Jz=0.0",
+      "differences": [
+        "Native ET gauge has no PANGU slow-start lapse term; waveform time/phase alignment and initial-data error budget required",
+        "Independent native spectral initial data and AMR boxes; no identical-grid performance claim",
+        "Outer box shifted by half finest cell to keep isolated puncture off vertex points",
+        "Zero-mass secondary spectral focus, center_offset shifts physical puncture to origin"
+      ],
+      "inputs": {
+        "admission": {
+          "file": "stationary_n64_admission.par",
+          "sha256": "153f71cec0130358b92c6eda4858475ca362c89d09c00bc19d58a561ffc17239"
+        },
+        "formal": {
+          "file": "stationary_n64_formal.par",
+          "sha256": "41ac14b3cf62c3e35570dfa59c5ccbc5e55392d5a8cdd9a0e31f9be1c6f3bbbc"
+        }
+      }
+    },
+    {
+      "id": "spinning_n64",
+      "kind": "spinning",
+      "n": 64,
+      "domain_half_extent": 200.0,
+      "finest_h": 0.0244140625,
+      "expected_dt": 0.0048828125,
+      "target": 500.0,
+      "J": 0.5,
+      "required_initial_horizons": 1,
+      "physics": "Isolated Bowen-York puncture bare mass1, Jz=0.5",
+      "differences": [
+        "Native ET gauge has no PANGU slow-start lapse term; waveform time/phase alignment and initial-data error budget required",
+        "Independent native spectral initial data and AMR boxes; no identical-grid performance claim",
+        "Outer box shifted by half finest cell to keep isolated puncture off vertex points",
+        "Zero-mass secondary spectral focus, center_offset shifts physical puncture to origin"
+      ],
+      "inputs": {
+        "admission": {
+          "file": "spinning_n64_admission.par",
+          "sha256": "3b85a16133fbe8383fbc0afc62dd8e5ff60b8a0b94f642e06723306d366e1e5b"
+        },
+        "formal": {
+          "file": "spinning_n64_formal.par",
+          "sha256": "f1cbc5dfb724b0d6950e24426129ed8ecb6f5bfe66ece8626712f76127aa2282"
+        }
+      }
+    },
+    {
+      "id": "quasicircular_n32",
+      "kind": "quasicircular",
+      "n": 32,
+      "domain_half_extent": 128.0,
+      "finest_h": 0.03125,
+      "expected_dt": 0.00625,
+      "target": 300.0,
+      "J": 0.0,
+      "required_initial_horizons": 2,
+      "physics": "Nonspinning Bowen-York QC binary b3.257,m+/-0.483,Py-/+0.133",
+      "differences": [
+        "Native ET gauge has no PANGU slow-start lapse term; waveform time/phase alignment and initial-data error budget required",
+        "Independent native spectral initial data and AMR boxes; no identical-grid performance claim",
+        "Native upstream QC chi_floor=1e-6, alphaG_floor=1e-8 and epsdiss=0.32; outer box offset by half finest cell; puncture tracking and finite checks retained"
+      ],
+      "inputs": {
+        "admission": {
+          "file": "quasicircular_n32_admission.par",
+          "sha256": "40c0820fc044547974bc3349291874472b5d550765a59279db3ba168767ab9f4"
+        },
+        "formal": {
+          "file": "quasicircular_n32_formal.par",
+          "sha256": "bd6cd37560f0f4da392e2d2d26c8a9d37d395a5c52191956c0581af9098a7237"
+        }
+      }
+    }
+  ],
+  "status": "native_inputs_prepared_GPU_admission_required"
+}
