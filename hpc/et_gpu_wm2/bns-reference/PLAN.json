@@ -9,11 +9,11 @@
       "inputs": {
         "admission": {
           "file": "bns_n64_admission.par",
-          "sha256": "73db1855951605593950bb0f52bda5f23ed8e5adf1347117af866f25554a1903"
+          "sha256": "99dcefcd57448d17fb740df810cefe41ae99e66ec2de56ea0265a62e2ba7a630"
         },
         "formal": {
           "file": "bns_n64_formal.par",
-          "sha256": "e8590f1d241610a89ed41fba4773a3039ed5c4a8295dbe0038b523970d85fc53"
+          "sha256": "d957d53b1863ba4bd3186ce3b3da8f427b3acd0daef5efefdac78846c06c3f89"
         }
       }
     },
@@ -26,11 +26,11 @@
       "inputs": {
         "admission": {
           "file": "bns_n96_admission.par",
-          "sha256": "7003c852772baf9ad271201a5f1a2808576bf50271ccbf77e8d35198a657541a"
+          "sha256": "f49b070a3eaf5eafe7c7bca58c8f5420c632d65fb7a1e6b08c16d57ecbcc1ded"
         },
         "formal": {
           "file": "bns_n96_formal.par",
-          "sha256": "efad0a6ae7e889054afd9385ed965c575f879d7a67e45ad156049660df7e171a"
+          "sha256": "795a7d1cc32636eea0314b6a3dcc46ceaa4538a7ee40adba8e44ed4300df4c19"
         }
       }
     }

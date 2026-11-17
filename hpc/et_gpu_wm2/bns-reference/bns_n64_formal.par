@@ -41,8 +41,8 @@ TimerReport::output_all_timers_readable  = yes
 TimerReport::n_top_timers                = 50
 CarpetX::poison_undefined_values = no
 
-# Finest grid spacing is 0.15625 
-# To have a symmetric grid along 0, we have odd number of points (257) 
+# Finest grid spacing is 0.15625
+# To have a symmetric grid along 0, we have odd number of points (257)
 # along each direction going from -20.078125 to +20.078125 for the finest level
 
 CarpetX::xmin = -256
@@ -91,7 +91,7 @@ CarpetX::refine_grid_layout = no
 BoxInBox::num_regions = 1
 # Region 1
 BoxInBox::shape_1 = "cube"
-BoxInBox::num_levels_1 = $nlevels 
+BoxInBox::num_levels_1 = $nlevels
 # Refined box [1,7]^3: its lower edges are one coarse cell from x, y, z = 0
 
 
@@ -157,7 +157,6 @@ EOSX::eps_min = 1e-16
 #Cactus::cctk_final_time = 200
 ODESolvers::method = "RK4"
 
-IO::out_dir = $parfile
 IO::parfile_write = no
 
 CarpetX::out_metadata = no

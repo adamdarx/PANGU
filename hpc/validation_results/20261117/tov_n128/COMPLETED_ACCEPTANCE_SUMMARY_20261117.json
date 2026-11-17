@@ -1,0 +1,23 @@
+{
+  "job_id": "17355476",
+  "status": "numerical_evolution_completed_physical_comparison_pending",
+  "target": 100,
+  "final_time": 100.0,
+  "final_cycle": 64000,
+  "blocks": 456,
+  "binary_sha256": "3b9b28e77df07674b8ea888c3d098f7727eb37f7302e8ae608ef2ee8bd6336ec",
+  "input_sha256": "10dbf6e064f3e301dbec7885a4b2d4d8e904a9490a42511b642a986a712f5961",
+  "source_summary_sha256": "ec51d3743f7f333e1aedc4a913bef5efd843cabbe61aea073c06d3775e0ba54f",
+  "phase_receipt_sha256": "41cb44ba3311f808dae2ee195ca29f41790addb9ef4a2f270c8843304777ee53",
+  "exterior_shell": {
+    "inner_coordinate_radius": 3,
+    "outer_coordinate_radius": 30,
+    "proper_volume_H_RMS": 0.00031182069910543585,
+    "H_abs_max": 0.00800892228355379,
+    "divB_abs_max": 4.565099397223076e-16,
+    "baryon_mass": 6.496132098092913e-11
+  },
+  "physical_acceptance": false,
+  "qualification_scope": "Cross-resolution AH/exterior comparison and boundary/CFL controls pending. Global post-AH baryon drift includes recovery; last-stage recovery is not cumulative.",
+  "utc": "2026-11-17T13:16:35.630368Z"
+}

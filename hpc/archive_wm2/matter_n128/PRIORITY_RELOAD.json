@@ -1,0 +1,5 @@
+{
+  "status": "waiting_for_archive_idle",
+  "old_pid": 319781,
+  "policy": "Do not interrupt validation/transfer; restart the same journal owner at its normal sleep; evolution jobs untouched"
+}

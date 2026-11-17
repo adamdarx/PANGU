@@ -1,0 +1,12 @@
+{
+  "status": "numerical_evolution_completed_physical_comparison_pending",
+  "final": {
+    "time": 100.0,
+    "cycle": 64000,
+    "blocks": 456,
+    "baryon_mass": 1.5394927529316873,
+    "independent_divb_max": 3.937128401076961e-12,
+    "stored_divb_difference": 0.0,
+    "magnetic_max": 0.00014735125040618862
+  }
+}
