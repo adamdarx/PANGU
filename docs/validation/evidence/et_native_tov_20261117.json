@@ -1,5 +1,5 @@
 {
-  "observed_utc": "2026-11-17T07:15:24.331131+00:00",
+  "observed_utc": "2026-11-17T07:32:32.698158+00:00",
   "policy": "physical_consistency_native_initializers_allowed",
   "plan": {
     "status": "native_physical_reference_prepared_GPU_resource_admission_required",
@@ -80,13 +80,17 @@
     "runtime_validation": "Pending Slurm compute allocation; no solver run on LOGIN/DATA."
   },
   "submissions": {
-    "status": "GPU_diagnostic_validations_submitted",
+    "status": "all_formal100_submitted",
     "UTC": "2026-11-17T07:07:29.612895Z",
     "validation": {
       "64": "17371787",
       "96": "17371788"
     },
-    "formal": {}
+    "formal": {
+      "64": "17371814",
+      "96": "17371818"
+    },
+    "updated_utc": "2026-11-17T07:26:32.351420Z"
   },
   "physical_acceptance": false,
   "seed_calibration": {
@@ -107,5 +111,66 @@
     },
     "relative_Ab_refinement_difference": -3.015143690277e-12,
     "scope": "Same total initial magnetic energy using different native seed profiles; static quadrature consistency is not a discretized GPU validation."
-  }
+  },
+  "diagnostic_validations": {
+    "64": {
+      "status": "validation_passed_formal_ready",
+      "job_id": "17371787",
+      "n": 64,
+      "mode": "validation",
+      "binary_sha256": "64f3b5e9b7edd80efc00f3f8a971f976bbb7927be489bb5e3c8332cef41898a2",
+      "started_utc": "2026-11-17T07:25:23.264944Z",
+      "physical_acceptance": false,
+      "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/native-tov-reference/runs/n64/17371787",
+      "input_sha256": "e9f5a677c3ccf150d4cabd627cc1cb89bc3719a098dfd550dff254d74360a2ee",
+      "returncode": 0,
+      "actual_GPU_process_observed": true,
+      "GPU_memory": {
+        "0": {
+          "peak_MiB": 6667.0,
+          "total_MiB": 40960.0
+        }
+      },
+      "measurements": {
+        "initial_baryon_mass": 1.5304535602281253,
+        "initial_rho_max": 0.007989045488565953,
+        "initial_magnetic_energy": 1.0658742079965143e-05,
+        "max_relative_baryon_drift": 8.862033529233315e-08,
+        "initial_H_L2": 0.0014289191390198077,
+        "final_time": 0.05000000000000001,
+        "initial_magnetic_energy_relative_to_continuum_target": 0.0017396160127765015
+      },
+      "finished_utc": "2026-11-17T07:25:44.437037Z"
+    },
+    "96": {
+      "status": "validation_passed_formal_ready",
+      "job_id": "17371788",
+      "n": 96,
+      "mode": "validation",
+      "binary_sha256": "64f3b5e9b7edd80efc00f3f8a971f976bbb7927be489bb5e3c8332cef41898a2",
+      "started_utc": "2026-11-17T07:25:46.089973Z",
+      "physical_acceptance": false,
+      "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/native-tov-reference/runs/n96/17371788",
+      "input_sha256": "76954d1b6ecf96157b2c078ffb76723f797568d5bb86704090c33d80a6db2ec6",
+      "returncode": 0,
+      "actual_GPU_process_observed": true,
+      "GPU_memory": {
+        "0": {
+          "peak_MiB": 18059.0,
+          "total_MiB": 40960.0
+        }
+      },
+      "measurements": {
+        "initial_baryon_mass": 1.5331414440649818,
+        "initial_rho_max": 0.007991241831480474,
+        "initial_magnetic_energy": 1.0667823791892298e-05,
+        "max_relative_baryon_drift": 2.3847709362811997e-08,
+        "initial_H_L2": 0.001717016466155113,
+        "final_time": 0.03333333333333333,
+        "initial_magnetic_energy_relative_to_continuum_target": 0.002593141743148175
+      },
+      "finished_utc": "2026-11-17T07:26:30.297400Z"
+    }
+  },
+  "formal_state": "Submitted, pending priority at observation"
 }
