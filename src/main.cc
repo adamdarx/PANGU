@@ -70,6 +70,14 @@ int main(int argc, char** argv) {
     }
 
     manager.ParthenonInitPackagesAndMesh();
+    if (manager.pinput->GetOrAddBoolean("pangu", "diagnostics_only", false)) {
+      PARTHENON_REQUIRE(
+          manager.pmesh->packages.AllPackages().count("numerical_relativity") != 0,
+          "pangu/diagnostics_only requires the native numerical-relativity package");
+      // The ordinary driver still prepares its normal initial state and outputs,
+      // but its loop cannot execute. NR's before-loop hook measures this state.
+      manager.pinput->SetInteger("parthenon/time", "nlim", 0);
+    }
     int return_code = 0;
     {
       pangu::driver::Driver driver(manager.pinput.get(), manager.app_input.get(),

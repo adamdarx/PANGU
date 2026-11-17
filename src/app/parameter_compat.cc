@@ -58,7 +58,8 @@ const std::map<std::string, std::pair<std::string, KeyMap>> kLegacyBlocks{
        {"ncycle_out_mesh", "ncycle_out_mesh"}}}}};
 
 const std::map<std::string, std::set<std::string>> kPanguSchema{
-    {"pangu", {"strict_parameters", "check_input_only", "compatibility_mode"}},
+    {"pangu", {"strict_parameters", "check_input_only", "compatibility_mode",
+               "diagnostics_only"}},
     {"plugins", {"enabled"}},
     {"hydro",
      {"physics", "eos", "reconstruct", "rsolver", "gamma", "gamma_max",

@@ -511,6 +511,16 @@ if(BUILD_TESTING AND PANGU_ENABLE_TESTING)
         list(APPEND nr_horizon_mpi_args --mpiexec "${MPIEXEC_EXECUTABLE}")
       endif()
       add_test(
+        NAME pangu.nr6.snapshot_diagnostics
+        COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tst/regression/nr_snapshot_diagnostics.py"
+                --executable $<TARGET_FILE:pangu>
+                --input "${CMAKE_CURRENT_SOURCE_DIR}/tst/input/nr6_stationary_puncture_diagnostics.in"
+                --workdir "${CMAKE_CURRENT_BINARY_DIR}/nr6-snapshot-diagnostics")
+      set_tests_properties(pangu.nr6.snapshot_diagnostics PROPERTIES
+        LABELS "numerical-relativity;nr6;regression;gpu;horizon;restart;diagnostics"
+        RUN_SERIAL TRUE TIMEOUT 1200)
+      add_test(
         NAME pangu.nr6.horizon_multiblock
         COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tst/regression/nr6_horizon_multiblock.py"

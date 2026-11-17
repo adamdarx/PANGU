@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -27,6 +28,7 @@
 #include "z4c/coupling/sync_grhd.h"
 #include "z4c/coupling/sync_grmhd.h"
 #include "z4c/initial_data/tov.h"
+#include "z4c/diagnostics/diagnostics.h"
 #include "z4c/diagnostics/weyl.h"
 #include "z4c/evolution/z4c_rhs.h"
 #include "pangu.h"
@@ -962,7 +964,15 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   package->AddParam<int>("waveform_interpolation_points", waveform_interpolation_points);
   package->AddParam<Real>("waveform_dt", waveform_dt);
   package->AddParam<std::vector<Real>>("waveform_radii", waveform_radii);
-  package->AddParam<Real>("waveform_last_output_time", 0.0, parthenon::Params::Mutability::Restart);
+  // Snapshot remeasurement uses the requested diagnostic geometry and a fresh
+  // cadence, even when this same checkpoint already contains AH measurements.
+  // The evolution fields and puncture positions still restore normally.
+  const bool diagnostics_only = pin->GetOrAddBoolean("pangu", "diagnostics_only", false);
+  const auto diagnostic_mutability = diagnostics_only ? parthenon::Params::Mutability::Mutable
+                                                      : parthenon::Params::Mutability::Restart;
+  package->AddParam<Real>("waveform_last_output_time",
+                         diagnostics_only ? -std::numeric_limits<Real>::max() : 0.0,
+                         diagnostic_mutability);
   package->AddParam<int>("horizon_ntheta", horizon_ntheta);
   package->AddParam<int>("horizon_lmax", horizon_lmax);
   package->AddParam<int>("horizon_iterations", horizon_iterations);
@@ -978,15 +988,15 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   package->AddParam<Real>("horizon_max_radius_factor", horizon_max_radius_factor);
   package->AddParam<Real>("horizon_step_limit", horizon_step_limit);
   package->AddParam<std::vector<Real>>("horizon_radii", horizon_radii,
-                                       parthenon::Params::Mutability::Restart);
+                                       diagnostic_mutability);
   package->AddParam<std::vector<int>>("horizon_found", horizon_found,
-                                      parthenon::Params::Mutability::Restart);
+                                      diagnostic_mutability);
   package->AddParam<std::vector<Real>>("horizon_last_search_times", horizon_last_search_times,
-                                       parthenon::Params::Mutability::Restart);
+                                       diagnostic_mutability);
   package->AddParam<std::vector<int>>("horizon_tracker_indices", horizon_tracker_indices,
-                                      parthenon::Params::Mutability::Restart);
+                                      diagnostic_mutability);
   package->AddParam<std::vector<Real>>("horizon_centers", horizon_centers,
-                                       parthenon::Params::Mutability::Restart);
+                                       diagnostic_mutability);
   package->AddParam<std::vector<Real>>("horizon_start_times", horizon_start_times);
   package->AddParam<std::vector<Real>>("horizon_stop_times", horizon_stop_times);
   package->AddParam<std::vector<int>>("horizon_wait_for_punctures", horizon_wait_for_punctures);
@@ -1185,6 +1195,17 @@ std::shared_ptr<StateDescriptor> Initialize(ParameterInput* pin) {
   if constexpr (!geometry::ConfiguredGeometryIsSynchronized())
     package->FillDerivedBlock = Z4cToADMBlockTask;
   package->FillDerivedMesh = Z4cToADMMeshTask;
+  package->UserWorkBeforeLoopMesh = [](Mesh* mesh, parthenon::ParameterInput* input,
+                                        parthenon::SimTime& time) {
+    if (input->GetOrAddBoolean("pangu", "diagnostics_only", false)) {
+      PARTHENON_REQUIRE(!time.KeepGoing(),
+                        "NR diagnostics-only mode must not enter the evolution loop");
+      RunPostStepDiagnostics(mesh, time.time, time.ncycle);
+      if (parthenon::Globals::my_rank == 0)
+        std::cout << "NR diagnostics only: time=" << std::setprecision(17) << time.time
+                  << " cycle=" << time.ncycle << " evolved_steps=0\n";
+    }
+  };
   // Outputs::MakeOutputs invokes this hook, not FillDerived. With constraints
   // omitted from the vacuum evolution graph, field dumps otherwise retain
   // the initialization/remesh diagnostics despite an evolved Z4c state.

@@ -102,3 +102,35 @@ python tst/reference/polytropic_tov_oracle.py \
 
 退出码0=通过、1=已有指标失败、2=证据不全待验收。任何缺少的指标、源文件或
 SHA不匹配均不会被填成零误差或自动通过。完成、归档校验与物理通过分开记录。
+
+### 不推进时间的归档快照诊断
+
+`pangu` 的原生数值相对论程序支持 `pangu/diagnostics_only=true`。它正常读取
+检查点、建立网格及填充派生量，然后只调用一次当前快照的诊断；演化循环的
+步数上限被强制设为零，日志打印实际时间、周期以及 `evolved_steps=0`。
+这不会把旧程序计算的近似视界自动升级为合格结果：每个快照仍需检查新 CSV
+中的 `found`、扩张残差及球谐/角分辨率误差。
+复测时视界搜索缓存与诊断采样计时会重置，视界数量、中心和 tracker 映射取本次
+输入设置；演化场及实际穿刺位置正常恢复。普通续跑保持原有诊断恢复行为。
+
+在单独目录运行，避免与原诊断文件混写。例如，对单位质量、中心在原点的
+Schwarzschild 检查点：
+
+```sh
+pangu -r /absolute/path/checkpoint.rhdf pangu/diagnostics_only=true \
+  numerical_relativity/horizon_enabled=true \
+  numerical_relativity/horizon_count=1 \
+  numerical_relativity/horizon_tracker_0=-1 \
+  numerical_relativity/horizon_start_time_0=0 \
+  numerical_relativity/horizon_stop_time_0=1e30 \
+  numerical_relativity/horizon_initial_radius_0=0.5 \
+  numerical_relativity/horizon_convergence=mass_and_expansion \
+  numerical_relativity/horizon_expansion_tolerance=1e-4 \
+  numerical_relativity/diagnostic_directory=diagnostics
+```
+
+双黑洞需按目标公共视界设置中心、初始半径、视界时间窗及 tracker。检查点中
+的诊断开关、视界起止时间窗和输出块仍然生效；可对每个原输出块设置 `dt=-1` 和
+`dn=-1`，避免重复写出大场，视界 CSV 仍由诊断钩子产生。`pangu_scalar` 不提供
+此入口。回归脚本 `tst/regression/nr_snapshot_diagnostics.py` 检查非零周期重启
+后时间、周期和独立演化变量不变，原检查点 SHA 不变，并验证解析单位质量视界。
