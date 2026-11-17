@@ -2,7 +2,7 @@
   "repositories": {
     "AsterX": "b046e1d9f6a3026fc1f40a0e883d587d7decc45c",
     "CRL": "3fe27dbaacb1f1520297151bca0141580d40f30a",
-    "CarpetX": "29c2901522b595c24d9e1a918fd6600d6050a0cf",
+    "CarpetX": "f5ef96c1109e12af4275937ab10c06b8076f7026",
     "CoreDoc": "2c601efcc9b19439487069f568d2f2d461706730",
     "Cottonmouth": "7b3a6b19bb6278d7ae9205bce817042c253a9591",
     "ExternalLibraries-ADIOS2": "0013236d89be1344578abcd0649e0dcc8e2f5b26",
@@ -30,7 +30,7 @@
     "ExternalLibraries-ssht": "8d465b66382f97a7d205b0d6f8ef0710ef822424",
     "ExternalLibraries-yaml_cpp": "0a4f0895d8b1cf8099fe3a1fb1c6b08131cc58d4",
     "ExternalLibraries-zlib": "a013c30b69c27a9678ed94f1b591b83115295639",
-    "SpacetimeX": "a7d497402abebdfb9b6dd968e085ebdabe9154f8",
+    "SpacetimeX": "e162dd1111b149618cd5ed964656bfa41e17e6f3",
     "cactusbase": "49a9d71ec54e97eead7b057bae247f734678ce81",
     "cactustest": "7dcfb915d90b81ba5b81ff5da020556acba979bc",
     "cactusutils": "fddaed620cf48db1df992298f209222ea794ce7a",
@@ -42,7 +42,7 @@
     "utilities": "5b9fc0be3f4b0a0729557b89fd498add9875a940"
   },
   "overrides": {
-    "reason": "Match AsterX dev CI scripts/asterx.th; no physics or interface stubs",
+    "reason": "AsterX current dev requires pre-refactor CarpetX private communication API; use pinned matching source, no physics stubs or modifications",
     "utc": "2026-11-17T03:25:05.755182Z",
     "repos": [
       {
@@ -50,16 +50,32 @@
         "original": "eddc5513276f8b08a407f97b8300830afbfadbbe",
         "source": "https://github.com/lwJi/CarpetX.git",
         "branch": "dev",
-        "head": "29c2901522b595c24d9e1a918fd6600d6050a0cf"
+        "head": "f5ef96c1109e12af4275937ab10c06b8076f7026",
+        "previous_incompatible_head": "29c2901522b595c24d9e1a918fd6600d6050a0cf",
+        "pin_reason": "Latest first-parent revision retaining AsterX required old communication API and root header layout",
+        "interfaces_checked": [
+          "use_subcycling",
+          "CarpetX_PreRestrict",
+          "FillPatch_Sync",
+          "RestrictNoPoison",
+          "SyncGroupsByDirIGhostOnly"
+        ]
       },
       {
         "name": "SpacetimeX",
         "original": "21fe52a2b93d6101ed5205d23d9826b4ff86d2c5",
         "source": "https://github.com/lwJi/SpacetimeX.git",
         "branch": "dev",
-        "head": "a7d497402abebdfb9b6dd968e085ebdabe9154f8"
+        "head": "e162dd1111b149618cd5ed964656bfa41e17e6f3",
+        "previous_incompatible_head": "a7d497402abebdfb9b6dd968e085ebdabe9154f8",
+        "pin_reason": "Use the same-period pre-restructure SpacetimeX with CarpetX old patch-data/symmetry interface",
+        "interfaces_checked": [
+          "NewRadX old PatchData.symmetries member",
+          "selected thorn presence"
+        ]
       }
-    ]
+    ],
+    "compatibility_pin_utc": "2026-11-17T05:24:37.477398Z"
   },
   "selection": {
     "status": "selected_thorn_dependency_closure_prepared",

@@ -16,10 +16,20 @@ does not need to be active in a vacuum run. See the upstream
 The isolated WM2 build uses DATA for sources, LOGIN for CUDA compilation,
 and Slurm GPU compute allocations for execution. The build recipes and source
 pins are in `hpc/et_gpu_wm2`. The source selection follows AsterX's current
-`scripts/asterx.th` CI recipe: CarpetX `29c2901522b595c24d9e1a918fd6600d6050a0cf`,
-SpacetimeX `a7d497402abebdfb9b6dd968e085ebdabe9154f8`, and AsterX
+`scripts/asterx.th` CI recipe, with a compatible API pin:
+CarpetX `f5ef96c1109e12af4275937ab10c06b8076f7026`,
+SpacetimeX `e162dd1111b149618cd5ed964656bfa41e17e6f3`, and AsterX
 `b046e1d9f6a3026fc1f40a0e883d587d7decc45c`. The official CarpetX main checkout
-lacked AsterX dev's subcycling API; no missing API was stubbed or disabled.
+lacked AsterX dev's subcycling API. The latest maintainer CarpetX dev HEAD
+`29c2901` had already refactored the private communication API used by AsterX;
+the selected `f5ef96c` retains the required headers, function signatures,
+subcycling parameter and PreRestrict schedule group. No missing API was
+stubbed or disabled, and no evolution equations were modified. The failed
+layout builds were preserved. SpacetimeX is pinned to the same-period
+pre-restructure revision using CarpetX's original patch-data/symmetry API.
+The complete 64-thorn CUDA executable compiled successfully on WM2 at
+2026-11-17 05:38:47 UTC. Its frozen SHA256 is
+`7379fd2b9b5edff39c4a384a617439058e401bc646b652d7dae9db471aae18c6`.
 
 The build includes TwoPuncturesX for spectral BBH initial data. The separate
 PETSc-dependent Punctures initial-data provider is omitted. CUDA compilation
@@ -28,8 +38,55 @@ existing parallel HDF5. CUDA device images are checked before freezing the
 executable. Official WaveToyX/standing and AsterX/magTOV_Z4c_AMR_order4
 regressions then run on one Slurm GPU and compare against upstream reference
 outputs. Their success is technical validation, not the final research
-comparison or module acceptance. Build and GPU-regression completion remain
-pending until the corresponding receipts say otherwise.
+comparison or module acceptance. GPU device images passed inspection;
+allocated runtime regression job17370919 passed both selected official
+tests on an A10040GB at06:08:03UTC. The suite compared144 magnetic-TOV
+files and58 WaveToy files successfully within its stated tolerances;
+an actual GPU process was observed. This is a technical validation gate.
+Short acceptance allocations may use
+high QOS, as authorized by the user; formal long runs retain low QOS.
+
+## Formal GRMHD references
+
+AthenaK and ET direct TOV/BNS comparisons are restricted to N64 and N96.
+Existing PANGU N128 runs continue separately. The completed stable-star
+pilots below are auxiliary evidence and do not replace the original
+magnetized TOV collapse to time100 or the time-symmetric BNS to time200.
+
+The isolated WM2 AthenaK CUDA build uses upstream commit
+`8a5d398cb50c7621d03127008aad52c80d579c9c` and Kokkos
+`6739bc623081648af9e752b616d9671527922cbf`. The source snapshot SHA256 is
+`2b570de2379209b362ba6077dfd836007808bcbb4770233654baacb5f991a5ac`.
+Inherited changes check I/O errors and initialize mesh-only destructor
+pointers; evolution kernels and the native TOV initializer are unchanged.
+The user requested retaining the native finite-difference implementation:
+SMR uses four ghost layers and native sixth-order spacetime differences,
+while PANGU's corresponding cases use fourth order. This difference is
+reported explicitly, and these runs do not establish a matched-condition
+performance advantage.
+
+The TOV N64/N96 input candidates reproduce the original456-block physical
+refinement coverage and stellar/magnetic parameters. Their native mesh
+checks passed locally. High-QOS allocated probes must verify actual GPU
+execution, memory reserve, finite fields and initial-state agreement with
+the archived PANGU time-zero fields before automatic low-QOS formal
+submission. These resource probes are not physical acceptance. BNS needs
+the same time-symmetric initial-data table before a direct comparison;
+unrelated inspiral data are not a substitute.
+
+## Existing single-BH resolution labels
+
+Actual frozen time-zero PHDF headers show that N96 and N192 share all
+3,498,736 leaf cells in8<r<30, despite different finest-grid spacings.
+The integer global-cell identity hash is
+`47ff535da25ce1ecdf57cbceb3bb48caba2d15c7c706c4bb63a0f4538d0954b5`.
+This is an initial-mesh result; the production mesh mode is adaptive,
+so it must not be generalized to later outputs without checking.
+The previous single-BH constraint analysis used2<r<=10, requiring its
+own audit. See `evidence/single_bh_initial_mesh_20261117.json`.
+The authorized stationary/spinning N32/N48/N64 supplement must demonstrate
+actual physical refinement before an order curve is fitted. All original
+N96/N128/N192500M runs remain unchanged.
 
 ## BBH resolution candidates
 
@@ -58,13 +115,33 @@ block-geometry check gives rho_max relative bias -2.58713e-8 and integrated
 baryon-mass relative bias -9.31342e-9. AthenaK stores these fields as float32,
 whereas PANGU uses float64 here. Those initial differences are not evolution
 errors. An inadvertently started CPU reference was stopped; its partial
-trajectory is excluded. AthenaK CUDA compilation and the full GPU trajectory
-comparison remain pending.
+trajectory is excluded. The AthenaK CUDA trajectory also completed time50
+/800steps. Its frozen executable SHA256 is
+`c914ab7541144ed8e65803d43ba91a75e3abcc1127e07735cd1e40e138af3199`.
+A separate eight-step probe with that same executable recorded CUDA
+dispatches for the fluid fluxes, primitive recovery, constrained transport,
+Z4c RHS, and Runge–Kutta update. The WSL nvidia-smi process-name observer
+could not see processes; its historical false flag is retained, and the
+direct Kokkos execution-space proof supplements it.
+
+At eleven shared times from0 to50, the maximum rho_max relative difference
+is 6.09275e-7, and the maximum initial-core density relative L1 difference is
+9.27123e-7. Both codes' sampled rho_max decrease by about2% during this pilot;
+their close agreement does not bound their shared discretization or boundary
+error. The initial core uses the reference time-zero rho>1e-4 mask.
+
+Native double-precision history reductions at the same eleven times give
+maximum relative baryon drifts of1.49925e-12 (PANGU) and9.96980e-14 (AthenaK).
+The AthenaK float32 snapshot integral fluctuates by1.32625e-8 instead; this
+storage effect must not be used as evidence that its evolution conserves
+mass less accurately. The machine-readable measurements and GPU proof are
+in `evidence/tov_matched_gpu_20261117.json`.
 
 `tst/reference/compare_tov_trajectory.py` requires a completed GPU execution
 receipt, matching complete sample sets, matching block geometry and times,
-and finite density. It reports initial bias, normalized density excursions,
-core density differences, and each code's baryon drift. Both conserved
+finite density, and native mass histories with the matching exact times.
+It reports initial bias, normalized density excursions,
+core density differences, and each code's snapshot and native-history baryon drift. Both conserved
 densities already include sqrt(gamma); no second metric factor is applied.
 No convergence, efficiency, or full physical acceptance is inferred from
 this single-resolution, finite-domain pilot.

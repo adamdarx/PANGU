@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=ET_CarpetX_AsterX_GPU_SMOKE
-#SBATCH --partition=GPU80G
-#SBATCH --qos=low
+#SBATCH --partition=GPU40G
+#SBATCH --qos=high
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:1

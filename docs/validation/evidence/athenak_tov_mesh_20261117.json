@@ -1,0 +1,30 @@
+{
+  "status": "native_AthenaK_N64_N96_mesh_matches_archived_PANGU",
+  "cases": [
+    {
+      "root": 64,
+      "block": 16,
+      "blocks": 456,
+      "physical_refinement_levels": 7,
+      "finest_dx": 0.03125,
+      "physical_leaf_locations_equal_to_archived_PANGU": true,
+      "maximum_block_bound_difference": 0.0,
+      "absolute_geometry_tolerance": 1e-12,
+      "native_mesh_structure_sha256": "d0736995856dbca1d7260e872dc3e909ecce63c5aa88179138560cb96dbc2fe1",
+      "mesh_only_program_sha256": "c914ab7541144ed8e65803d43ba91a75e3abcc1127e07735cd1e40e138af3199"
+    },
+    {
+      "root": 96,
+      "block": 24,
+      "blocks": 456,
+      "physical_refinement_levels": 7,
+      "finest_dx": 0.020833333333333332,
+      "physical_leaf_locations_equal_to_archived_PANGU": true,
+      "maximum_block_bound_difference": 1.4210854715202004e-14,
+      "absolute_geometry_tolerance": 1e-12,
+      "native_mesh_structure_sha256": "d0736995856dbca1d7260e872dc3e909ecce63c5aa88179138560cb96dbc2fe1",
+      "mesh_only_program_sha256": "c914ab7541144ed8e65803d43ba91a75e3abcc1127e07735cd1e40e138af3199"
+    }
+  ],
+  "scope": "Mesh geometry only; GPU resource and initial-state validation are separate gates."
+}

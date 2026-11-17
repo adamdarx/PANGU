@@ -1,0 +1,264 @@
+diff --git a/src/mesh/meshblock_pack.cpp b/src/mesh/meshblock_pack.cpp
+index 43b6cc84..c30e2cc9 100644
+--- a/src/mesh/meshblock_pack.cpp
++++ b/src/mesh/meshblock_pack.cpp
+@@ -40,7 +40,11 @@ MeshBlockPack::MeshBlockPack(Mesh *pm, int igids, int igide) :
+   pmesh(pm),
+   gids(igids),
+   gide(igide),
+-  nmb_thispack(igide - igids + 1) {
++  nmb_thispack(igide - igids + 1),
++  pmb(nullptr),
++  pcoord(nullptr) {
++  // Mesh-only (-m) runs stop before AddCoordinatesAndPhysics().  Keep owned
++  // objects null until constructed so destruction also handles partial setup.
+   // create map for task lists
+   tl_map.insert(std::make_pair("before_timeintegrator",std::make_shared<TaskList>()));
+   tl_map.insert(std::make_pair("after_timeintegrator",std::make_shared<TaskList>()));
+diff --git a/src/outputs/io_wrapper.cpp b/src/outputs/io_wrapper.cpp
+index b2888d5d..3aba3373 100644
+--- a/src/outputs/io_wrapper.cpp
++++ b/src/outputs/io_wrapper.cpp
+@@ -16,6 +16,7 @@
+ 
+ #include "athena.hpp"
+ #include "io_wrapper.hpp"
++#include "checked_stdio.hpp"
+ 
+ //----------------------------------------------------------------------------------------
+ //! \fn int IOWrapper::Open(const char* fname, FileMode rw)
+@@ -87,6 +88,8 @@ int IOWrapper::Open(const char* fname, FileMode rw, bool single_file_per_rank) {
+                 << std::endl;
+       std::exit(EXIT_FAILURE);
+     }
++    if (rw != FileMode::read && std::setvbuf(local_fh, nullptr, _IONBF, 0) != 0)
++      throw std::runtime_error(std::string("Cannot disable stdio buffering: ") + fname);
+     fh_ = reinterpret_cast<IOWrapperFile>(local_fh);
+   }
+ #else
+@@ -98,6 +101,8 @@ int IOWrapper::Open(const char* fname, FileMode rw, bool single_file_per_rank) {
+               << std::endl;
+     std::exit(EXIT_FAILURE);
+   }
++  if (rw != FileMode::read && std::setvbuf(local_fh, nullptr, _IONBF, 0) != 0)
++    throw std::runtime_error(std::string("Cannot disable stdio buffering: ") + fname);
+   fh_ = local_fh;
+ #endif
+ 
+@@ -159,11 +164,11 @@ std::size_t IOWrapper::Read_bytes_at(void *buf, IOWrapperSizeT size,
+     if (MPI_Get_count(&status,MPI_BYTE,&nread) == MPI_UNDEFINED) {return 0;}
+     return nread/size;
+   } else {
+-    std::fseek(reinterpret_cast<FILE*>(fh_), offset, SEEK_SET);
++    checked_stdio::Seek(reinterpret_cast<FILE*>(fh_), offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+     return std::fread(buf, size, cnt, reinterpret_cast<FILE*>(fh_));
+   }
+ #else
+-  std::fseek(fh_, offset, SEEK_SET);
++  checked_stdio::Seek(fh_, offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+   return std::fread(buf, size, cnt, fh_);
+ #endif
+ }
+@@ -193,11 +198,11 @@ std::size_t IOWrapper::Read_bytes_at_all(void *buf, IOWrapperSizeT size,
+     if (MPI_Get_count(&status,MPI_BYTE,&nread) == MPI_UNDEFINED) {return 0;}
+     return nread/size;
+   } else {
+-    std::fseek(reinterpret_cast<FILE*>(fh_), offset, SEEK_SET);
++    checked_stdio::Seek(reinterpret_cast<FILE*>(fh_), offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+     return std::fread(buf, size, cnt, reinterpret_cast<FILE*>(fh_));
+   }
+ #else
+-  std::fseek(fh_, offset, SEEK_SET);
++  checked_stdio::Seek(fh_, offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+   return std::fread(buf, size, cnt, fh_);
+ #endif
+ }
+@@ -255,11 +260,11 @@ std::size_t IOWrapper::Read_Reals_at(void *buf, IOWrapperSizeT cnt,
+     if (MPI_Get_count(&status,MPI_ATHENA_REAL,&nread) == MPI_UNDEFINED) {return 0;}
+     return nread;
+   } else {
+-    std::fseek(reinterpret_cast<FILE*>(fh_), offset, SEEK_SET);
++    checked_stdio::Seek(reinterpret_cast<FILE*>(fh_), offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+     return std::fread(buf, sizeof(Real), cnt, reinterpret_cast<FILE*>(fh_));
+   }
+ #else
+-  std::fseek(fh_, offset, SEEK_SET);
++  checked_stdio::Seek(fh_, offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+   return std::fread(buf, sizeof(Real), cnt, fh_);
+ #endif
+ }
+@@ -288,11 +293,11 @@ std::size_t IOWrapper::Read_Reals_at_all(void *buf, IOWrapperSizeT cnt,
+     if (MPI_Get_count(&status,MPI_ATHENA_REAL,&nread) == MPI_UNDEFINED) {return 0;}
+     return nread;
+   } else {
+-    std::fseek(reinterpret_cast<FILE*>(fh_), offset, SEEK_SET);
++    checked_stdio::Seek(reinterpret_cast<FILE*>(fh_), offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+     return std::fread(buf, sizeof(Real), cnt, reinterpret_cast<FILE*>(fh_));
+   }
+ #else
+-  std::fseek(fh_, offset, SEEK_SET);
++  checked_stdio::Seek(fh_, offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+   return std::fread(buf, sizeof(Real), cnt, fh_);
+ #endif
+ }
+@@ -324,7 +329,7 @@ std::size_t IOWrapper::Write_any_type(const void *buf, IOWrapperSizeT cnt,
+                 << std::endl << "Unrecognized datatype '" << datatype << "'" << std::endl;
+       std::exit(EXIT_FAILURE);
+     }
+-    std::size_t written = std::fwrite(buf, datasize, cnt, reinterpret_cast<FILE*>(fh_));
++    std::size_t written = checked_stdio::Write(reinterpret_cast<FILE*>(fh_), buf, datasize, cnt, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+     if (written != cnt) {
+       std::cerr << "Error writing data. Expected to write " << cnt
+                 << " elements, but wrote " << written << std::endl;
+@@ -382,7 +387,7 @@ std::size_t IOWrapper::Write_any_type(const void *buf, IOWrapperSizeT cnt,
+     std::exit(EXIT_FAILURE);
+   }
+   // Write data using standard C functions
+-  std::size_t written = std::fwrite(buf, datasize, cnt, fh_);
++  std::size_t written = checked_stdio::Write(fh_, buf, datasize, cnt, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+   if (written != cnt) {
+     std::cerr << "Error writing data. Expected to write " << cnt
+               << " elements, but wrote " << written << std::endl;
+@@ -420,8 +425,8 @@ std::size_t IOWrapper::Write_any_type_at(const void *buf, IOWrapperSizeT cnt,
+       std::exit(EXIT_FAILURE);
+     }
+     // Write data using standard C functions
+-    std::fseek(reinterpret_cast<FILE*>(fh_), offset, SEEK_SET);
+-    std::size_t written = std::fwrite(buf, datasize, cnt, reinterpret_cast<FILE*>(fh_));
++    checked_stdio::Seek(reinterpret_cast<FILE*>(fh_), offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
++    std::size_t written = checked_stdio::Write(reinterpret_cast<FILE*>(fh_), buf, datasize, cnt, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+     if (written != cnt) {
+       std::cerr << "Error writing data. Expected to write " << cnt
+                 << " elements, but wrote " << written << std::endl;
+@@ -479,8 +484,8 @@ std::size_t IOWrapper::Write_any_type_at(const void *buf, IOWrapperSizeT cnt,
+     std::exit(EXIT_FAILURE);
+   }
+   // Write data using standard C functions
+-  std::fseek(fh_, offset, SEEK_SET);
+-  std::size_t written = std::fwrite(buf, datasize, cnt, fh_);
++  checked_stdio::Seek(fh_, offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
++  std::size_t written = checked_stdio::Write(fh_, buf, datasize, cnt, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+   if (written != cnt) {
+     std::cerr << "Error writing data. Expected to write " << cnt
+               << " elements, but wrote " << written << std::endl;
+@@ -518,8 +523,8 @@ std::size_t IOWrapper::Write_any_type_at_all(const void *buf, IOWrapperSizeT cnt
+       std::exit(EXIT_FAILURE);
+     }
+     // Write data using standard C functions
+-    std::fseek(reinterpret_cast<FILE*>(fh_), offset, SEEK_SET);
+-    std::size_t written = std::fwrite(buf, datasize, cnt, reinterpret_cast<FILE*>(fh_));
++    checked_stdio::Seek(reinterpret_cast<FILE*>(fh_), offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
++    std::size_t written = checked_stdio::Write(reinterpret_cast<FILE*>(fh_), buf, datasize, cnt, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+     if (written != cnt) {
+       std::cerr << "Error writing data. Expected to write " << cnt
+                 << " elements, but wrote " << written << std::endl;
+@@ -577,8 +582,8 @@ std::size_t IOWrapper::Write_any_type_at_all(const void *buf, IOWrapperSizeT cnt
+     std::exit(EXIT_FAILURE);
+   }
+   // Write data using standard C functions
+-  std::fseek(fh_, offset, SEEK_SET);
+-  std::size_t written = std::fwrite(buf, datasize, cnt, fh_);
++  checked_stdio::Seek(fh_, offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
++  std::size_t written = checked_stdio::Write(fh_, buf, datasize, cnt, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+   if (written != cnt) {
+     std::cerr << "Error writing data. Expected to write " << cnt
+               << " elements, but wrote " << written << std::endl;
+@@ -596,10 +601,10 @@ int IOWrapper::Close(bool single_file_per_rank) {
+   if (!single_file_per_rank) {
+     return MPI_File_close(&fh_);
+   } else {
+-    return std::fclose(reinterpret_cast<FILE*>(fh_));
++    return checked_stdio::Close(reinterpret_cast<FILE*>(fh_), checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+   }
+ #else
+-  return std::fclose(fh_);
++  return checked_stdio::Close(fh_, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
+ #endif
+ }
+ 
+@@ -612,10 +617,12 @@ int IOWrapper::Seek(IOWrapperSizeT offset, bool single_file_per_rank) {
+   if (!single_file_per_rank) {
+     return MPI_File_seek(fh_, offset, MPI_SEEK_SET);
+   } else {
+-    return std::fseek(reinterpret_cast<FILE*>(fh_), offset, SEEK_SET);
++    checked_stdio::Seek(reinterpret_cast<FILE*>(fh_), offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
++    return 0;
+   }
+ #else
+-  return std::fseek(fh_, offset, SEEK_SET);
++  checked_stdio::Seek(fh_, offset, checked_stdio::Filename(reinterpret_cast<FILE*>(fh_)));
++  return 0;
+ #endif
+ }
+ 
+@@ -630,11 +637,11 @@ IOWrapperSizeT IOWrapper::GetPosition(bool single_file_per_rank) {
+     MPI_File_get_position(fh_, &position);
+     return position;
+   } else {
+-    int64_t pos = ftell(reinterpret_cast<FILE*>(fh_));
++    int64_t pos = ::ftello(reinterpret_cast<FILE*>(fh_));
+     return pos;
+   }
+ #else
+-  int64_t pos = ftell(fh_);
++  int64_t pos = ::ftello(fh_);
+   return pos;
+ #endif
+ }
+diff --git a/src/outputs/restart.cpp b/src/outputs/restart.cpp
+index a474cee1..2f55ef93 100644
+--- a/src/outputs/restart.cpp
++++ b/src/outputs/restart.cpp
+@@ -12,6 +12,8 @@
+ #include <cstdio>      // fwrite(), fclose(), fopen(), fnprintf(), snprintf()
+ #include <cstdlib>
+ #include <iomanip>
++#include <filesystem>
++#include <stdexcept>
+ #include <iostream>
+ #include <sstream>
+ #include <string>
+@@ -75,6 +77,8 @@ void RestartOutput::LoadOutputData(Mesh *pm) {
+   }
+   if (pz4c != nullptr) {
+     nz4c = pz4c->nz4c;
++    if (nmb != pm->nmb_thisrank || pz4c->u0.extent(0) < static_cast<size_t>(nmb))
++      throw std::runtime_error("Restart Z4c block count disagrees with mesh");
+   } else if (padm != nullptr) {
+     nadm = padm->nadm;
+   }
+@@ -210,7 +214,8 @@ void RestartOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin) {
+ 
+   // open file and  write the header; this part is serial
+   IOWrapper resfile;
+-  resfile.Open(fname.c_str(), IOWrapper::FileMode::write, single_file_per_rank);
++  const std::string pending_name = fname + ".partial";
++  resfile.Open(pending_name.c_str(), IOWrapper::FileMode::write, single_file_per_rank);
+   if (global_variable::my_rank == 0 || single_file_per_rank) {
+     // output the input parameters (input file)
+     resfile.Write_any_type(sbuf.c_str(), sbuf.size(), "byte", single_file_per_rank);
+@@ -633,6 +638,24 @@ void RestartOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin) {
+ 
+   // close file, clean up
+   resfile.Close(single_file_per_rank);
++  // Publish only a complete checkpoint set; incomplete writes remain .partial.
++#if MPI_PARALLEL_ENABLED
++  MPI_Barrier(MPI_COMM_WORLD);
++#endif
++  if (single_file_per_rank || global_variable::my_rank == 0) {
++    if (pm->pzoom == nullptr || !pm->pzoom->write_rst) {
++      const auto blocks = single_file_per_rank ? pm->nmb_thisrank : pm->nmb_total;
++      const auto expected = step1size + step2size + step3size +
++                            sizeof(IOWrapperSizeT) + data_size*blocks;
++      if (std::filesystem::file_size(pending_name) != expected)
++        throw std::runtime_error("Incomplete restart: " + pending_name);
++    }
++    if (std::rename(pending_name.c_str(), fname.c_str()) != 0)
++      throw std::runtime_error("Restart rename failed: " + pending_name);
++  }
++#if MPI_PARALLEL_ENABLED
++  MPI_Barrier(MPI_COMM_WORLD);
++#endif
+ 
+   return;
+ }

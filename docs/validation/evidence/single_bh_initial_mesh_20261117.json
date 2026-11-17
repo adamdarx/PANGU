@@ -1,0 +1,406 @@
+{
+  "initial_grid_audit": {
+    "status": "actual_frozen_initial_grid_headers_audited",
+    "utc": "2026-11-17T04:43:27.544393+00:00",
+    "cases": [
+      {
+        "family": "spinning",
+        "n": 96,
+        "job": 17313451,
+        "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/17313451/attempt-0/pangu/output/nr_puncture.spinning.00000.phdf",
+        "source_time": 0.0,
+        "root_grid": [
+          96,
+          96,
+          96
+        ],
+        "blocks": 3800,
+        "physical_level_min": 0,
+        "physical_level_max": 8,
+        "minimum_cell_spacing": 0.01627604166666652,
+        "maximum_cell_spacing": 4.166666666666686,
+        "probe_x_cell_spacings": {
+          "1.123": [
+            0.03255208333333348
+          ],
+          "5.123": [
+            0.13020833333333393
+          ],
+          "10.123": [
+            0.26041666666666785
+          ],
+          "20.123": [
+            0.5208333333333357
+          ],
+          "40.123": [
+            1.0416666666666714
+          ]
+        },
+        "settings": {
+          "<parthenon/mesh>/numlevel": "9",
+          "<numerical_relativity>/horizon_ntheta": "48",
+          "<numerical_relativity>/horizon_lmax": "16",
+          "<numerical_relativity>/horizon_expansion_tolerance": "1e-4",
+          "<problem>/puncture_spectral_points": "46",
+          "<problem>/puncture_interpolation_points": "8"
+        }
+      },
+      {
+        "family": "spinning",
+        "n": 128,
+        "job": 17313452,
+        "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/17313452/attempt-0/pangu/output/nr_puncture.spinning.00000.phdf",
+        "source_time": 0.0,
+        "root_grid": [
+          128,
+          128,
+          128
+        ],
+        "blocks": 4768,
+        "physical_level_min": 0,
+        "physical_level_max": 8,
+        "minimum_cell_spacing": 0.01220703125,
+        "maximum_cell_spacing": 3.125,
+        "probe_x_cell_spacings": {
+          "1.123": [
+            0.01220703125
+          ],
+          "5.123": [
+            0.09765625
+          ],
+          "10.123": [
+            0.1953125
+          ],
+          "20.123": [
+            0.390625
+          ],
+          "40.123": [
+            0.78125
+          ]
+        },
+        "settings": {
+          "<parthenon/mesh>/numlevel": "9",
+          "<numerical_relativity>/horizon_ntheta": "48",
+          "<numerical_relativity>/horizon_lmax": "16",
+          "<numerical_relativity>/horizon_expansion_tolerance": "1e-4",
+          "<problem>/puncture_spectral_points": "46",
+          "<problem>/puncture_interpolation_points": "8"
+        }
+      },
+      {
+        "family": "spinning",
+        "n": 192,
+        "job": 17260147,
+        "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/17260147/attempt-0/pangu/output/nr_puncture.spinning.00000.phdf",
+        "source_time": 0.0,
+        "root_grid": [
+          192,
+          192,
+          192
+        ],
+        "blocks": 8392,
+        "physical_level_min": 0,
+        "physical_level_max": 8,
+        "minimum_cell_spacing": 0.00813802083333326,
+        "maximum_cell_spacing": 2.083333333333343,
+        "probe_x_cell_spacings": {
+          "1.123": [
+            0.01627604166666674
+          ],
+          "5.123": [
+            0.13020833333333393
+          ],
+          "10.123": [
+            0.26041666666666785
+          ],
+          "20.123": [
+            0.5208333333333357
+          ],
+          "40.123": [
+            1.0416666666666714
+          ]
+        },
+        "settings": {
+          "<parthenon/mesh>/numlevel": "9",
+          "<numerical_relativity>/horizon_ntheta": "48",
+          "<numerical_relativity>/horizon_lmax": "16",
+          "<numerical_relativity>/horizon_expansion_tolerance": "1e-4",
+          "<problem>/puncture_spectral_points": "46",
+          "<problem>/puncture_interpolation_points": "8"
+        }
+      },
+      {
+        "family": "stationary",
+        "n": 96,
+        "job": 17313453,
+        "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/17313453/attempt-0/pangu/output/nr_boosted_puncture.stationary.00000.phdf",
+        "source_time": 0.0,
+        "root_grid": [
+          96,
+          96,
+          96
+        ],
+        "blocks": 3800,
+        "physical_level_min": 0,
+        "physical_level_max": 8,
+        "minimum_cell_spacing": 0.01627604166666652,
+        "maximum_cell_spacing": 4.166666666666686,
+        "probe_x_cell_spacings": {
+          "1.123": [
+            0.03255208333333348
+          ],
+          "5.123": [
+            0.13020833333333393
+          ],
+          "10.123": [
+            0.26041666666666785
+          ],
+          "20.123": [
+            0.5208333333333357
+          ],
+          "40.123": [
+            1.0416666666666714
+          ]
+        },
+        "settings": {
+          "<parthenon/mesh>/numlevel": "9",
+          "<numerical_relativity>/horizon_ntheta": "48",
+          "<numerical_relativity>/horizon_lmax": "16",
+          "<numerical_relativity>/horizon_expansion_tolerance": "1e-4"
+        }
+      },
+      {
+        "family": "stationary",
+        "n": 128,
+        "job": 17260149,
+        "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/17260149/attempt-0/pangu/output/nr_boosted_puncture.stationary.00000.phdf",
+        "source_time": 0.0,
+        "root_grid": [
+          128,
+          128,
+          128
+        ],
+        "blocks": 4768,
+        "physical_level_min": 0,
+        "physical_level_max": 8,
+        "minimum_cell_spacing": 0.01220703125,
+        "maximum_cell_spacing": 3.125,
+        "probe_x_cell_spacings": {
+          "1.123": [
+            0.01220703125
+          ],
+          "5.123": [
+            0.09765625
+          ],
+          "10.123": [
+            0.1953125
+          ],
+          "20.123": [
+            0.390625
+          ],
+          "40.123": [
+            0.78125
+          ]
+        },
+        "settings": {
+          "<parthenon/mesh>/numlevel": "9",
+          "<numerical_relativity>/horizon_ntheta": "48",
+          "<numerical_relativity>/horizon_lmax": "16",
+          "<numerical_relativity>/horizon_expansion_tolerance": "1e-4"
+        }
+      },
+      {
+        "family": "stationary",
+        "n": 192,
+        "job": 17260150,
+        "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/17260150/attempt-0/pangu/output/nr_boosted_puncture.stationary.00000.phdf",
+        "source_time": 0.0,
+        "root_grid": [
+          192,
+          192,
+          192
+        ],
+        "blocks": 8392,
+        "physical_level_min": 0,
+        "physical_level_max": 8,
+        "minimum_cell_spacing": 0.00813802083333326,
+        "maximum_cell_spacing": 2.083333333333343,
+        "probe_x_cell_spacings": {
+          "1.123": [
+            0.01627604166666674
+          ],
+          "5.123": [
+            0.13020833333333393
+          ],
+          "10.123": [
+            0.26041666666666785
+          ],
+          "20.123": [
+            0.5208333333333357
+          ],
+          "40.123": [
+            1.0416666666666714
+          ]
+        },
+        "settings": {
+          "<parthenon/mesh>/numlevel": "9",
+          "<numerical_relativity>/horizon_ntheta": "48",
+          "<numerical_relativity>/horizon_lmax": "16",
+          "<numerical_relativity>/horizon_expansion_tolerance": "1e-4"
+        }
+      }
+    ]
+  },
+  "initial_region_audit": {
+    "status": "actual_exterior_region_mesh_audited",
+    "utc": "2026-11-17T04:46:28.880642+00:00",
+    "cases": [
+      {
+        "n": 96,
+        "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/17313451/attempt-0/pangu/output/nr_puncture.spinning.00000.phdf",
+        "meshblock_size": [
+          16,
+          16,
+          16
+        ],
+        "refinement": "adaptive",
+        "declared_refinement_regions": {
+          "<parthenon/static_refinement0>": {
+            "level": "8",
+            "x1min": "-1.0",
+            "x1max": "1.0",
+            "x2min": "-1.0",
+            "x2max": "1.0",
+            "x3min": "-1.0",
+            "x3max": "1.0"
+          }
+        },
+        "shell": "8<coordinate_r<30",
+        "shell_cells": 3498736,
+        "shell_cell_layout_sha256": "47ff535da25ce1ecdf57cbceb3bb48caba2d15c7c706c4bb63a0f4538d0954b5",
+        "shell_spacing_distribution": [
+          {
+            "effective_cells_per_axis": 768,
+            "h": 0.5208333333333334,
+            "cells": 538184,
+            "coordinate_volume": 76037.37160011576
+          },
+          {
+            "effective_cells_per_axis": 1536,
+            "h": 0.2604166666666667,
+            "cells": 1835008,
+            "coordinate_volume": 32407.407407407412
+          },
+          {
+            "effective_cells_per_axis": 3072,
+            "h": 0.13020833333333334,
+            "cells": 1125544,
+            "coordinate_volume": 2484.7277888545286
+          }
+        ]
+      },
+      {
+        "n": 128,
+        "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/17313452/attempt-0/pangu/output/nr_puncture.spinning.00000.phdf",
+        "meshblock_size": [
+          16,
+          16,
+          16
+        ],
+        "refinement": "adaptive",
+        "declared_refinement_regions": {
+          "<parthenon/static_refinement0>": {
+            "level": "8",
+            "x1min": "-1.0",
+            "x1max": "1.0",
+            "x2min": "-1.0",
+            "x2max": "1.0",
+            "x3min": "-1.0",
+            "x3max": "1.0"
+          }
+        },
+        "shell": "8<coordinate_r<30",
+        "shell_cells": 3470432,
+        "shell_cell_layout_sha256": "68635dacaa548f7b29590a6b4d34a6b09899f06289d6696dc653690c0fe056d4",
+        "shell_spacing_distribution": [
+          {
+            "effective_cells_per_axis": 512,
+            "h": 0.78125,
+            "cells": 27912,
+            "coordinate_volume": 13309.478759765625
+          },
+          {
+            "effective_cells_per_axis": 1024,
+            "h": 0.390625,
+            "cells": 1411440,
+            "coordinate_volume": 84128.37982177734
+          },
+          {
+            "effective_cells_per_axis": 2048,
+            "h": 0.1953125,
+            "cells": 1777360,
+            "coordinate_volume": 13242.363929748535
+          },
+          {
+            "effective_cells_per_axis": 4096,
+            "h": 0.09765625,
+            "cells": 253720,
+            "coordinate_volume": 236.2951636314392
+          }
+        ]
+      },
+      {
+        "n": 192,
+        "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/17260147/attempt-0/pangu/output/nr_puncture.spinning.00000.phdf",
+        "meshblock_size": [
+          16,
+          16,
+          16
+        ],
+        "refinement": "adaptive",
+        "declared_refinement_regions": {
+          "<parthenon/static_refinement0>": {
+            "level": "8",
+            "x1min": "-1.0",
+            "x1max": "1.0",
+            "x2min": "-1.0",
+            "x2max": "1.0",
+            "x3min": "-1.0",
+            "x3max": "1.0"
+          }
+        },
+        "shell": "8<coordinate_r<30",
+        "shell_cells": 3498736,
+        "shell_cell_layout_sha256": "47ff535da25ce1ecdf57cbceb3bb48caba2d15c7c706c4bb63a0f4538d0954b5",
+        "shell_spacing_distribution": [
+          {
+            "effective_cells_per_axis": 768,
+            "h": 0.5208333333333334,
+            "cells": 538184,
+            "coordinate_volume": 76037.37160011576
+          },
+          {
+            "effective_cells_per_axis": 1536,
+            "h": 0.2604166666666667,
+            "cells": 1835008,
+            "coordinate_volume": 32407.407407407412
+          },
+          {
+            "effective_cells_per_axis": 3072,
+            "h": 0.13020833333333334,
+            "cells": 1125544,
+            "coordinate_volume": 2484.7277888545286
+          }
+        ]
+      }
+    ],
+    "N96_N192_exterior_leaf_cells_identical": true,
+    "canonical_cell_identity": "effective_global_cells_per_axis and integer global cell indices; sorted, little-endian int64"
+  },
+  "limitations": [
+    "These headers prove the initial mesh only; the production meshes are adaptive.",
+    "The prior single-BH constraint analysis used2<r<=10, requiring a separate audit.",
+    "N96/N192 labels cannot establish convergence in a region with identical cells.",
+    "The user authorized a controlled N32/N48/N64 supplemental stationary/spinning cohort; no result is claimed here."
+  ]
+}

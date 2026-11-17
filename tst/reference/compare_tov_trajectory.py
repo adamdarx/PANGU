@@ -12,6 +12,7 @@ import csv
 import hashlib
 import importlib.util
 import json
+import re
 from pathlib import Path
 
 import h5py
@@ -67,6 +68,30 @@ def binary_variable_bytes(path: Path) -> int:
     return int(header['size of variable'])
 
 
+def native_mass_history(folder: Path, column: str, times: np.ndarray):
+    matches = []
+    for path in folder.rglob('*.hst'):
+        with path.open() as stream:
+            headers = ''.join(line for line in stream if line.startswith('#'))
+        columns = {name: int(index) - 1
+                   for index, name in re.findall(r'\[(\d+)\]=(\S+)', headers)}
+        if column in columns:
+            matches.append((path, columns))
+    if len(matches) != 1:
+        raise ValueError(f'Expected one native history with column {column}, found {len(matches)}')
+    path, columns = matches[0]
+    data = np.atleast_2d(np.loadtxt(path))
+    if not np.isfinite(data[:, [columns['time'], columns[column]]]).all():
+        raise ValueError('Nonfinite native history mass or time')
+    indices = []
+    for time in times:
+        hits = np.flatnonzero(np.isclose(data[:, columns['time']], time, rtol=0, atol=1e-12))
+        if len(hits) != 1:
+            raise ValueError(f'Missing or duplicated native history at time {time}')
+        indices.append(hits[0])
+    return data[indices, columns[column]], dict(path=str(path), column=column, sha256=sha256(path))
+
+
 def compare(pangu_dir: Path, athena_dir: Path, source: Path,
             target_time: float = 50, expected_samples: int = 11):
     read = reader(source)
@@ -119,6 +144,12 @@ def compare(pangu_dir: Path, athena_dir: Path, source: Path,
     if (times[0] != 0 or np.any(np.diff(times) <= 0)
             or not np.isclose(times[-1], target_time, rtol=0, atol=1e-12)):
         raise ValueError('Incomplete, duplicated or unordered trajectory')
+    p_native, p_proof = native_mass_history(pangu_dir, 'mhd_mass', times)
+    a_native, a_proof = native_mass_history(athena_dir, 'mass', times)
+    for row, pmass, amass in zip(rows, p_native, a_native, strict=True):
+        row.update(pangu_native_baryon_mass=float(pmass), athena_native_baryon_mass=float(amass),
+                   pangu_native_baryon_drift=float(pmass / p_native[0] - 1),
+                   athena_native_baryon_drift=float(amass / a_native[0] - 1))
     initial = rows[0]
     for row in rows:
         for code in ('pangu', 'athena'):
@@ -127,6 +158,8 @@ def compare(pangu_dir: Path, athena_dir: Path, source: Path,
         row['rho_max_relative_error'] = row['pangu_rho_max'] / row['athena_rho_max'] - 1
         row['rho_perturbation_difference'] = row['pangu_rho_perturbation'] - row['athena_rho_perturbation']
     return dict(samples=rows, files_sha256=evidence,
+                native_mass_history=dict(pangu=p_proof, athena=a_proof,
+                                         note='Native float64 reductions at exactly the shared snapshot times; snapshot mass is also reported and may be quantized.'),
                 stored_precision=[dict(pangu_density_dtype=p, athena_primitive_bytes=w,
                                        athena_conserved_bytes=u) for p, w, u in sorted(precisions)],
                 target_time=target_time, independent_comparison_completed=True,
@@ -134,9 +167,11 @@ def compare(pangu_dir: Path, athena_dir: Path, source: Path,
                 summary={
                     'initial_rho_max_relative_bias': rows[0]['rho_max_relative_error'],
                     'initial_baryon_relative_bias': initial['pangu_baryon_mass'] / initial['athena_baryon_mass'] - 1,
+                    'initial_native_baryon_relative_bias': float(p_native[0] / a_native[0] - 1),
                     **{'max_abs_' + key: max(abs(row[key]) for row in rows)
                        for key in ('rho_max_relative_error', 'rho_perturbation_difference',
                                    'pangu_baryon_drift', 'athena_baryon_drift',
+                                   'pangu_native_baryon_drift', 'athena_native_baryon_drift',
                                    'rho_core_relative_l1')}},
                 limitations=['Single resolution and bounded 50-time pilot; not a convergence claim.',
                              'Finite domain and output precision contribute to the measured difference.',

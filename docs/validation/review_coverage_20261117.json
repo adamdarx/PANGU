@@ -23,7 +23,7 @@
     },
     "single_BH": {
       "B": "original500M runs active",
-      "C": "common-time resolution study and error-source separation pending",
+      "C": "Authorized N32/N48/N64 supplement must establish actual physical refinement. Existing N96/N192 initial8<r<30 cells coincide, so these labels cannot establish regional order.",
       "R": "original AthenaK paired runs/analysis pending",
       "status": "incomplete"
     },
@@ -57,6 +57,14 @@
     "performance": {
       "status": "matched-condition and matched-accuracy accounting pending",
       "advantage_established_by_this_review": false
+    },
+    "TOV_stable_matched_pilot": {
+      "B": "Both GPU binaries completed800 steps to code time50 on the same uniform N64 grid",
+      "C": "Auxiliary N32/N48/N64 endpoint study exists; asymptotic and long-time accuracy are not certified.",
+      "R": "Completed matched eleven-time density and native mass-history comparison against pinned AthenaK",
+      "status": "bounded_single_resolution_reference_complete_full_accuracy_pending",
+      "full_physical_acceptance": false,
+      "evidence": "evidence/tov_matched_gpu_20261117.json"
     }
   },
   "required_before_closeout": [
@@ -72,5 +80,29 @@
     "Original500M single BH and active N128 jobs keep their frozen binaries/inputs.",
     "New resolution/resource selection needs mesh leaf-count, memory and short throughput evidence before long submissions.",
     "No unrestricted3D scalar requirement is inferred from this feedback."
-  ]
+  ],
+  "reference_policy": {
+    "TOV_BNS_resolutions": [
+      64,
+      96
+    ],
+    "PANGU_N128_continues": true,
+    "all_evolutions_GPU": true,
+    "short_acceptance_QOS": "high",
+    "AthenaK_native_FD_implementation_retained": true,
+    "Einstein_Toolkit_modules": [
+      "single_BH",
+      "BBH",
+      "TOV",
+      "BNS"
+    ]
+  },
+  "ET_technical": {
+    "binary_compiled": true,
+    "CUDA_images_verified": true,
+    "sha256": "7379fd2b9b5edff39c4a384a617439058e401bc646b652d7dae9db471aae18c6",
+    "GPU_runtime_job": "17370919",
+    "runtime_validation": "official_GPU_regressions_passed",
+    "runtime_passed": true
+  }
 }

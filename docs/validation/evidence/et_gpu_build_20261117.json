@@ -1,0 +1,87 @@
+{
+  "build": {
+    "status": "gpu_binary_compiled_frozen_compute_smoke_pending",
+    "started_utc": "2026-11-17T05:31:38.695321Z",
+    "source_commits": {
+      "CarpetX": "f5ef96c1109e12af4275937ab10c06b8076f7026",
+      "SpacetimeX": "e162dd1111b149618cd5ed964656bfa41e17e6f3",
+      "AsterX": "b046e1d9f6a3026fc1f40a0e883d587d7decc45c"
+    },
+    "source_overrides_manifest": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/COMPATIBLE_SOURCE_SELECTION.json",
+    "returncode": 0,
+    "finished_utc": "2026-11-17T05:38:47.461809Z",
+    "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/bin/cactus-wm2cuda-7379fd2b9b5e",
+    "sha256": "7379fd2b9b5edff39c4a384a617439058e401bc646b652d7dae9db471aae18c6",
+    "CUDA_device_images_verified": true,
+    "source_manifest": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/FETCH_RESULT.json",
+    "selection": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/BUILD_SELECTION.json",
+    "runtime_validation": "Pending Slurm compute allocation; no solver run on LOGIN/DATA."
+  },
+  "source_selection": {
+    "reason": "AsterX current dev requires pre-refactor CarpetX private communication API; use pinned matching source, no physics stubs or modifications",
+    "utc": "2026-11-17T03:25:05.755182Z",
+    "repos": [
+      {
+        "name": "CarpetX",
+        "original": "eddc5513276f8b08a407f97b8300830afbfadbbe",
+        "source": "https://github.com/lwJi/CarpetX.git",
+        "branch": "dev",
+        "head": "f5ef96c1109e12af4275937ab10c06b8076f7026",
+        "previous_incompatible_head": "29c2901522b595c24d9e1a918fd6600d6050a0cf",
+        "pin_reason": "Latest first-parent revision retaining AsterX required old communication API and root header layout",
+        "interfaces_checked": [
+          "use_subcycling",
+          "CarpetX_PreRestrict",
+          "FillPatch_Sync",
+          "RestrictNoPoison",
+          "SyncGroupsByDirIGhostOnly"
+        ]
+      },
+      {
+        "name": "SpacetimeX",
+        "original": "21fe52a2b93d6101ed5205d23d9826b4ff86d2c5",
+        "source": "https://github.com/lwJi/SpacetimeX.git",
+        "branch": "dev",
+        "head": "e162dd1111b149618cd5ed964656bfa41e17e6f3",
+        "previous_incompatible_head": "a7d497402abebdfb9b6dd968e085ebdabe9154f8",
+        "pin_reason": "Use the same-period pre-restructure SpacetimeX with CarpetX old patch-data/symmetry interface",
+        "interfaces_checked": [
+          "NewRadX old PatchData.symmetries member",
+          "selected thorn presence"
+        ]
+      }
+    ],
+    "compatibility_pin_utc": "2026-11-17T05:24:37.477398Z"
+  },
+  "submitted_GPU_regression": {
+    "job_id": "17370919",
+    "submitted_utc": "2026-11-17T05:39:10.241672Z",
+    "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/bin/cactus-wm2cuda-7379fd2b9b5e",
+    "sha256": "7379fd2b9b5edff39c4a384a617439058e401bc646b652d7dae9db471aae18c6",
+    "status": "submitted_not_yet_validated"
+  },
+  "physical_acceptance": false,
+  "GPU_runtime": {
+    "status": "official_gpu_regressions_passed",
+    "job_id": "17370919",
+    "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/bin/cactus-wm2cuda-7379fd2b9b5e",
+    "sha256": "7379fd2b9b5edff39c4a384a617439058e401bc646b652d7dae9db471aae18c6",
+    "started_utc": "2026-11-17T06:07:44.145237Z",
+    "tests": [
+      "WaveToyX/standing",
+      "AsterX/magTOV_Z4c_AMR_order4"
+    ],
+    "scientific_acceptance": "Technical GPU regression only; quantitative research comparison remains pending",
+    "summary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/runs/17370919/TEST/wm2cuda/summary.log",
+    "actual_gpu_process_observed": true,
+    "finished_utc": "2026-11-17T06:08:03.715793Z"
+  },
+  "current_status": "compiled_frozen_and_selected_official_GPU_regressions_passed",
+  "official_summary": {
+    "runnable": 2,
+    "passed": 2,
+    "failed": 0,
+    "unrunnable": 0,
+    "within_upstream_tolerances": true
+  }
+}

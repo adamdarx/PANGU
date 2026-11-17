@@ -1,0 +1,11 @@
+{
+  "status": "validated_CUDA_reference_source_snapshot",
+  "sha256": "2b570de2379209b362ba6077dfd836007808bcbb4770233654baacb5f991a5ac",
+  "bytes": 26419200,
+  "base_commit": "8a5d398cb50c7621d03127008aad52c80d579c9c",
+  "kokkos": "6739bc623081648af9e752b616d9671527922cbf",
+  "prior_GPU_binary_sha256": "c914ab7541144ed8e65803d43ba91a75e3abcc1127e07735cd1e40e138af3199",
+  "reviewed_changes": "Inherited checked I/O and mesh-only destructor fixes; physical kernels and TOV pgen unchanged",
+  "target": "WM2 CUDA sm80 build for formal TOV comparisons at N64/N96 only; BNS initial-data adapter pending",
+  "utc": "2026-11-17T05:37:09.760095+00:00"
+}
