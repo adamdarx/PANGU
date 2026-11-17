@@ -1,0 +1,50 @@
+[
+  {
+    "case": "d200_stationary_n128",
+    "job": "17260149",
+    "time": 320.41015625,
+    "remaining_wall_hours": 59.560659358888884,
+    "estimated_hours_to500": 35.25751633986928,
+    "window_hours": 6.111111111111111,
+    "rate_M_per_hour": 5.093661221590909,
+    "EndTime": "2026-11-20T09:09:23",
+    "actual_final_checkpoint_policy": "Preserved by existing archive owners",
+    "estimate": "Observed window extrapolation only; no job/input/resources changed"
+  },
+  {
+    "case": "d200_spinning_n128",
+    "job": "17313452",
+    "time": 207.24365234375,
+    "remaining_wall_hours": 80.55951046083332,
+    "estimated_hours_to500": 55.565792134263475,
+    "window_hours": 6.111111111111111,
+    "rate_M_per_hour": 5.268643465909091,
+    "EndTime": "2026-11-21T06:09:19",
+    "actual_final_checkpoint_policy": "Preserved by existing archive owners",
+    "estimate": "Observed window extrapolation only; no job/input/resources changed"
+  },
+  {
+    "case": "d200_stationary_n192",
+    "job": "17260150",
+    "time": 125.8463541668094,
+    "remaining_wall_hours": 81.54169405166667,
+    "estimated_hours_to500": 116.2932303160263,
+    "window_hours": 6.111111111111111,
+    "rate_M_per_hour": 3.217329545463909,
+    "EndTime": "2026-11-21T07:08:15",
+    "actual_final_checkpoint_policy": "Preserved by existing archive owners",
+    "estimate": "Observed window extrapolation only; no job/input/resources changed"
+  },
+  {
+    "case": "d200_spinning_n192",
+    "job": "17260147",
+    "time": 205.7486979163631,
+    "remaining_wall_hours": 59.56049009444444,
+    "estimated_hours_to500": 89.14116149452366,
+    "window_hours": 6.111111111111111,
+    "rate_M_per_hour": 3.3009588067989677,
+    "EndTime": "2026-11-20T09:09:23",
+    "actual_final_checkpoint_policy": "Preserved by existing archive owners",
+    "estimate": "Observed window extrapolation only; no job/input/resources changed"
+  }
+]

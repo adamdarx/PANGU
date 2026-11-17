@@ -1,0 +1,93 @@
+{
+  "utc": "2026-11-17T13:40:28.176420Z",
+  "status": "read_only_plan_no_jobs_changed_or_submitted",
+  "target_M": 500,
+  "checkpoints": [
+    {
+      "case": "d200_stationary_n192",
+      "original_job_id": "17260150",
+      "checkpoint_candidates": [
+        {
+          "path": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/17260150/attempt-0/pangu/output/nr_boosted_puncture.restart.00000.rhdf",
+          "time": 0.0,
+          "cycle": 0,
+          "bytes": 334868665,
+          "mtime_ns": 1794784234000000000,
+          "header_readable": true,
+          "full_restart_integrity_and_GPU_equivalence": "not checked by this read-only inventory"
+        },
+        {
+          "path": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/17260150/attempt-0/pangu/output/nr_boosted_puncture.restart.00003.rhdf",
+          "time": 75.00162760416143,
+          "cycle": 46081,
+          "bytes": 5259703514,
+          "mtime_ns": 1794866065000000000,
+          "header_readable": true,
+          "full_restart_integrity_and_GPU_equivalence": "not checked by this read-only inventory"
+        },
+        {
+          "path": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/17260150/attempt-0/pangu/output/nr_boosted_puncture.restart.00004.rhdf",
+          "time": 100.00000000006752,
+          "cycle": 61440,
+          "bytes": 5267126981,
+          "mtime_ns": 1794893863000000000,
+          "header_readable": true,
+          "full_restart_integrity_and_GPU_equivalence": "not checked by this read-only inventory"
+        },
+        {
+          "path": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/17260150/attempt-0/pangu/output/nr_boosted_puncture.restart.00005.rhdf",
+          "time": 125.00000000014028,
+          "cycle": 76800,
+          "bytes": 5272841558,
+          "mtime_ns": 1794921615000000000,
+          "header_readable": true,
+          "full_restart_integrity_and_GPU_equivalence": "not checked by this read-only inventory"
+        }
+      ]
+    },
+    {
+      "case": "d200_spinning_n192",
+      "original_job_id": "17260147",
+      "checkpoint_candidates": [
+        {
+          "path": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/17260147/attempt-0/pangu/output/nr_puncture.restart.00000.rhdf",
+          "time": 0.0,
+          "cycle": 0,
+          "bytes": 1817841522,
+          "mtime_ns": 1794705931000000000,
+          "header_readable": true,
+          "full_restart_integrity_and_GPU_equivalence": "not checked by this read-only inventory"
+        },
+        {
+          "path": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/17260147/attempt-0/pangu/output/nr_puncture.restart.00006.rhdf",
+          "time": 150.00000000002095,
+          "cycle": 92160,
+          "bytes": 5529577015,
+          "mtime_ns": 1794864025000000000,
+          "header_readable": true,
+          "full_restart_integrity_and_GPU_equivalence": "not checked by this read-only inventory"
+        },
+        {
+          "path": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/17260147/attempt-0/pangu/output/nr_puncture.restart.00007.rhdf",
+          "time": 175.00162760404208,
+          "cycle": 107521,
+          "bytes": 5526239856,
+          "mtime_ns": 1794890313000000000,
+          "header_readable": true,
+          "full_restart_integrity_and_GPU_equivalence": "not checked by this read-only inventory"
+        },
+        {
+          "path": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/17260147/attempt-0/pangu/output/nr_puncture.restart.00008.rhdf",
+          "time": 200.00162760389657,
+          "cycle": 122881,
+          "bytes": 5529110768,
+          "mtime_ns": 1794916589000000000,
+          "header_readable": true,
+          "full_restart_integrity_and_GPU_equivalence": "not checked by this read-only inventory"
+        }
+      ]
+    }
+  ],
+  "option_checkpoint": "Retain these current-run states; only after explicit clarification of the previous fresh-only instruction, validate frozen-binary GPU restart equivalence and arrange a separate allocation to finish500. Never change/cancel current jobs.",
+  "option_fresh": "Keep current jobs/data; prepare a fresh N192 run on more GPUs only after measured memory/throughput admission. Scaling is unverified; would repeat the initial portion."
+}

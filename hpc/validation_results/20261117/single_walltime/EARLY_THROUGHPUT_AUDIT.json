@@ -1,0 +1,67 @@
+{
+  "utc": "2026-11-17T13:43:25.125556Z",
+  "cohort": "N32_N48_N64_stationary_and_spinning",
+  "cases": [
+    {
+      "case": "stationary_n32",
+      "GPU_job": "17371935",
+      "steady_step_seconds_median": 0.161,
+      "dt": 0.009765625,
+      "compute_only500M_hours": 2.289777777777778,
+      "log_sha256": "4fcae29d68696abd10245d0ea65e3d1e0bd7c9a4649be2650672de7bac990cc8",
+      "scope": "Only evolution steps3..15, excluding initial/final output. No completion guarantee; later AMR/AH/I/O/runtime variability remain. All formal jobs use compression0 after proven HDF5-deflate bottleneck.",
+      "allocation_changed": false
+    },
+    {
+      "case": "stationary_n48",
+      "GPU_job": "17371936",
+      "steady_step_seconds_median": 0.367,
+      "dt": 0.006510416666666671,
+      "compute_only500M_hours": 7.829333333333328,
+      "log_sha256": "61760a0d15a51d2b52d4493bb3aed6bb0de83bee48062ef9c53e0ed14d16654e",
+      "scope": "Only evolution steps3..15, excluding initial/final output. No completion guarantee; later AMR/AH/I/O/runtime variability remain. All formal jobs use compression0 after proven HDF5-deflate bottleneck.",
+      "allocation_changed": false
+    },
+    {
+      "case": "spinning_n32",
+      "GPU_job": "17371938",
+      "steady_step_seconds_median": 0.162,
+      "dt": 0.009765625,
+      "compute_only500M_hours": 2.304,
+      "log_sha256": "08133e79eadba91ab53cdd7d9798412e413343cadeefc7146318b357775ce7e3",
+      "scope": "Only evolution steps3..15, excluding initial/final output. No completion guarantee; later AMR/AH/I/O/runtime variability remain. All formal jobs use compression0 after proven HDF5-deflate bottleneck.",
+      "allocation_changed": false
+    },
+    {
+      "case": "spinning_n48",
+      "GPU_job": "17371939",
+      "steady_step_seconds_median": 0.366,
+      "dt": 0.006510416666666671,
+      "compute_only500M_hours": 7.8079999999999945,
+      "log_sha256": "28e32ec11ef9a3a0be51e1a75dcac9ac53d684bf5e8662df55464ead7595f6c0",
+      "scope": "Only evolution steps3..15, excluding initial/final output. No completion guarantee; later AMR/AH/I/O/runtime variability remain. All formal jobs use compression0 after proven HDF5-deflate bottleneck.",
+      "allocation_changed": false
+    },
+    {
+      "case": "stationary_n64",
+      "GPU_job": "17372618",
+      "steady_step_seconds_median": 0.71,
+      "dt": 0.0048828125,
+      "compute_only500M_hours": 20.195555555555554,
+      "log_sha256": "daaa4d2392a1bfb1040d93d9a03fa471b981dba04a435fdf08129c408abffdb3",
+      "scope": "Only evolution steps3..15, excluding initial/final output. No completion guarantee; later AMR/AH/I/O/runtime variability remain. All formal jobs use compression0 after proven HDF5-deflate bottleneck.",
+      "allocation_changed": false
+    },
+    {
+      "case": "spinning_n64",
+      "GPU_job": "17373397",
+      "steady_step_seconds_median": 0.708,
+      "dt": 0.0048828125,
+      "compute_only500M_hours": 20.138666666666666,
+      "log_sha256": "d29b7d8dea294a423dd2b3a31dd73a5d55bbec93d7f9a9d3f9873411aa0f915d",
+      "scope": "Only evolution steps3..15, excluding initial/final output. No completion guarantee; later AMR/AH/I/O/runtime variability remain. All formal jobs use compression0 after proven HDF5-deflate bottleneck.",
+      "allocation_changed": false
+    }
+  ],
+  "status": "Early measured compute projections fit five days; no resource changes or new submissions"
+}
