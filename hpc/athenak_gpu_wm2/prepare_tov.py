@@ -43,7 +43,7 @@ for n in (64, 96):
                                p_pert='0', user_hist='true')),
               ('fastflow', {'num_horizons': '1', 'ntheta': '40', 'lmax': '12',
                             'initial_radius_0': '2', 'start_time_0': '0', 'stop_time_0': '1e30',
-                            'flow_iterations_0': '300', 'hmean_tol_0': '1e-5',
+                            'flow_iterations_0': '300', 'hmean_tol_0': '100',
                             'mass_tol_0': '1e-5', 'output_grid': 'false'})]
     for key in ('write_final_csv',): blocks[-2][1].pop(key, None)
     for axis in (1, 2, 3):

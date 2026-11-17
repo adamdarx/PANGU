@@ -3,6 +3,8 @@ from pathlib import Path
 import csv,datetime,hashlib,json,os,re,signal,subprocess,sys,time
 import numpy as np
 R=Path(__file__).resolve().parent;root=R.parent;mode,key=sys.argv[1:];case=next(c for c in json.loads((R/'PLAN.json').read_text())['cases'] if c['id']==key)
+sys.path.insert(0,str(root))
+from reference_history_guard import check_norms
 assert os.environ.get('SLURM_JOB_ID') and os.environ.get('CUDA_VISIBLE_DEVICES')
 build=json.loads((root/'AH_BUILD_STATUS.json').read_text());exe=Path(build['binary']);assert hashlib.sha256(exe.read_bytes()).hexdigest()==build['sha256'];deck=R/'inputs'/case['inputs'][mode]['file'];assert hashlib.sha256(deck.read_bytes()).hexdigest()==case['inputs'][mode]['sha256']
 job=os.environ['SLURM_JOB_ID'];work=R/'runs'/key/job;work.mkdir(parents=True,exist_ok=False);receipt=R/('%s_%s.json'%(mode.upper(),key));report=dict(status=mode+'_running',job_id=job,case=key,mode=mode,work=str(work),target=case['target'],binary_sha256=build['sha256'],input_sha256=case['inputs'][mode]['sha256'],physical_acceptance=False,comparison_differences=case['differences'])
@@ -25,7 +27,7 @@ try:
    try:
     while p.poll() is None:
      apps=subprocess.check_output(['nvidia-smi','-i',os.environ['CUDA_VISIBLE_DEVICES'],'--query-compute-apps=process_name','--format=csv,noheader']).decode();seen=seen or exe.name in apps
-     if time.monotonic()-last>60:report['free_GiB']=free();save();assert report['free_GiB']>150,'Protect production quota';last=time.monotonic()
+     if time.monotonic()-last>60:check_norms(work);report['free_GiB']=free();save();assert report['free_GiB']>150,'Protect production quota';last=time.monotonic()
      if mode=='admission':
       if time.monotonic()-start>1600:raise TimeoutError('Bounded GPU admission exceeded1600seconds')
       q=next(work.rglob('z4c-hc.tsv'),None)
@@ -41,6 +43,7 @@ try:
     except subprocess.TimeoutExpired:os.killpg(p.pid,signal.SIGKILL);p.wait()
     raise
  finally:mon.terminate();mon.wait(timeout=10);gpu.close()
+ check_norms(work,full=True)
  report.update(returncode=p.returncode,actual_GPU_process_observed=seen,wall_seconds=time.monotonic()-start);assert p.returncode==0 and seen
  text=(work/'run.log').read_text(errors='replace');assert 'Done.' in text
  hc=next(work.rglob('z4c-hc.tsv'));d=np.atleast_2d(np.loadtxt(hc));assert np.isfinite(d).all();report.update(final_time=float(d[-1,1]),final_cycle=int(d[-1,0]))

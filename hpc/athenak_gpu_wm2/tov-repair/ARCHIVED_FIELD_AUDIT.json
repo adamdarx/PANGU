@@ -1,0 +1,290 @@
+{
+  "n64_i00019": {
+    "n": 64,
+    "index": 19,
+    "time": 94.99999999994783,
+    "source_sha256": "f4e244becde3bebd60dcadf0dc78277459a3f4b8fe1845c545253c4319db0611",
+    "source_archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.z4c.00019.bin.zst",
+    "cells": 1867776,
+    "any_nonfinite_cells": 0,
+    "shells": {
+      "0<=r<2": {
+        "cells": 366752,
+        "any_nonfinite_cells": 0,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 0,
+        "chi_range": [
+          5.763860099250451e-05,
+          0.4203367233276367
+        ],
+        "lapse_range": [
+          0.001047925790771842,
+          0.3787631690502167
+        ]
+      },
+      "2<=r<5": {
+        "cells": 320760,
+        "any_nonfinite_cells": 0,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 0,
+        "chi_range": [
+          0.420697957277298,
+          0.7202154397964478
+        ],
+        "lapse_range": [
+          0.37905994057655334,
+          0.6941624879837036
+        ]
+      },
+      "5<=r<10": {
+        "cells": 229376,
+        "any_nonfinite_cells": 0,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 0,
+        "chi_range": [
+          0.7203310132026672,
+          0.8086831569671631
+        ],
+        "lapse_range": [
+          0.6943508386611938,
+          0.8524543642997742
+        ]
+      },
+      "10<=r<30": {
+        "cells": 343096,
+        "any_nonfinite_cells": 0,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 0,
+        "chi_range": [
+          0.8087359666824341,
+          0.9097117781639099
+        ],
+        "lapse_range": [
+          0.8525527119636536,
+          0.9522231221199036
+        ]
+      },
+      "30<=r<1000": {
+        "cells": 607792,
+        "any_nonfinite_cells": 0,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 0,
+        "chi_range": [
+          0.9097838997840881,
+          0.9868407845497131
+        ],
+        "lapse_range": [
+          0.9522706270217896,
+          0.9933851361274719
+        ]
+      }
+    },
+    "scope": "Geometric radial shells, not an apparent-horizon mask. Nonfinite global histories alone do not establish exterior failure; these fields directly locate it."
+  },
+  "n64_i00020": {
+    "n": 64,
+    "index": 20,
+    "time": 100.0,
+    "source_sha256": "40cde2efa59bde2e323da5e604b9d7b5b92c248bd8a726348d9407ce6e93130e",
+    "source_archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.z4c.00020.bin.zst",
+    "cells": 1867776,
+    "any_nonfinite_cells": 1867776,
+    "shells": {
+      "0<=r<2": {
+        "cells": 366752,
+        "any_nonfinite_cells": 366752,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 366752,
+        "chi_range": null,
+        "lapse_range": null
+      },
+      "2<=r<5": {
+        "cells": 320760,
+        "any_nonfinite_cells": 320760,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 320760,
+        "chi_range": null,
+        "lapse_range": null
+      },
+      "5<=r<10": {
+        "cells": 229376,
+        "any_nonfinite_cells": 229376,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 229376,
+        "chi_range": null,
+        "lapse_range": null
+      },
+      "10<=r<30": {
+        "cells": 343096,
+        "any_nonfinite_cells": 343096,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 343096,
+        "chi_range": null,
+        "lapse_range": null
+      },
+      "30<=r<1000": {
+        "cells": 607792,
+        "any_nonfinite_cells": 607792,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 607792,
+        "chi_range": null,
+        "lapse_range": null
+      }
+    },
+    "scope": "Geometric radial shells, not an apparent-horizon mask. Nonfinite global histories alone do not establish exterior failure; these fields directly locate it."
+  },
+  "n96_i00015": {
+    "n": 96,
+    "index": 15,
+    "time": 74.99999999997287,
+    "source_sha256": "9ac4033fb65a1db3270f0c3c3e3db72603ff5f4e0b5422c38e35c72757ca0435",
+    "source_archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.z4c.00015.bin.zst",
+    "cells": 6303744,
+    "any_nonfinite_cells": 0,
+    "shells": {
+      "0<=r<2": {
+        "cells": 1237544,
+        "any_nonfinite_cells": 0,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 0,
+        "chi_range": [
+          2.3154658265411854e-05,
+          0.4031410217285156
+        ],
+        "lapse_range": [
+          0.0006965392967686057,
+          0.39773789048194885
+        ]
+      },
+      "2<=r<5": {
+        "cells": 1082456,
+        "any_nonfinite_cells": 0,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 0,
+        "chi_range": [
+          0.4032990634441376,
+          0.6904186606407166
+        ],
+        "lapse_range": [
+          0.3978707790374756,
+          0.7045287489891052
+        ]
+      },
+      "5<=r<10": {
+        "cells": 774144,
+        "any_nonfinite_cells": 0,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 0,
+        "chi_range": [
+          0.6904686093330383,
+          0.791208803653717
+        ],
+        "lapse_range": [
+          0.7046063542366028,
+          0.8532991409301758
+        ]
+      },
+      "10<=r<30": {
+        "cells": 1158912,
+        "any_nonfinite_cells": 0,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 0,
+        "chi_range": [
+          0.7912357449531555,
+          0.9081549644470215
+        ],
+        "lapse_range": [
+          0.8533382415771484,
+          0.9562230110168457
+        ]
+      },
+      "30<=r<1000": {
+        "cells": 2050688,
+        "any_nonfinite_cells": 0,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 0,
+        "chi_range": [
+          0.9081690907478333,
+          0.9869109988212585
+        ],
+        "lapse_range": [
+          0.9562538862228394,
+          0.993422269821167
+        ]
+      }
+    },
+    "scope": "Geometric radial shells, not an apparent-horizon mask. Nonfinite global histories alone do not establish exterior failure; these fields directly locate it."
+  },
+  "n96_i00016": {
+    "n": 96,
+    "index": 16,
+    "time": 79.99999999996832,
+    "source_sha256": "46cc0be03852009dba8ce0ec6a2d0cca91395e565f8579b0562e3ed6569c2bbe",
+    "source_archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.z4c.00016.bin.zst",
+    "cells": 6303744,
+    "any_nonfinite_cells": 6303744,
+    "shells": {
+      "0<=r<2": {
+        "cells": 1237544,
+        "any_nonfinite_cells": 1237544,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 1237544,
+        "chi_range": null,
+        "lapse_range": null
+      },
+      "2<=r<5": {
+        "cells": 1082456,
+        "any_nonfinite_cells": 1082456,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 1082456,
+        "chi_range": null,
+        "lapse_range": null
+      },
+      "5<=r<10": {
+        "cells": 774144,
+        "any_nonfinite_cells": 774144,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 774144,
+        "chi_range": null,
+        "lapse_range": null
+      },
+      "10<=r<30": {
+        "cells": 1158912,
+        "any_nonfinite_cells": 1158912,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 1158912,
+        "chi_range": null,
+        "lapse_range": null
+      },
+      "30<=r<1000": {
+        "cells": 2050688,
+        "any_nonfinite_cells": 2050688,
+        "nonpositive_chi_cells": 0,
+        "nonpositive_lapse_cells": 0,
+        "conformal_metric_nonSPD_cells": 2050688,
+        "chi_range": null,
+        "lapse_range": null
+      }
+    },
+    "scope": "Geometric radial shells, not an apparent-horizon mask. Nonfinite global histories alone do not establish exterior failure; these fields directly locate it."
+  }
+}

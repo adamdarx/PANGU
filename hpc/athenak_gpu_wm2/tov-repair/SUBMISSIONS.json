@@ -1,11 +1,17 @@
 {
   "admission": {
-    "64": "17374026"
+    "64": "17374129"
   },
   "formal": {
     "64": "17374027"
   },
   "utc": "2026-11-17T12:08:30.566978Z",
   "scope": "N64 native stabilization-parameter retry, initial data/binary/FD unchanged; live nonfinite history guard; N96 retry deferred until N64 reviewed",
-  "physical_acceptance": false
+  "physical_acceptance": false,
+  "AH_probe": "17374129",
+  "previous_resource_admission": "17374026",
+  "formal_state_before_AH_gate": "PENDING",
+  "formal_waits_for_AH_probe": true,
+  "AH_parameter_correction": "Native hmean_tol100 is an iteration-divergence guard; mass_tol remains1e-5, residual quality independent",
+  "updated_utc": "2026-11-17T12:25:52.543277Z"
 }

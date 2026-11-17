@@ -3,6 +3,8 @@ from pathlib import Path
 import csv,datetime,hashlib,json,os,re,signal,subprocess,sys,time
 import numpy as np
 R=Path(__file__).resolve().parent;root=R.parent;mode=sys.argv[1];n=int(sys.argv[2])
+sys.path.insert(0,str(root))
+from reference_history_guard import check_norms
 assert mode in ['admission','formal'] and n in [64,96]
 assert os.environ.get('SLURM_JOB_ID') and os.environ.get('CUDA_VISIBLE_DEVICES')
 case=next(c for c in json.loads((R/'PLAN.json').read_text())['cases'] if c['n']==n)
@@ -29,7 +31,7 @@ try:
   try:
    while child.poll() is None:
     now=time.monotonic()
-    if now-last>60:report['free_GiB']=free();save();assert report['free_GiB']>150,'Protect production storage';last=now
+    if now-last>60:check_norms(work);report['free_GiB']=free();save();assert report['free_GiB']>150,'Protect production storage';last=now
     if mode=='admission':
      if now-start>1500:raise TimeoutError('Bounded GPU admission exceeded1500seconds')
      p=next(work.rglob('hydrobasex-rho.tsv'),None)
@@ -44,6 +46,7 @@ try:
    try:child.wait(timeout=30)
    except subprocess.TimeoutExpired:os.killpg(child.pid,signal.SIGKILL);child.wait()
    raise
+ check_norms(work,full=True)
  report.update(returncode=child.returncode,wall_seconds=time.monotonic()-start);assert child.returncode==0
  text=(work/'run.log').read_text(errors='replace');assert 'Done.' in text and 'BNS_TABLE source0=' in text
  memory={}

@@ -1,7 +1,9 @@
 from pathlib import Path
-import csv,datetime,hashlib,json,os,re,signal,subprocess,time
+import csv,datetime,hashlib,json,os,re,signal,subprocess,sys,time
 import numpy as np
 ROOT=Path('/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu');suite=ROOT/'native-tov-reference'
+sys.path.insert(0,str(ROOT))
+from reference_history_guard import check_norms
 n=int(os.environ['REFERENCE_N']);mode=os.environ.get('REFERENCE_MODE','validation');assert mode in ('validation','formal') and n in (64,96)
 assert os.environ.get('SLURM_JOB_ID') and os.environ.get('CUDA_VISIBLE_DEVICES')
 build=json.loads((ROOT/'AH_BUILD_STATUS.json').read_text());exe=Path(build['binary']);assert hashlib.sha256(exe.read_bytes()).hexdigest()==build['sha256']
@@ -30,6 +32,7 @@ try:
      with (work/'gpu-processes.log').open('a') as f:f.write(processes)
      if exe.name in processes:observed=True
      if time.monotonic()-last>60:
+      check_norms(work)
       assert free()>150,'Terminate this new reference only to protect production quota';last=time.monotonic()
      if mode=='validation' and time.monotonic()-start>1000:raise TimeoutError('GPU validation exceeded1000seconds')
      time.sleep(1)
@@ -39,6 +42,7 @@ try:
     except subprocess.TimeoutExpired:os.killpg(child.pid,signal.SIGKILL);child.wait()
     raise
  finally:monitor.terminate();monitor.wait(timeout=10);gpu.close()
+ check_norms(work,full=True)
  report.update(returncode=child.returncode,actual_GPU_process_observed=observed);assert child.returncode==0 and observed,'GPU execution/exit check failed'
  assert 'Done.' in (work/'run.log').read_text(errors='replace')
  memory={}

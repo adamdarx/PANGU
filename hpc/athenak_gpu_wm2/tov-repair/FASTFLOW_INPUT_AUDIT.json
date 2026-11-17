@@ -1,0 +1,12 @@
+{
+  "source_fastflow_cpp_sha256": "524c8e28b417f0526753e507787138c5f9ee59897e726601a278bb7daa60d321",
+  "source_verified_equal_on_HPC": true,
+  "incorrect_new_matter_input_value": 1e-05,
+  "native_abort_bound": 100.0,
+  "code_semantics": "if abs(integral(H dA)) > hmean_tol: failed=true; break; native mass_tol drives iteration convergence",
+  "effective_runtime_override": "fastflow/hmean_tol_0=100",
+  "unchanged_mass_tolerance": 1e-05,
+  "native_hrms_semantics": "integral(H^2 dA)/area; true RMS expansion is sqrt(hrms)",
+  "scientific_acceptance": "Separate postprocessing of expansion residual, mass budget and cross-code differences. Native found flag alone is not physical acceptance.",
+  "does_not_fix_nonfinite_evolution_by_itself": true
+}

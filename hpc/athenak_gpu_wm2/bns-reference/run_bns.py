@@ -16,6 +16,7 @@ work=ROOT/'runs'/('bns_n%d'%args.resolution)/job;work.mkdir(parents=True,exist_o
 report=dict(status=args.mode+'_running',mode=args.mode,resolution=args.resolution,job_id=job,
             started_utc=datetime.datetime.utcnow().isoformat()+'Z',binary_sha256=binary['sha256'],
             input_sha256=case['sha256'],work=str(work),physical_acceptance=False)
+report['effective_overrides']={'fastflow/hmean_tol_0':100.0,'reason':'Native divergence-abort bound; convergence and physical quality checked separately'}
 receipt=ROOT/('BNS_%s_N%d.json'%(args.mode.upper(),args.resolution))
 def save():
     temporary=receipt.with_suffix('.tmp');temporary.write_text(json.dumps(report,indent=2,allow_nan=False)+'\n');temporary.replace(receipt)
@@ -34,6 +35,7 @@ try:
         assert admission['status']=='admission_passed' and admission['binary_sha256']==binary['sha256'] and admission['input_sha256']==case['sha256']
         report['admission_job_id']=admission['job_id'];save()
     command=['mpirun','-np',str(ranks),'--bind-to','none','bash',str(ROOT/'rank.sh'),str(exe),'-i',str(deck)]
+    command+=['fastflow/hmean_tol_0=100']
     if args.mode=='admission':
         command+=['time/nlim=8','time/ndiag=1','fastflow/start_time_0=1e30']
         command+=['output%d/dt=1e30'%i for i in range(2,10)]

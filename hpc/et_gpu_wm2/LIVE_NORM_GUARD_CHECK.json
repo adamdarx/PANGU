@@ -1,0 +1,25 @@
+{
+  "actual_GPU_result_checks": [
+    {
+      "folder": "native-tov-reference/runs/n64/17371787",
+      "finite_norms_and_positive_volumes": true
+    },
+    {
+      "folder": "native-tov-reference/runs/n96/17371788",
+      "finite_norms_and_positive_volumes": true
+    },
+    {
+      "folder": "vacuum-reference/runs/stationary_n64/17373901",
+      "finite_norms_and_positive_volumes": true
+    },
+    {
+      "folder": "vacuum-reference/runs/spinning_n64/17373902",
+      "finite_norms_and_positive_volumes": true
+    },
+    {
+      "folder": "vacuum-reference/runs/quasicircular_n32/17373933",
+      "finite_norms_and_positive_volumes": true
+    }
+  ],
+  "scope": "Completed native norm rows only; no evolution run on DATA"
+}
