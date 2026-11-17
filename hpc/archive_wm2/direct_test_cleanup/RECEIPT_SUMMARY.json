@@ -1,0 +1,15 @@
+{
+  "policy": "User explicitly authorizes direct deletion of valueless or accepted testing data without archive",
+  "scope": "Only historical performance / CPU / MPI-I/O diagnosis and quota-retry large numerical outputs; logs, scripts, binaries and formal scientific results retained",
+  "archive_required": false,
+  "removed_bytes": 96265216140,
+  "completed_utc": "2026-11-17T09:28:59.295116Z",
+  "removed_files": 627,
+  "skipped_files": 0,
+  "coarse_archive_owner": {
+    "pid": 388874,
+    "scope": "only new coarse cohort",
+    "policy": "Formal fields archived; closed resource admission raw fields discarded directly; diagnostic receipts retained",
+    "updated_utc": "2026-11-17T09:30:06.554552+00:00"
+  }
+}

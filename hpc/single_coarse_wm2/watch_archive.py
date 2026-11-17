@@ -1,4 +1,4 @@
-"""Own only the new six-case cohort journal; reuse the canonical SHA-verified pipeline."""
+"""Archive formal outputs; directly discard closed resource-test raw data."""
 from pathlib import Path
 import datetime,fcntl,json,os,subprocess,sys,time
 H=Path(__file__).resolve().parent;name='20261117-single-coarse-convergence'
@@ -17,7 +17,13 @@ for d in (r/'runs').glob('*/*'):
  match=re.fullmatch(r'(stationary|spinning)_n(32|48|64)',case)
  if not match or not d.name.isdigit():continue
  mode=None;state=None
+ own=d/'STATUS.json'
+ if own.exists():
+  v=json.loads(own.read_text());state=v.get('status','')
+  if state.startswith('admission_'):mode='ADMISSION'
+  elif state.startswith('formal_'):mode='FORMAL'
  for candidate in ('ADMISSION','FORMAL'):
+  if mode is not None:break
   p=r/('%s_%s.json'%(candidate,case))
   if p.exists():
    v=json.loads(p.read_text())
@@ -38,8 +44,8 @@ for d in (r/'runs').glob('*/*'):
    if not m and not complete:continue
    remove=mode=='ADMISSION' and complete
    if mode=='FORMAL' and m and int(m[1])>0 and p.name not in latest:remove=True
-   rows.append(dict(path=str(p.relative_to(base)),absolute_source=str(p),bytes=s.st_size,mtime_ns=s.st_mtime_ns,remove_after_verified=remove,phase=mode,physical_acceptance='pending'))
- if complete:
+   rows.append(dict(path=str(p.relative_to(base)),absolute_source=str(p),bytes=s.st_size,mtime_ns=s.st_mtime_ns,remove_after_verified=remove,direct_discard=(mode=='ADMISSION' and complete),phase=mode,physical_acceptance='pending'))
+ if complete and mode=='FORMAL':
   for p in d.rglob('*'):
    if not p.is_file() or p.is_symlink() or p.suffix in ('.phdf','.rhdf') or p.name.endswith('.archive.json'):continue
    st=p.stat()
@@ -58,6 +64,11 @@ with (H/'archive.lock').open('w') as lock:
    assert a.archive_available(),'Archive drive unavailable; retain server sources'
    entries=json.loads(subprocess.check_output(ssh+['python3 -'],input=INVENTORY.encode(),timeout=90))
    for e in entries:
+    if e.get('direct_discard'):
+     code="from pathlib import Path\nimport json,stat\np=Path("+repr(e['absolute_source'])+")\nassert p.is_relative_to(Path("+repr(a.BASE+'/'+name+'/runs')+")) if hasattr(p,'is_relative_to') else str(p).startswith("+repr(a.BASE+'/'+name+'/runs/')+")\nassert not any(q.is_symlink() for q in [p]+list(p.parents))\ns=p.stat()\nassert stat.S_ISREG(s.st_mode) and s.st_uid==71767 and s.st_size=="+repr(e['bytes'])+" and s.st_mtime_ns=="+repr(e['mtime_ns'])+"\np.unlink()\n"
+     subprocess.check_output(ssh+['python3 -'],input=code.encode(),timeout=90)
+     index.setdefault('discarded_tests',{})[e['path']]=dict(bytes=e['bytes'],reason='Closed resource admission raw data; diagnostics retained; user requests direct deletion',removed_utc=datetime.datetime.now(datetime.timezone.utc).isoformat());a.save(index)
+     continue
     old=index['files'].get(e['path'])
     if old and old.get('server_removed'):continue
     if old and not e['remove_after_verified'] and Path(old['archive']).exists():continue

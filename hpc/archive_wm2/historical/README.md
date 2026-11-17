@@ -1,3 +1,5 @@
+CURRENT POLICY: blanket archival is disabled by the STOP marker. Classify data first. Obsolete or accepted temporary test raw output is deleted directly without archival; formal scientific evidence remains protected.
+
 Historical result archival
 
 Scope: old Matter, BinaryPuncture, SinglePuncture, ApplesWithApples, Performance, BinaryPlasma and Operations result files. Live solver roots, current archive owners, source/build trees and executable binaries are excluded. Current scheduler command/work directories are refreshed before processing.

@@ -2,6 +2,7 @@ from pathlib import Path
 import json,subprocess,time,os,datetime
 H=Path(__file__).parent
 while True:
+ if (H/'STOP').exists(): raise SystemExit('Latest user policy disables blanket archival')
  try:
   d=json.loads((H/'INVENTORY.json').read_text());assert d['entries'];break
  except (ValueError,AssertionError,FileNotFoundError):time.sleep(10)

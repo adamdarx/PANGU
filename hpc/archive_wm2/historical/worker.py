@@ -2,6 +2,7 @@
 from pathlib import Path
 import datetime,fcntl,hashlib,json,os,shlex,subprocess,sys,time
 H=Path(__file__).resolve().parent
+if (H/'STOP').exists(): raise SystemExit('Historical blanket archival disabled by latest user policy')
 sys.path.insert(0,'/home/adamdarx/archive-local/ArchiveControl/20261114/runtime/validation/hpc/binary_stall_20261103')
 import archive_qnm as w
 a=w.archive
@@ -37,6 +38,7 @@ with (H/'archive.lock').open('w') as lock:
  index.update(status='running',pid=os.getpid(),inventory_files=len(entries),inventory_raw_bytes=inv['raw_bytes']);a.save(index)
  cache=[];last=0;errors=[]
  for e in entries:
+  if (H/'STOP').exists(): break
   try:
    if time.monotonic()-last>60:cache=protected();last=time.monotonic()
    source=a.BASE+'/'+e['path']
