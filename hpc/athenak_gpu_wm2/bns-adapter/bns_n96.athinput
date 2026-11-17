@@ -1,0 +1,211 @@
+# Candidate matched BNS table input: GPU admission required before formal submission.
+<job>
+basename = athenak_bns_n96
+
+<mesh>
+nghost = 4
+nx1 = 96
+x1min = -256
+x1max = 256
+ix1_bc = diode
+ox1_bc = diode
+nx2 = 96
+x2min = -256
+x2max = 256
+ix2_bc = diode
+ox2_bc = diode
+nx3 = 96
+x3min = -256
+x3max = 256
+ix3_bc = diode
+ox3_bc = diode
+
+<meshblock>
+nx1 = 24
+nx2 = 24
+nx3 = 24
+
+<mesh_refinement>
+refinement = static
+
+<time>
+evolution = dynamic
+integrator = rk4
+cfl_number = 0.15
+tlim = 200
+nlim = -1
+ndiag = 20
+
+<coord>
+general_rel = true
+excise = false
+m = 1
+a = 0
+
+<mhd>
+eos = ideal
+dyn_eos = ideal
+dyn_error = reset_floor
+reconstruct = plm
+rsolver = hlle
+dfloor = 1e-14
+tfloor = 1e-12
+dthreshold = 1.02
+gamma = 1.999999999999
+gamma_max = 1000
+max_bsq = 1e8
+dyn_scratch = 1
+fofc = true
+enforce_maximum = false
+
+<adm>
+
+
+<z4c>
+diss = 0.1
+damp_kappa1 = 0.02
+damp_kappa2 = 0
+chi_psi_power = -4
+chi_div_floor = 1e-5
+lapse_oplog = 2
+lapse_advect = 1
+slow_start_lapse = false
+shift_Gamma = 1
+shift_eta = 2
+shift_advect = 1
+floor_chi = true
+chi_min_floor = 1e-12
+
+<problem>
+initial_data_file = /lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/source-records/bns/bns.dat
+pressure_floor = 1e-26
+user_hist = false
+
+<fastflow>
+num_horizons = 1
+ntheta = 40
+lmax = 12
+initial_radius_0 = 3
+start_time_0 = 40
+stop_time_0 = 1e30
+flow_iterations_0 = 1000
+hmean_tol_0 = 1e-5
+mass_tol_0 = 1e-5
+output_grid = false
+
+<output1>
+file_type = hst
+dt = 0.2654888979068945
+data_format = %20.15e
+
+<output2>
+file_type = bin
+variable = mhd_w_bcc
+dt = 5
+
+<output3>
+file_type = bin
+variable = mhd_u
+dt = 5
+
+<output4>
+file_type = bin
+variable = z4c
+dt = 5
+
+<output5>
+file_type = bin
+variable = adm
+dt = 5
+
+<output6>
+file_type = bin
+variable = mhd_divb
+dt = 5
+
+<output7>
+file_type = bin
+variable = con_H
+dt = 5
+
+<output8>
+file_type = bin
+variable = con_M
+dt = 5
+
+<output9>
+file_type = rst
+dt = 50
+single_file_per_rank = true
+
+<refined_region0>
+level = 1
+x1min = -64
+x1max = 64
+x2min = -64
+x2max = 64
+x3min = -128
+x3max = 128
+
+<refined_region1>
+level = 2
+x1min = -32
+x1max = 32
+x2min = -32
+x2max = 32
+x3min = -64
+x3max = 64
+
+<refined_region2>
+level = 3
+x1min = -16
+x1max = 16
+x2min = -16
+x2max = 16
+x3min = -32
+x3max = 32
+
+<refined_region3>
+level = 4
+x1min = -9
+x1max = 9
+x2min = -9
+x2max = 9
+x3min = -21
+x3max = 21
+
+<refined_region4>
+level = 5
+x1min = -8
+x1max = 8
+x2min = -8
+x2max = 8
+x3min = -8
+x3max = 8
+
+<refined_region5>
+level = 6
+x1min = -4
+x1max = 4
+x2min = -4
+x2max = 4
+x3min = -4
+x3max = 4
+
+<refined_region6>
+level = 7
+x1min = -2
+x1max = 2
+x2min = -2
+x2max = 2
+x3min = -2
+x3max = 2
+
+<refined_region7>
+level = 8
+x1min = -1
+x1max = 1
+x2min = -1
+x2max = 1
+x3min = -1
+x3max = 1

@@ -1,0 +1,20 @@
+{
+  "status": "native_sm80_build_in_progress_GPU_initial_state_comparison_pending",
+  "cases": [
+    {
+      "n": 64,
+      "target": 200,
+      "input_sha256": "d925e0cc97baf75f76da28dd53c561399846277ae0d003bb47e613a2e58d8d80",
+      "PANGU_source_input_sha256": "6f8657cb25d0bfa867c17064069693b7b8c0879d102cfa61418acfe10c0d6ac2"
+    },
+    {
+      "n": 96,
+      "target": 200,
+      "input_sha256": "c34ed985ad190c448957405bcf0ffe80e6a4e5d4aeb96f4fdc854db627d4f740",
+      "PANGU_source_input_sha256": "5ea9eb52c3210c293cdf87688cb24672abce08f1f356b9869a5a4a5693f0791c"
+    }
+  ],
+  "evolution_or_FD_changes": false,
+  "adapter_scope": "read existing time-symmetric constraint-solved initial-data table only",
+  "formal_submitted": false
+}
