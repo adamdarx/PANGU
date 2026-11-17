@@ -1,0 +1,42 @@
+{
+  "status": "mesh_only_no_evolution",
+  "parthenon": "fa7f3f09a192030f511834fff934d799457d4958",
+  "cases": [
+    {
+      "n": 32,
+      "blocks": 904,
+      "physical_levels": 8,
+      "command": [
+        "/home/adamdarx/PANGU/build-cuda-nr/src/pangu",
+        "-i",
+        "/home/adamdarx/pangu-setup/bbh-convergence-20261117/candidates/quasicircular_n32_pangu.in",
+        "-m",
+        "4"
+      ]
+    },
+    {
+      "n": 48,
+      "blocks": 904,
+      "physical_levels": 8,
+      "command": [
+        "/home/adamdarx/PANGU/build-cuda-nr/src/pangu",
+        "-i",
+        "/home/adamdarx/pangu-setup/bbh-convergence-20261117/candidates/quasicircular_n48_pangu.in",
+        "-m",
+        "4"
+      ]
+    },
+    {
+      "n": 64,
+      "blocks": 904,
+      "physical_levels": 8,
+      "command": [
+        "/home/adamdarx/PANGU/build-cuda-nr/src/pangu",
+        "-i",
+        "/home/adamdarx/pangu-setup/bbh-convergence-20261117/candidates/quasicircular_n64_pangu.in",
+        "-m",
+        "4"
+      ]
+    }
+  ]
+}

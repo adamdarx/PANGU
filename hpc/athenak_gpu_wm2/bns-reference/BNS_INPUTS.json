@@ -1,0 +1,16 @@
+{
+  "cases": [
+    {
+      "resolution": 64,
+      "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/inputs/bns_n64.athinput",
+      "sha256": "d925e0cc97baf75f76da28dd53c561399846277ae0d003bb47e613a2e58d8d80",
+      "target": 200
+    },
+    {
+      "resolution": 96,
+      "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/inputs/bns_n96.athinput",
+      "sha256": "c34ed985ad190c448957405bcf0ffe80e6a4e5d4aeb96f4fdc854db627d4f740",
+      "target": 200
+    }
+  ]
+}

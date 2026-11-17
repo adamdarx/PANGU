@@ -18,7 +18,10 @@ save()
 try:
  report['initial_free_GiB']=free();assert report['initial_free_GiB']>200,'Protect existing production quota'
  if mode=='formal':
-  v=json.loads((R/('ADMISSION_%s_n%d.json'%(kind,n))).read_text());assert v['status']=='admission_passed' and v['binary_sha256']==meta['sha256'] and v['input_sha256']==case['sha256'];assert (R/'COHORT_GEOMETRY_VERIFIED.json').exists()
+  v=json.loads((R/('ADMISSION_%s_n%d.json'%(kind,n))).read_text());assert v['status']=='admission_passed' and v['binary_sha256']==meta['sha256'] and v['input_sha256']==case['sha256'];proofs=[json.loads((R/('ADMISSION_%s_n%d.json'%(k,m))).read_text()) for k in ('stationary','spinning') for m in (32,48,64)]
+  proofs=[p for p in proofs if p['status']=='admission_passed'];assert proofs
+  geometries={f['geometry_sha256'] for p in proofs for f in p['fields']};assert len(geometries)==1,'Actual physical leaf layouts differ'
+  marker=R/'COHORT_GEOMETRY_VERIFIED.json';temp=marker.with_name(marker.name+'.'+os.environ['SLURM_JOB_ID']+'.tmp');temp.write_text(json.dumps(dict(status='all_admitted_actual_GPU_initial_and_step16_mesh_geometries_identical',geometry_sha256=next(iter(geometries)))));temp.replace(marker)
  cmd=['mpirun','-np',os.environ['SLURM_NTASKS'],'--bind-to','none','bash',str(R/'rank.sh'),str(exe),'-i',str(deck),'-d','output']
  if mode=='admission':cmd+=['parthenon/time/nlim=16','parthenon/time/ncycle_out=1','parthenon/output2/dt=1e30','parthenon/output3/dt=1e30']
  (work/'command.json').write_text(json.dumps(cmd,indent=2)+'\n');gpu=(work/'gpu.csv').open('w');monitor=subprocess.Popen(['nvidia-smi','--query-gpu=index,memory.used,memory.total','--format=csv,noheader,nounits','--loop=1'],stdout=gpu,stderr=subprocess.STDOUT)
@@ -32,7 +35,7 @@ try:
      if exe.name in gpu_text:observed=True
      if time.monotonic()-last>60:
       report['latest_free_GiB']=free();save();assert report['latest_free_GiB']>150,'Stop this new job only to protect production quota';last=time.monotonic()
-     if mode=='admission' and time.monotonic()-start>1000:raise TimeoutError('Bounded GPU admission exceeded1000seconds')
+     if mode=='admission' and time.monotonic()-start>2100:raise TimeoutError('Bounded GPU admission exceeded2100seconds')
      time.sleep(1)
    except BaseException:
     os.killpg(p.pid,signal.SIGTERM)

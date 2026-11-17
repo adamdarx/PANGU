@@ -1,0 +1,96 @@
+{
+  "updated_utc": "2026-11-17T09:56:24.235626+00:00",
+  "cohorts": {
+    "single-coarse-20261117": {
+      "target_M": 500,
+      "status": "all_six_formal500M_queued_with_success_dependencies",
+      "admission": {
+        "stationary_n32": "17371935",
+        "stationary_n48": "17371936",
+        "stationary_n64": "17372618",
+        "spinning_n32": "17371938",
+        "spinning_n48": "17371939",
+        "spinning_n64": "17372871"
+      },
+      "formal": {
+        "stationary_n32": "17372872",
+        "stationary_n48": "17372873",
+        "stationary_n64": "17372874",
+        "spinning_n32": "17372875",
+        "spinning_n48": "17372876",
+        "spinning_n64": "17372877"
+      },
+      "UTC": "2026-11-17T07:48:12.748017Z",
+      "GPU80_retry": {
+        "stationary_n64": {
+          "previous_job": "17371937",
+          "retry_job": "17372618",
+          "reason": "Measured GPU40G memory admission failed; same input/program, one80G GPU"
+        },
+        "spinning_n64": {
+          "previous_job": "17371940",
+          "retry_job": "17372619",
+          "reason": "Measured GPU40G memory admission failed; same input/program, one80G GPU"
+        }
+      },
+      "formal_dependencies": [
+        "17372871"
+      ],
+      "GPU80_timing_retry": {
+        "previous_job": "17372619",
+        "retry_job": "17372871",
+        "reason": "Original1000-second short-test cap expired during final output; physical16 steps nearly finished; extend short-test IO allowance only"
+      },
+      "superseded_formal": {
+        "stationary_n32": "17372809",
+        "stationary_n48": "17372810",
+        "stationary_n64": "17372811",
+        "spinning_n32": "17372812",
+        "spinning_n48": "17372813",
+        "spinning_n64": "17372814"
+      }
+    },
+    "single-athenak-parallel-20261117": {
+      "admission": {
+        "d200_spinning_n96": "17372835",
+        "d200_spinning_n128": "17372837",
+        "d200_spinning_n192": "17372839",
+        "d200_stationary_n96": "17372841",
+        "d200_stationary_n128": "17372843",
+        "d200_stationary_n192": "17372845"
+      },
+      "formal": {
+        "d200_spinning_n96": "17372836",
+        "d200_spinning_n128": "17372838",
+        "d200_spinning_n192": "17372840",
+        "d200_stationary_n96": "17372842",
+        "d200_stationary_n128": "17372844",
+        "d200_stationary_n192": "17372846"
+      },
+      "target": 500,
+      "policy": "Independent of PANGU; formal depends only on own GPU acceptance"
+    },
+    "bbh-convergence-20261117": {
+      "resource_gate": "17369148",
+      "formal": {
+        "32": "17372824",
+        "48": "17372825",
+        "64": "17372826"
+      },
+      "full_io_gate": "17372823"
+    },
+    "athenak-grmhd-reference-20261117": {
+      "admission": {
+        "64": "17372828",
+        "96": "17372830"
+      },
+      "formal": {
+        "64": "17372829",
+        "96": "17372831"
+      },
+      "target": 200
+    }
+  },
+  "formal_jobs": 17,
+  "notes": "17 current formal jobs; superseded coarse dependency jobs canceled and replaced. Short tests are technical acceptance, not physics validation."
+}

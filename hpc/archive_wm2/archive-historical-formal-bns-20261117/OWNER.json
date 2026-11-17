@@ -1,0 +1,10 @@
+{
+  "pid": 390205,
+  "scope": [
+    "Matter/20261104-bns-from-rest/",
+    "Matter/20261112-bns-dt5/"
+  ],
+  "files": 54,
+  "candidate_raw_bytes": 239671688812,
+  "existing_D_only": false
+}

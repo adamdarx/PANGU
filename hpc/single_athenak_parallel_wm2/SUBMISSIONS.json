@@ -1,0 +1,20 @@
+{
+  "admission": {
+    "d200_spinning_n96": "17372835",
+    "d200_spinning_n128": "17372837",
+    "d200_spinning_n192": "17372839",
+    "d200_stationary_n96": "17372841",
+    "d200_stationary_n128": "17372843",
+    "d200_stationary_n192": "17372845"
+  },
+  "formal": {
+    "d200_spinning_n96": "17372836",
+    "d200_spinning_n128": "17372838",
+    "d200_spinning_n192": "17372840",
+    "d200_stationary_n96": "17372842",
+    "d200_stationary_n128": "17372844",
+    "d200_stationary_n192": "17372846"
+  },
+  "target": 500,
+  "policy": "Independent of PANGU; formal depends only on own GPU acceptance"
+}

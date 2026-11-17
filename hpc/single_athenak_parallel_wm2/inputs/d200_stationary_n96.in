@@ -1,0 +1,137 @@
+# stationary, N=96, T=25; domain +/-200; eight refinements; native frozen solvers.
+
+<comment>
+problem = z4c stage02 stationary puncture
+
+<job>
+basename = stationary_n96
+
+<mesh>
+nghost = 4
+nx1 = 96
+x1min = -200.0
+x1max = 200.0
+ix1_bc = outflow
+ox1_bc = outflow
+nx2 = 96
+x2min = -200.0
+x2max = 200.0
+ix2_bc = outflow
+ox2_bc = outflow
+nx3 = 96
+x3min = -200.0
+x3max = 200.0
+ix3_bc = outflow
+ox3_bc = outflow
+
+<meshblock>
+nx1 = 16
+nx2 = 16
+nx3 = 16
+
+<time>
+evolution = dynamic
+integrator = rk4
+cfl_number = 0.2
+nlim = -1
+tlim = 500.0
+ndiag = 100
+
+<z4c>
+lapse_oplog = 2.0
+lapse_harmonic = 0.0
+lapse_advect = 1.0
+shift_Gamma = 1.0
+shift_eta = 2.0
+shift_advect = 1.0
+diss = 0.1
+chi_div_floor = 1e-5
+damp_kappa1 = 0.02
+damp_kappa2 = 0.0
+slow_start_lapse = true
+ssl_damping_time = 20
+ssl_damping_amp = 0.6
+ssl_damping_index = 1
+co_0_type = BH
+co_0_x = 0.0
+co_0_y = 0.0
+co_0_z = 0.0
+co_0_mass = 1.0
+co_0_radius = 1.0
+co_0_reflevel = 8
+tracker_mode = ode
+horizon_dt = 0.5
+
+<fastflow>
+npunct = 1
+num_horizons = 1
+use_puncture_0 = 0
+center_x_0 = 0.0
+center_y_0 = 0.0
+center_z_0 = 0.0
+ntheta = 48
+lmax = 16
+initial_radius_0 = 0.5
+flow = standard
+flow_iterations_0 = 600
+flow_alpha_beta_const_0 = 1.0
+hmean_tol_0 = 100.0
+mass_tol_0 = 1e-12
+expand_guess = 1.0
+start_time_0 = 0.0
+stop_time_0 = 1.0e30
+output_grid = true
+output_ylm = false
+verbose = false
+
+<mesh_refinement>
+refinement = adaptive
+max_nmb_per_rank = 2560
+num_levels = 9
+refinement_interval = 1
+
+<refined_region1>
+level = 8
+x1min = -1.0
+x1max = 1.0
+x2min = -1.0
+x2max = 1.0
+x3min = -1.0
+x3max = 1.0
+
+<amr_criterion0>
+method = user
+
+<z4c_amr>
+method = tracker
+
+<problem>
+punc_ADM_mass = 1.0
+
+<output1>
+file_type = hst
+dt = 0.1
+data_format = %20.15e
+
+<output2>
+file_type = bin
+variable = z4c
+dt = 25.0
+ghost_zones = false
+
+<output3>
+file_type = bin
+variable = adm
+dt = 25.0
+ghost_zones = false
+
+<output4>
+file_type = bin
+variable = con
+dt = 25.0
+ghost_zones = false
+
+<output5>
+file_type = rst
+dt = 25.0
+single_file_per_rank = true

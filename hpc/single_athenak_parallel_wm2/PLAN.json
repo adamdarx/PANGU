@@ -1,0 +1,90 @@
+{
+  "status": "standalone_AthenaK_GPU_performance_admission_required",
+  "cases": [
+    {
+      "id": "d200_spinning_n96",
+      "kind": "spinning",
+      "n": 96,
+      "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/bin/athenak-spinning-db54c2630b4c",
+      "binary_sha256": "db54c2630b4c2abad0d7d3cd047a8f78e7feb5c5fb1c74a6d220e7d975f0ebe0",
+      "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/inputs/d200_spinning_n96.in",
+      "input_sha256": "9bff58b1726d69a6b5b8c526e08b8752651eda03639aa3c29a3bb5040774b577",
+      "target": 500,
+      "nodes": 2,
+      "gpus_per_node": 2,
+      "ranks": 4,
+      "original_ranks": 2
+    },
+    {
+      "id": "d200_spinning_n128",
+      "kind": "spinning",
+      "n": 128,
+      "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/bin/athenak-spinning-db54c2630b4c",
+      "binary_sha256": "db54c2630b4c2abad0d7d3cd047a8f78e7feb5c5fb1c74a6d220e7d975f0ebe0",
+      "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/inputs/d200_spinning_n128.in",
+      "input_sha256": "51af467cc9b2e6e9561b480274402cd56d5119af3a6b62da182d7b806e3f5636",
+      "target": 500,
+      "nodes": 2,
+      "gpus_per_node": 4,
+      "ranks": 8,
+      "original_ranks": 3
+    },
+    {
+      "id": "d200_spinning_n192",
+      "kind": "spinning",
+      "n": 192,
+      "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/bin/athenak-spinning-db54c2630b4c",
+      "binary_sha256": "db54c2630b4c2abad0d7d3cd047a8f78e7feb5c5fb1c74a6d220e7d975f0ebe0",
+      "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/inputs/d200_spinning_n192.in",
+      "input_sha256": "560a39a17afaae7d4a7b6ad6f7731d51ef4781205ae6a8aaac169d47d4288089",
+      "target": 500,
+      "nodes": 2,
+      "gpus_per_node": 4,
+      "ranks": 8,
+      "original_ranks": 4
+    },
+    {
+      "id": "d200_stationary_n96",
+      "kind": "stationary",
+      "n": 96,
+      "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/bin/athenak-stationary-62f343361762",
+      "binary_sha256": "62f3433617629529e63cf3fd4bca6296a347d41fa54f69a3bb44831494ffd659",
+      "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/inputs/d200_stationary_n96.in",
+      "input_sha256": "b4a1bfe0d6abf0465c46db38d0ebdd769126dc1825cd6bd8aa223f5cd004af0a",
+      "target": 500,
+      "nodes": 2,
+      "gpus_per_node": 2,
+      "ranks": 4,
+      "original_ranks": 2
+    },
+    {
+      "id": "d200_stationary_n128",
+      "kind": "stationary",
+      "n": 128,
+      "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/bin/athenak-stationary-62f343361762",
+      "binary_sha256": "62f3433617629529e63cf3fd4bca6296a347d41fa54f69a3bb44831494ffd659",
+      "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/inputs/d200_stationary_n128.in",
+      "input_sha256": "73dbf83c0c21271a5e614cf56174d5f52ffc932b246b2a318fde0fc17dd94e1e",
+      "target": 500,
+      "nodes": 2,
+      "gpus_per_node": 4,
+      "ranks": 8,
+      "original_ranks": 3
+    },
+    {
+      "id": "d200_stationary_n192",
+      "kind": "stationary",
+      "n": 192,
+      "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/bin/athenak-stationary-62f343361762",
+      "binary_sha256": "62f3433617629529e63cf3fd4bca6296a347d41fa54f69a3bb44831494ffd659",
+      "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-athenak-parallel/inputs/d200_stationary_n192.in",
+      "input_sha256": "ed1042a1688e0616bdf936d07e1a1833dd009d1507b7b635ad6f2ee9bc13e9f8",
+      "target": 500,
+      "nodes": 2,
+      "gpus_per_node": 4,
+      "ranks": 8,
+      "original_ranks": 4
+    }
+  ],
+  "policy": "Independent scheduler jobs, no dependency on PANGU. Original frozen binaries and500M inputs. New runs begin from initial data, not stopped partial data."
+}

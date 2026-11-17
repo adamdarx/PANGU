@@ -1,0 +1,49 @@
+{
+  "target_M": 500,
+  "status": "all_six_formal500M_queued_with_success_dependencies",
+  "admission": {
+    "stationary_n32": "17371935",
+    "stationary_n48": "17371936",
+    "stationary_n64": "17372618",
+    "spinning_n32": "17371938",
+    "spinning_n48": "17371939",
+    "spinning_n64": "17372871"
+  },
+  "formal": {
+    "stationary_n32": "17372872",
+    "stationary_n48": "17372873",
+    "stationary_n64": "17372874",
+    "spinning_n32": "17372875",
+    "spinning_n48": "17372876",
+    "spinning_n64": "17372877"
+  },
+  "UTC": "2026-11-17T07:48:12.748017Z",
+  "GPU80_retry": {
+    "stationary_n64": {
+      "previous_job": "17371937",
+      "retry_job": "17372618",
+      "reason": "Measured GPU40G memory admission failed; same input/program, one80G GPU"
+    },
+    "spinning_n64": {
+      "previous_job": "17371940",
+      "retry_job": "17372619",
+      "reason": "Measured GPU40G memory admission failed; same input/program, one80G GPU"
+    }
+  },
+  "formal_dependencies": [
+    "17372871"
+  ],
+  "GPU80_timing_retry": {
+    "previous_job": "17372619",
+    "retry_job": "17372871",
+    "reason": "Original1000-second short-test cap expired during final output; physical16 steps nearly finished; extend short-test IO allowance only"
+  },
+  "superseded_formal": {
+    "stationary_n32": "17372809",
+    "stationary_n48": "17372810",
+    "stationary_n64": "17372811",
+    "spinning_n32": "17372812",
+    "spinning_n48": "17372813",
+    "spinning_n64": "17372814"
+  }
+}

@@ -1,0 +1,202 @@
+# Equal-mass nonspinning Bowen--York binary, close quasi-circular parameters.
+<parthenon/job>
+problem_id = nr_two_punctures
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+<parthenon/mesh>
+refinement = adaptive
+numlevel = 9
+nghost = 4
+nx1 = 48
+x1min = -128.0
+x1max = 128.0
+ix1_bc = nr_outflow
+ox1_bc = nr_outflow
+nx2 = 48
+x2min = -128.0
+x2max = 128.0
+ix2_bc = nr_outflow
+ox2_bc = nr_outflow
+nx3 = 48
+x3min = -128.0
+x3max = 128.0
+ix3_bc = nr_outflow
+ox3_bc = nr_outflow
+
+task_collection_timeout_in_seconds = 1800
+<parthenon/meshblock>
+nx1 = 24
+nx2 = 24
+nx3 = 24
+<parthenon/time>
+integrator = rk4
+tlim = 300.0
+nlim = -1
+ncycle_out_mesh = 100
+<numerical_relativity>
+cfl = 0.2
+finite_difference_order = 4
+dissipation = 0.1
+chi_div_floor = 1.0e-5
+damp_kappa1 = 0.02
+damp_kappa2 = 0.0
+lapse_harmonic = 0.0
+lapse_oplog = 2.0
+lapse_advect = 1.0
+slow_start_lapse = true
+slow_start_amplitude = 0.6
+slow_start_time = 20.0
+slow_start_index = 1.0
+shift_gamma = 1.0
+shift_eta = 2.0
+shift_advect = 1.0
+tracker_enabled = true
+tracker_count = 2
+tracker_0_center_x1 = 3.257
+tracker_0_center_x2 = 0.0
+tracker_0_center_x3 = 0.0
+tracker_0_mass = 0.505
+tracker_0_refinement_radius = 0.5
+tracker_0_refinement_level = 8
+tracker_1_center_x1 = -3.257
+tracker_1_center_x2 = 0.0
+tracker_1_center_x3 = 0.0
+tracker_1_mass = 0.505
+tracker_1_refinement_radius = 0.5
+tracker_1_refinement_level = 8
+amr_method = tracker
+amr_radius_0 = 56.0
+amr_radius_0_refinement_level = 2
+amr_radius_1 = 16.0
+amr_radius_1_refinement_level = 5
+weyl_enabled = true
+waveform_enabled = true
+waveform_num_radii = 3
+waveform_radius_1 = 30.0
+waveform_radius_2 = 40.0
+waveform_radius_3 = 50.0
+waveform_geodesic_level = 10
+waveform_interpolation_points = 4
+waveform_dt = 0.1
+horizon_enabled = true
+horizon_output_grid = false
+horizon_count = 3
+horizon_tracker_0 = 0
+horizon_tracker_1 = 1
+horizon_tracker_2 = -1
+horizon_mass_weighted_center_2 = true
+horizon_wait_for_punctures_2 = true
+horizon_start_time_0 = 0.0
+horizon_start_time_1 = 0.0
+horizon_start_time_2 = 0.0
+horizon_stop_time_0 = 1.0e30
+horizon_stop_time_1 = 1.0e30
+horizon_stop_time_2 = 1.0e30
+horizon_ntheta = 40
+horizon_lmax = 12
+horizon_iterations = 300
+horizon_initial_radius_0 = 0.4
+horizon_initial_radius_1 = 0.4
+horizon_initial_radius_2 = 1.0
+horizon_flow_gain = 0.25
+horizon_dt = 0.5
+horizon_max_radius_factor = 4.0
+horizon_step_limit = 0.1
+horizon_merger_distance = 2.0
+horizon_flow = standard
+horizon_mass_tolerance = 1.0e-2
+horizon_hmean_limit = 100.0
+horizon_expand_guess = 1.0
+diagnostic_directory = diagnostics
+
+rk4_variant = classical
+
+tracker_mode = ode
+
+lapse_gauge = one_plus_log
+
+shift_gauge = gamma_driver
+
+horizon_convergence = mass_and_expansion
+
+horizon_expansion_tolerance = 0.01
+<problem>
+par_b = 3.257
+par_m_plus = 0.483
+par_m_minus = 0.483
+target_M_plus = 0.505
+target_M_minus = 0.505
+par_P_plus1 = 0.0
+par_P_plus2 = -0.133
+par_P_plus3 = 0.0
+par_P_minus1 = 0.0
+par_P_minus2 = 0.133
+par_P_minus3 = 0.0
+par_S_plus1 = 0.0
+par_S_plus2 = 0.0
+par_S_plus3 = 0.0
+par_S_minus1 = 0.0
+par_S_minus2 = 0.0
+par_S_minus3 = 0.0
+center_offset1 = 0.0
+center_offset2 = 0.0
+center_offset3 = 0.0
+give_bare_mass = true
+npoints_A = 30
+npoints_B = 30
+npoints_phi = 16
+Newton_tol = 1.0e-10
+Newton_maxit = 10
+initial_lapse_psi_exponent = -2.0
+constraint_mask_radius = 0.5
+<parthenon/output1>
+file_type = hst
+dt = 0.1
+data_format = %20.15e
+<parthenon/output2>
+file_type = hdf5
+dt = 5.0
+variables = nr.z4c,nr.adm,nr.constraints,nr.weyl,nr.constraint_mask
+id = fields
+single_precision_output = true
+ghost_zones = false
+
+hdf5_compression_level = 0
+<parthenon/output3>
+file_type = rst
+dt = 10.25
+id = restart
+
+hdf5_compression_level = 0
+
+<parthenon/static_refinement0>
+level = 2
+x1min = -32.0
+x1max = 32.0
+x2min = -32.0
+x2max = 32.0
+x3min = -32.0
+x3max = 32.0
+
+<parthenon/static_refinement1>
+level = 8
+x1min = 2.757
+x1max = 3.757
+x2min = -0.5
+x2max = 0.5
+x3min = -0.5
+x3max = 0.5
+
+<parthenon/static_refinement2>
+level = 8
+x1min = -3.757
+x1max = -2.757
+x2min = -0.5
+x2max = 0.5
+x3min = -0.5
+x3max = 0.5

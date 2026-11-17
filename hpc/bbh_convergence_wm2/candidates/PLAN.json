@@ -1,0 +1,62 @@
+{
+  "status": "candidates_only_resource_admission_required",
+  "source_input": "/home/adamdarx/pangu-setup/bbh-convergence-20261117/source-records/inputs/quasicircular_n32_pangu.in",
+  "source_input_sha256": "511c029cfd5d28385b9841820ed7af403cd5b7fc4faf5452f4e9cc92caff49ad",
+  "root_blocks_per_axis": 2,
+  "physics_changes": [],
+  "cases": [
+    {
+      "n": 32,
+      "block": 16,
+      "input": "quasicircular_n32_pangu.in",
+      "input_sha256": "511c029cfd5d28385b9841820ed7af403cd5b7fc4faf5452f4e9cc92caff49ad",
+      "root_dx": 8.0,
+      "requested_finest_level": 8,
+      "requested_min_dx": 0.03125,
+      "wavezone_dx": 2.0,
+      "changed_keys": [],
+      "resource_status": "not_admitted",
+      "target": 300.0
+    },
+    {
+      "n": 48,
+      "block": 24,
+      "input": "quasicircular_n48_pangu.in",
+      "input_sha256": "231b10df91efd970d16ee7ec040d92d61f5b82d1b8a8cc68f70b2ae8f5becba0",
+      "root_dx": 5.333333333333333,
+      "requested_finest_level": 8,
+      "requested_min_dx": 0.020833333333333332,
+      "wavezone_dx": 1.3333333333333333,
+      "changed_keys": [
+        "parthenon/mesh/nx1",
+        "parthenon/mesh/nx2",
+        "parthenon/mesh/nx3",
+        "parthenon/meshblock/nx1",
+        "parthenon/meshblock/nx2",
+        "parthenon/meshblock/nx3"
+      ],
+      "resource_status": "not_admitted",
+      "target": 300.0
+    },
+    {
+      "n": 64,
+      "block": 32,
+      "input": "quasicircular_n64_pangu.in",
+      "input_sha256": "ff149675cda5e739d0cab69dea1ea43281c567612de29b9f1ed49b2bfce237ac",
+      "root_dx": 4.0,
+      "requested_finest_level": 8,
+      "requested_min_dx": 0.015625,
+      "wavezone_dx": 1.0,
+      "changed_keys": [
+        "parthenon/mesh/nx1",
+        "parthenon/mesh/nx2",
+        "parthenon/mesh/nx3",
+        "parthenon/meshblock/nx1",
+        "parthenon/meshblock/nx2",
+        "parthenon/meshblock/nx3"
+      ],
+      "resource_status": "not_admitted",
+      "target": 300.0
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "source_phdf_sha256": "35682d1a4b534aa1160774321719883129778d6dc321d6a12507f1c87bfcac32",
+  "npz_sha256": "d2ed081943bb5b401802b1d4c25dd2bb6bf79a7a665e354d82be7dc3ed379b03",
+  "baryon_mass": 2.9275905970077067,
+  "resolution": 64,
+  "blocks": 736,
+  "scope": "PANGU actual initial fields, independently checked against AthenaK"
+}
