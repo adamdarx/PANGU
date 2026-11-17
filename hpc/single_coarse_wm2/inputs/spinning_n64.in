@@ -1,0 +1,143 @@
+# spinning, N=96, T=25; domain +/-200; eight refinements; native frozen solvers.
+
+<parthenon/job>
+problem_id = nr_puncture
+
+<pangu>
+strict_parameters = true
+compatibility_mode = native
+
+<geometry>
+background = minkowski
+expected_metric = z4c
+expected_mode = sync
+
+<parthenon/mesh>
+refinement = adaptive
+numlevel = 9
+nghost = 4
+nx1 = 64
+x1min = -200.0
+x1max = 200.0
+ix1_bc = nr_outflow
+ox1_bc = nr_outflow
+nx2 = 64
+x2min = -200.0
+x2max = 200.0
+ix2_bc = nr_outflow
+ox2_bc = nr_outflow
+nx3 = 64
+x3min = -200.0
+x3max = 200.0
+ix3_bc = nr_outflow
+ox3_bc = nr_outflow
+
+<parthenon/meshblock>
+nx1 = 32
+nx2 = 32
+nx3 = 32
+
+<parthenon/time>
+integrator = rk4
+tlim = 500.0
+nlim = -1
+ncycle_out_mesh = 100
+
+<numerical_relativity>
+cfl = 0.2
+finite_difference_order = 4
+dissipation = 0.1
+chi_div_floor = 1.0e-5
+damp_kappa1 = 0.02
+damp_kappa2 = 0.0
+lapse_gauge = one_plus_log
+shift_gauge = gamma_driver
+lapse_harmonic = 0.0
+lapse_oplog = 2.0
+lapse_advect = 1.0
+slow_start_lapse = true
+slow_start_amplitude = 0.6
+slow_start_time = 20.0
+slow_start_index = 1.0
+shift_gamma = 1.0
+shift_eta = 2.0
+shift_advect = 1.0
+tracker_enabled = true
+tracker_count = 1
+tracker_0_center_x1 = 0.0
+tracker_0_center_x2 = 0.0
+tracker_0_center_x3 = 0.0
+tracker_0_mass = 1.0
+tracker_0_refinement_radius = 1.0
+tracker_0_refinement_level = 8
+amr_method = tracker
+weyl_enabled = false
+waveform_enabled = false
+horizon_enabled = true
+horizon_output_grid = true
+horizon_start_time_0 = 0.0
+horizon_stop_time_0 = 1.0e30
+horizon_ntheta = 48
+horizon_lmax = 16
+horizon_iterations = 600
+horizon_initial_radius = 0.4
+horizon_flow_gain = 1.0
+horizon_flow = standard
+horizon_mass_tolerance = 1.0e-2
+horizon_hmean_limit = 100.0
+horizon_expand_guess = 1.0
+diagnostic_directory = diagnostics
+rk4_variant = classical
+tracker_mode = ode
+horizon_dt = 1.0
+horizon_convergence = mass_and_expansion
+horizon_expansion_tolerance = 1e-4
+
+<problem>
+puncture_count = 1
+puncture_0_mass = 1.0
+puncture_0_center_x = 0.0
+puncture_0_center_y = 0.0
+puncture_0_center_z = 0.0
+puncture_0_momentum_x = 0.0
+puncture_0_momentum_y = 0.0
+puncture_0_momentum_z = 0.0
+puncture_0_spin_x = 0.0
+puncture_0_spin_y = 0.0
+puncture_0_spin_z = 0.5
+puncture_spectral_points = 46
+puncture_spectral_scale = 2.0
+puncture_nonlinear_tolerance = 1.0e-9
+puncture_linear_tolerance = 1.0e-10
+puncture_maximum_newton_iterations = 10
+puncture_maximum_linear_iterations = 8000
+initial_lapse_psi_exponent = -2.0
+constraint_mask_radius = 0.5
+puncture_interpolation_points = 8
+
+<parthenon/output1>
+file_type = hst
+dt = 0.1
+data_format = %20.15e
+
+<parthenon/output2>
+file_type = hdf5
+dt = 25.0
+variables = nr.z4c,nr.adm,nr.constraints,nr.constraint_mask
+id = spinning
+single_precision_output = false
+ghost_zones = false
+
+<parthenon/output3>
+file_type = rst
+dt = 25.0
+id = restart
+
+<parthenon/static_refinement0>
+level = 8
+x1min = -1.0
+x1max = 1.0
+x2min = -1.0
+x2max = 1.0
+x3min = -1.0
+x3max = 1.0

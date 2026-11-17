@@ -1,0 +1,17 @@
+{
+  "status": "all_six_candidates_identical_physical_mesh_structure",
+  "mesh_structure_sha256": "65feeddb1f4e0ae653e781e08936f0e281bf392746fc595c6266e3bfd4945a52",
+  "case_hashes": {
+    "stationary_n32.in": "65feeddb1f4e0ae653e781e08936f0e281bf392746fc595c6266e3bfd4945a52",
+    "stationary_n48.in": "65feeddb1f4e0ae653e781e08936f0e281bf392746fc595c6266e3bfd4945a52",
+    "stationary_n64.in": "65feeddb1f4e0ae653e781e08936f0e281bf392746fc595c6266e3bfd4945a52",
+    "spinning_n32.in": "65feeddb1f4e0ae653e781e08936f0e281bf392746fc595c6266e3bfd4945a52",
+    "spinning_n48.in": "65feeddb1f4e0ae653e781e08936f0e281bf392746fc595c6266e3bfd4945a52",
+    "spinning_n64.in": "65feeddb1f4e0ae653e781e08936f0e281bf392746fc595c6266e3bfd4945a52"
+  },
+  "blocks": 456,
+  "max_physical_level": 8,
+  "root_blocks_per_axis": 2,
+  "spacing_ratio": "N32:N48:N64 = 1:2/3:1/2",
+  "scope": "Mesh-only; frozen-program actual initial PHDF geometry and GPU resource checks still required"
+}

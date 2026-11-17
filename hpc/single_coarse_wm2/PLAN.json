@@ -1,0 +1,126 @@
+{
+  "status": "controlled_six_case_candidates_GPU_admission_required",
+  "cases": [
+    {
+      "kind": "stationary",
+      "n": 32,
+      "block": 16,
+      "input": "stationary_n32.in",
+      "sha256": "f04df7dc833d462944eef5f47378cce2650f4295185716f9f4a5563daccc95bb",
+      "original_sha256": "397134e379329d2288d0601ca4e7be03179c07f2f57a7aa7a8fb1875de9326de",
+      "target": 500,
+      "physical_level": 8,
+      "min_dx": 0.048828125,
+      "root_blocks_per_axis": 2,
+      "changed_parameters": [
+        "parthenon/mesh/nx1",
+        "parthenon/mesh/nx2",
+        "parthenon/mesh/nx3",
+        "parthenon/meshblock/nx1",
+        "parthenon/meshblock/nx2",
+        "parthenon/meshblock/nx3"
+      ]
+    },
+    {
+      "kind": "stationary",
+      "n": 48,
+      "block": 24,
+      "input": "stationary_n48.in",
+      "sha256": "abb6e90c860fb549ef5c474dc75e734e21caf4e99ba7aac5bf2b3df75cc31b0c",
+      "original_sha256": "397134e379329d2288d0601ca4e7be03179c07f2f57a7aa7a8fb1875de9326de",
+      "target": 500,
+      "physical_level": 8,
+      "min_dx": 0.032552083333333336,
+      "root_blocks_per_axis": 2,
+      "changed_parameters": [
+        "parthenon/mesh/nx1",
+        "parthenon/mesh/nx2",
+        "parthenon/mesh/nx3",
+        "parthenon/meshblock/nx1",
+        "parthenon/meshblock/nx2",
+        "parthenon/meshblock/nx3"
+      ]
+    },
+    {
+      "kind": "stationary",
+      "n": 64,
+      "block": 32,
+      "input": "stationary_n64.in",
+      "sha256": "c6644a0e925d90b3e1293e0dfb45bf2839a26aa1919db9044280019e9e347ffa",
+      "original_sha256": "397134e379329d2288d0601ca4e7be03179c07f2f57a7aa7a8fb1875de9326de",
+      "target": 500,
+      "physical_level": 8,
+      "min_dx": 0.0244140625,
+      "root_blocks_per_axis": 2,
+      "changed_parameters": [
+        "parthenon/mesh/nx1",
+        "parthenon/mesh/nx2",
+        "parthenon/mesh/nx3",
+        "parthenon/meshblock/nx1",
+        "parthenon/meshblock/nx2",
+        "parthenon/meshblock/nx3"
+      ]
+    },
+    {
+      "kind": "spinning",
+      "n": 32,
+      "block": 16,
+      "input": "spinning_n32.in",
+      "sha256": "64aedb62ddbf4f6a3e2d98f7a7d52ad8f940f521cd79ff1a31fb5179c5fe798a",
+      "original_sha256": "a655d300378e348500e83c8b1f0d8257088ca4f870eb3abc4f44fc7e8c0be1f4",
+      "target": 500,
+      "physical_level": 8,
+      "min_dx": 0.048828125,
+      "root_blocks_per_axis": 2,
+      "changed_parameters": [
+        "parthenon/mesh/nx1",
+        "parthenon/mesh/nx2",
+        "parthenon/mesh/nx3",
+        "parthenon/meshblock/nx1",
+        "parthenon/meshblock/nx2",
+        "parthenon/meshblock/nx3"
+      ]
+    },
+    {
+      "kind": "spinning",
+      "n": 48,
+      "block": 24,
+      "input": "spinning_n48.in",
+      "sha256": "0bb07127b147e3442619e5bfb6c433354a18962e746c3c7c9e27653fffc8d6f5",
+      "original_sha256": "a655d300378e348500e83c8b1f0d8257088ca4f870eb3abc4f44fc7e8c0be1f4",
+      "target": 500,
+      "physical_level": 8,
+      "min_dx": 0.032552083333333336,
+      "root_blocks_per_axis": 2,
+      "changed_parameters": [
+        "parthenon/mesh/nx1",
+        "parthenon/mesh/nx2",
+        "parthenon/mesh/nx3",
+        "parthenon/meshblock/nx1",
+        "parthenon/meshblock/nx2",
+        "parthenon/meshblock/nx3"
+      ]
+    },
+    {
+      "kind": "spinning",
+      "n": 64,
+      "block": 32,
+      "input": "spinning_n64.in",
+      "sha256": "844573bb7bd8f48e784fa11f31aec541452d384a1c4f01107b86c906d93266db",
+      "original_sha256": "a655d300378e348500e83c8b1f0d8257088ca4f870eb3abc4f44fc7e8c0be1f4",
+      "target": 500,
+      "physical_level": 8,
+      "min_dx": 0.0244140625,
+      "root_blocks_per_axis": 2,
+      "changed_parameters": [
+        "parthenon/mesh/nx1",
+        "parthenon/mesh/nx2",
+        "parthenon/mesh/nx3",
+        "parthenon/meshblock/nx1",
+        "parthenon/meshblock/nx2",
+        "parthenon/meshblock/nx3"
+      ]
+    }
+  ],
+  "original_production_unchanged": true
+}
