@@ -209,3 +209,6 @@ dt = 5
 <output9>
 file_type = rst
 dt = 25
+
+# Native rank-separated restart avoids the failed collective MPI-I/O path.
+single_file_per_rank = true

@@ -20,6 +20,10 @@ are needed for native SMR, selecting native FD6. PANGU uses FD4; retain
 and disclose this difference as requested, without changing derivative
 code or making a matched-condition performance claim. Atmosphere and
 boundary implementations also differ and are recorded in `TOV_INPUTS.json`.
+N96 uses the native `output9/single_file_per_rank=true` restart option:
+the first two-rank shared-restart probe failed with MPI_ERR_IO; the
+rank-separated retry passed with the same frozen program. Only restart
+layout changes. Binary field output remains shared.
 
 Start `auto_submit_tov.py` once on LOGIN. It waits for the frozen binary,
 submits eight-step GPU40G high-QOS probes (one GPU forN64, two forN96),

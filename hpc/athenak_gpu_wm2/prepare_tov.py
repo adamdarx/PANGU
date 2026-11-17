@@ -55,7 +55,8 @@ for n in (64, 96):
     blocks += [('output1', {'file_type': 'hst', 'dt': '0.1', 'data_format': '%20.15e'})]
     for i, variable in enumerate(('mhd_w_bcc', 'mhd_u', 'z4c', 'adm', 'mhd_divb', 'con_H', 'con_M'), 2):
         blocks.append(('output%d' % i, {'file_type': 'bin', 'variable': variable, 'dt': '5'}))
-    blocks.append(('output9', {'file_type': 'rst', 'dt': '25'}))
+    blocks.append(('output9', {'file_type': 'rst', 'dt': '25',
+                              'single_file_per_rank': 'true' if n == 96 else 'false'}))
     text = '# Native AthenaK GPU reference: original magnetized TOV collapse, target100.\n'
     text += '# SMR requires even nghost: native nghost4 uses FD6; PANGU uses FD4.\n'
     text += '# Atmosphere reset and diode/NR outflow implementations differ; no performance claim.\n'

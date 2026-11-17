@@ -1,0 +1,122 @@
+{
+  "TOV_BUILD_STATUS": {
+    "status": "TOV_sm80_GPU_binary_frozen_input_validation_pending",
+    "started_utc": "2026-11-17T05:52:00.873577Z",
+    "formal_reference_resolutions": [
+      64,
+      96
+    ],
+    "BNS": "Initial-data reader must match the existing time-symmetric table before submission",
+    "returncode": 0,
+    "finished_utc": "2026-11-17T06:20:05.823471Z",
+    "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/bin/athenak-tov-sm80-ed658646e218",
+    "sha256": "ed658646e2188b59b57cd52aa0ad21c5f3127ed3bd5047549c045d2a00907997",
+    "CUDA_device_images_verified": true,
+    "source_snapshot": {
+      "status": "validated_CUDA_reference_source_snapshot",
+      "sha256": "2b570de2379209b362ba6077dfd836007808bcbb4770233654baacb5f991a5ac",
+      "bytes": 26419200,
+      "base_commit": "8a5d398cb50c7621d03127008aad52c80d579c9c",
+      "kokkos": "6739bc623081648af9e752b616d9671527922cbf",
+      "prior_GPU_binary_sha256": "c914ab7541144ed8e65803d43ba91a75e3abcc1127e07735cd1e40e138af3199",
+      "reviewed_changes": "Inherited checked I/O and mesh-only destructor fixes; physical kernels and TOV pgen unchanged",
+      "target": "WM2 CUDA sm80 build for formal TOV comparisons at N64/N96 only; BNS initial-data adapter pending",
+      "utc": "2026-11-17T05:37:09.760095+00:00",
+      "staged_utc": "2026-11-17T05:51:33.494407Z",
+      "verified_sha256": "2b570de2379209b362ba6077dfd836007808bcbb4770233654baacb5f991a5ac"
+    }
+  },
+  "TOV_SUBMISSIONS": {
+    "status": "formal_N64_N96_T100_submitted",
+    "created_utc": "2026-11-17T06:08:14.041160Z",
+    "resolutions": [
+      64,
+      96
+    ],
+    "admissions": {
+      "64": "17371496",
+      "96": "17371505"
+    },
+    "formal": {
+      "64": "17371502",
+      "96": "17371507"
+    },
+    "updated_utc": "2026-11-17T06:23:49.145451Z",
+    "N96_IO_resolution": "Native single_file_per_rank restart input option; no derivative or evolution code change"
+  },
+  "TOV_ADMISSION_N64": {
+    "status": "admission_passed",
+    "mode": "admission",
+    "resolution": 64,
+    "job_id": "17371496",
+    "started_utc": "2026-11-17T06:20:21.337411Z",
+    "binary_sha256": "ed658646e2188b59b57cd52aa0ad21c5f3127ed3bd5047549c045d2a00907997",
+    "input_sha256": "10fad261a8cacdefe9df70b0d2c36ae28aeab78158b8462f87b753de5116fd15",
+    "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371496",
+    "physical_acceptance": false,
+    "returncode": 0,
+    "wall_seconds": 14.107207051012665,
+    "actual_gpu_process_observed": true,
+    "final_time": 0.025,
+    "final_cycle": 8,
+    "gpu_memory": {
+      "0": {
+        "total_MiB": 40960.0,
+        "peak_sampled_MiB": 20019.0
+      }
+    },
+    "initial_match": {
+      "blocks": 456,
+      "rho_relative_volume_L1": 2.157748105338139e-08,
+      "baryon_relative_bias": -7.348344155388986e-11,
+      "magnetic_relative_volume_L1": 2.1529137918111864e-08,
+      "pangu_source_sha256": "767575dd87d51688b6bc69034e316215e7d59cfefe9ca885249bc358606f485c"
+    },
+    "limitations": "Eight early steps; not long-time accuracy or horizon acceptance. AH search deferred during this resource probe; AH objects and full field/restart I/O remain allocated.",
+    "finished_utc": "2026-11-17T06:20:37.741520Z"
+  },
+  "TOV_ADMISSION_N96": {
+    "status": "admission_passed",
+    "mode": "admission",
+    "resolution": 96,
+    "job_id": "17371505",
+    "started_utc": "2026-11-17T06:23:03.416503Z",
+    "binary_sha256": "ed658646e2188b59b57cd52aa0ad21c5f3127ed3bd5047549c045d2a00907997",
+    "input_sha256": "fac06724a8b077a867b24ff6e7bc712207094d1dceb40fe8e6a1309092db3e49",
+    "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371505",
+    "physical_acceptance": false,
+    "returncode": 0,
+    "wall_seconds": 17.100585263920948,
+    "actual_gpu_process_observed": true,
+    "final_time": 0.01666667,
+    "final_cycle": 8,
+    "gpu_memory": {
+      "0": {
+        "total_MiB": 40960.0,
+        "peak_sampled_MiB": 21815.0
+      },
+      "1": {
+        "total_MiB": 40960.0,
+        "peak_sampled_MiB": 21815.0
+      }
+    },
+    "initial_match": {
+      "blocks": 456,
+      "rho_relative_volume_L1": 2.18175760490186e-08,
+      "baryon_relative_bias": 2.117128694578696e-11,
+      "magnetic_relative_volume_L1": 2.143281516726797e-08,
+      "pangu_source_sha256": "76ae36f0ff80ae32f4e94889c389ff24f066dcd3911585a726058aeb2a5285f6"
+    },
+    "limitations": "Eight early steps; not long-time accuracy or horizon acceptance. AH search deferred during this resource probe; AH objects and full field/restart I/O remain allocated.",
+    "finished_utc": "2026-11-17T06:23:25.291521Z"
+  },
+  "observed_utc": "2026-11-17T06:25:53.364125+00:00",
+  "formal_jobs_observed_running": true,
+  "previous_failed_admission": {
+    "job_id": "17371497",
+    "cause": "MPI_ERR_IO while writing the initial shared restart; no evolution/derivative code changed",
+    "resolution": "Native N96 output9 single_file_per_rank=true; high-QOS retry17371505 passed"
+  },
+  "physical_acceptance": false,
+  "BNS_reference": "Not submitted; matching the existing time-symmetric initial data is pending."
+}

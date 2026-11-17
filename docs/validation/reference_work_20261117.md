@@ -70,7 +70,16 @@ refinement coverage and stellar/magnetic parameters. Their native mesh
 checks passed locally. High-QOS allocated probes must verify actual GPU
 execution, memory reserve, finite fields and initial-state agreement with
 the archived PANGU time-zero fields before automatic low-QOS formal
-submission. These resource probes are not physical acceptance. BNS needs
+submission. Both probes passed: N64 job17371496 used about19.55GiB on
+one A10040GB; N96 job17371505 used about21.30GiB per GPU on two A10040GB.
+Initial density and magnetic-field volume L1 differences are approximately
+2.2e-8, and initial baryon-mass relative biases are below8e-11.
+Formal time100 jobs17371502(N64) and17371507(N96) were observed running
+at06:24UTC. N96's first probe17371497 failed in shared restart MPI-I/O;
+the successful retry uses native per-rank restart files through an input
+option. No evolution/derivative code changed. See
+`evidence/athenak_tov_submission_20261117.json`.
+These resource probes are not physical acceptance. BNS needs
 the same time-symmetric initial-data table before a direct comparison;
 unrelated inspiral data are not a substitute.
 
