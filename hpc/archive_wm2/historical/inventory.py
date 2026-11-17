@@ -12,7 +12,7 @@ entries=[];now=time.time()
 for top in tops:
  for folder,ds,fs in os.walk(str(R/top),followlinks=False):
   rel=str(Path(folder).relative_to(R))
-  if any(rel==x or rel.startswith(x+'/') for x in exclude):ds[:]=[];continue
+  if any(rel==x or rel.startswith(x+'/') for x in exclude) or (top=='Operations' and len(Path(rel).parts)>1 and Path(rel).parts[1].startswith('20261117')):ds[:]=[];continue
   # bin directories under runs are numerical output; outer bin directories are programs.
   ds[:]=[d for d in ds if not (Path(folder)/d).is_symlink() and (d not in prune or (d=='bin' and '/runs/' in folder))]
   for name in fs:
@@ -24,6 +24,6 @@ for top in tops:
    ismeta=suffix in meta and s.st_size<=16*1024*1024
    if not (isfield or ismeta):continue
    # Sweep old operation records, but do not guess closure of today's other operations.
-   if top=='Operations' and Path(rel).parts[1].startswith('20261117'):continue
+   if top=='Operations' and len(Path(rel).parts)>1 and Path(rel).parts[1].startswith('20261117'):continue
    entries.append(dict(path=str(p.relative_to(R)),bytes=s.st_size,mtime_ns=s.st_mtime_ns,large_output=isfield,remove_after_verified=False,physical_acceptance='not evaluated by byte archival',closure_basis='Historical scope; no active scheduler command roots; age>1h; repeated stat and hash required'))
 print(json.dumps(dict(root=str(R),excluded=sorted(exclude),entries=entries,files=len(entries),raw_bytes=sum(x['bytes'] for x in entries))))
