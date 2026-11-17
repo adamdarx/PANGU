@@ -1,0 +1,11 @@
+{
+  "admission": {
+    "64": "17374026"
+  },
+  "formal": {
+    "64": "17374027"
+  },
+  "utc": "2026-11-17T12:08:30.566978Z",
+  "scope": "N64 native stabilization-parameter retry, initial data/binary/FD unchanged; live nonfinite history guard; N96 retry deferred until N64 reviewed",
+  "physical_acceptance": false
+}

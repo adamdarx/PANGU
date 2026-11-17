@@ -1,0 +1,25 @@
+{
+  "status": "compiled_frozen_GPU_admission_required",
+  "pid": 3163872,
+  "started_utc": "2026-11-17T11:56:49.251380Z",
+  "preserved_vacuum_TOV_binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/bin/cactus-ah-64f3b5e9b7ed",
+  "preserved_sha256": "64f3b5e9b7edd80efc00f3f8a971f976bbb7927be489bb5e3c8332cef41898a2",
+  "initializer_files": {
+    "TableBNS/configuration.ccl": "aa0053fa3bfc0c58bda2aaf17bd2089b5cbca1438d4daf7d03cd549a40bba363",
+    "TableBNS/param.ccl": "54ab7747032a69ca991f1ace284ed4e7eb122f68bf5fc2ca5235a0577a6b3459",
+    "TableBNS/interface.ccl": "1ff73c4f4f6a2922f0bcc7b6c36eeb8ba8462dba2f097c844218c4d6dc524d48",
+    "TableBNS/schedule.ccl": "cb335026a56f66df7e41461860ffccb11d4cc64129209110320734d419cb1ef4",
+    "TableBNS/src/table_bns.cxx": "9eab961232e3c7c4f718ec185e8a1d27990b94aaecc7be7822b07359cea29509",
+    "TableBNS/src/make.code.defn": "76af2fd4bca46c0efdcab4e50f6bf9c70258030d53ebae58428db6451e49828e"
+  },
+  "source_commits": {
+    "AsterX": "b046e1d9f6a3026fc1f40a0e883d587d7decc45c",
+    "CarpetX": "f5ef96c1109e12af4275937ab10c06b8076f7026",
+    "SpacetimeX": "e162dd1111b149618cd5ed964656bfa41e17e6f3"
+  },
+  "returncode": 0,
+  "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/bin/cactus-bns-1da148496f80",
+  "sha256": "1da148496f80c476de133cac94e7a5f609e1f8883efaf6cd0b397371b2c47f2a",
+  "CUDA_device_images_verified": true,
+  "finished_utc": "2026-11-17T11:59:12.408486Z"
+}

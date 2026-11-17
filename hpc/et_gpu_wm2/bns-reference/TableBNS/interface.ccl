@@ -1,0 +1,4 @@
+IMPLEMENTS: TableBNS
+INHERITS: ADMBaseX HydroBaseX AsterX
+USES INCLUDE HEADER: loop.hxx
+USES INCLUDE HEADER: loop_device.hxx

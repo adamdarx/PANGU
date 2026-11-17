@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-11-17T11:47:10.340756+00:00",
+  "updated_utc": "2026-11-17T12:10:29.131997+00:00",
   "cohorts": {
     "single-coarse-20261117": {
       "target_M": 500,
@@ -163,8 +163,32 @@
         "reason": "Native QC floors/dissipation and off-vertex grid; initial horizons were found but beta invalid by step4; no PANGU changes"
       },
       "last_verified_utc": "2026-11-17T11:47:10.340756+00:00"
+    },
+    "et-bns-reference-20261117": {
+      "admission": {
+        "64": "17373994",
+        "96": "17373996"
+      },
+      "formal": {
+        "64": "17373995",
+        "96": "17373997"
+      },
+      "status": "GPU_gated_N64_N96_queued",
+      "physical_acceptance": false,
+      "utc": "2026-11-17T11:59:19.466576Z"
+    },
+    "athenak-tov-repair-20261117": {
+      "admission": {
+        "64": "17374026"
+      },
+      "formal": {
+        "64": "17374027"
+      },
+      "utc": "2026-11-17T12:08:30.566978Z",
+      "scope": "N64 native stabilization-parameter retry, initial data/binary/FD unchanged; live nonfinite history guard; N96 retry deferred until N64 reviewed",
+      "physical_acceptance": false
     }
   },
-  "formal_jobs": 20,
-  "notes": "Current tracked new cohorts:20 formal jobs; original ET TOV64/96 and original PANGU production are separate. GPU admission gates are technical only."
+  "formal_jobs": 23,
+  "notes": "23 tracked new formal/retry jobs, including one N64 TOV stabilization retry; original ET TOV64/96 and original PANGU production are separate. Short gates are technical checks. Original AthenaK TOV64/96 full histories invalid after NaN; see repair PREVIOUS_AUDIT."
 }

@@ -2,6 +2,7 @@
 from pathlib import Path
 import argparse,csv,datetime,hashlib,importlib.util,json,os,re,signal,subprocess,time
 import numpy as np
+from history_guard import check_history
 
 ROOT=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser();parser.add_argument('mode',choices=['admission','formal']);parser.add_argument('resolution',type=int,choices=[64,96]);args=parser.parse_args()
@@ -39,7 +40,7 @@ try:
     (work/'command.json').write_text(json.dumps(command,indent=2)+'\n')
     gpu=(work/'gpu-memory.csv').open('w')
     monitor=subprocess.Popen(['nvidia-smi','--query-gpu=timestamp,index,memory.used,memory.total,utilization.gpu','--format=csv,noheader,nounits','--loop=1'],stdout=gpu,stderr=subprocess.STDOUT)
-    observed=False;last_quota=time.monotonic();start=time.monotonic()
+    observed=False;last_quota=time.monotonic();start=time.monotonic();last_history=start
     try:
         with (work/'run.log').open('w') as log:
             child=subprocess.Popen(command,cwd=str(work),stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
@@ -48,6 +49,8 @@ try:
                     processes=subprocess.check_output(['nvidia-smi','--query-compute-apps=pid,process_name','--format=csv,noheader']).decode()
                     if str(exe) in processes or exe.name in processes:observed=True
                     with (work/'gpu-processes.log').open('a') as stream:stream.write(processes)
+                    if time.monotonic()-last_history>15:
+                        check_history(work);last_history=time.monotonic()
                     if time.monotonic()-last_quota>60:
                         free=quota_free();report['latest_free_GiB']=free;save();last_quota=time.monotonic()
                         if free<150:raise RuntimeError('Storage reserve below150GiB; terminate this new reference only')
@@ -60,6 +63,7 @@ try:
                 raise
     finally:
         monitor.terminate();monitor.wait(timeout=10);gpu.close()
+    check_history(work,full=True)
     report.update(returncode=child.returncode,wall_seconds=time.monotonic()-start,actual_gpu_process_observed=observed)
     assert child.returncode==0 and observed,'CUDA process or successful exit missing'
     text=(work/'run.log').read_text(errors='replace')

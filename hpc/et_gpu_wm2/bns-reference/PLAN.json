@@ -1,0 +1,40 @@
+{
+  "cases": [
+    {
+      "n": 64,
+      "target": 200,
+      "dt": 0.003125,
+      "table": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/source-records/bns/bns.dat",
+      "table_sha256": "fad451f7c365d9642e735aea9223f0c6829313cea232ce7ea0fe28a5f01165b5",
+      "inputs": {
+        "admission": {
+          "file": "bns_n64_admission.par",
+          "sha256": "73db1855951605593950bb0f52bda5f23ed8e5adf1347117af866f25554a1903"
+        },
+        "formal": {
+          "file": "bns_n64_formal.par",
+          "sha256": "e8590f1d241610a89ed41fba4773a3039ed5c4a8295dbe0038b523970d85fc53"
+        }
+      }
+    },
+    {
+      "n": 96,
+      "target": 200,
+      "dt": 0.0020833333333333333,
+      "table": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/source-records/bns/bns.dat",
+      "table_sha256": "fad451f7c365d9642e735aea9223f0c6829313cea232ce7ea0fe28a5f01165b5",
+      "inputs": {
+        "admission": {
+          "file": "bns_n96_admission.par",
+          "sha256": "7003c852772baf9ad271201a5f1a2808576bf50271ccbf77e8d35198a657541a"
+        },
+        "formal": {
+          "file": "bns_n96_formal.par",
+          "sha256": "efad0a6ae7e889054afd9385ed965c575f879d7a67e45ad156049660df7e171a"
+        }
+      }
+    }
+  ],
+  "physical_acceptance": false,
+  "scope": "Same from-rest constraint-solved binary table, native AsterX/Z4c evolution; independent grid staggering and AMR realization. No independent initial-data solver claim."
+}

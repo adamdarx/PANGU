@@ -1,0 +1,46 @@
+{
+  "64": {
+    "histories": {
+      "athenak_tov_collapse_n64.mhd.hst": {
+        "sha256": "d2b3f045a4afa489a988a6f5b3a8fdd6437f92eb873638776cd0ff9b9893af9d",
+        "first_nonfinite_time": 96.39999999994656,
+        "finite_full_history": false
+      },
+      "athenak_tov_collapse_n64.z4c.user.hst": {
+        "sha256": "c2dd1040834730ba590fc799cfd948fb4b8abef8d1d641c0702937df58309a19",
+        "first_nonfinite_time": 96.39999999994656,
+        "finite_full_history": false
+      },
+      "athenak_tov_collapse_n64.user.hst": {
+        "sha256": "a2dfa60ea0c17700eb3bcb9e1c14441368383872735a5891ed938c3304e5d581",
+        "first_nonfinite_time": 96.49999999994647,
+        "finite_full_history": false
+      }
+    },
+    "horizon_mass_finite_rows": 0,
+    "full_physical_acceptance": false,
+    "diagnosis": "Reached100 and exited0; nonfinite evolved histories invalidate full-duration reference. Finite prefixes are not independently certified as accurate. No valid horizon mass was reported."
+  },
+  "96": {
+    "histories": {
+      "athenak_tov_collapse_n96.mhd.hst": {
+        "sha256": "2800eae38b60405e63b00d833d4823624d7783b314c58d232abecb478426b50a",
+        "first_nonfinite_time": 78.89999999996932,
+        "finite_full_history": false
+      },
+      "athenak_tov_collapse_n96.user.hst": {
+        "sha256": "3a8182ef4a7c4d6e3613a575c15bf8e7ba404e129c3e16c7cbccdd9a74e02ccc",
+        "first_nonfinite_time": 78.99999999996923,
+        "finite_full_history": false
+      },
+      "athenak_tov_collapse_n96.z4c.user.hst": {
+        "sha256": "c8823473e066bb8ce54100c9f4db05872a61eb24a14e4a4e3ef96f34a9cc9b8c",
+        "first_nonfinite_time": null,
+        "finite_full_history": true
+      }
+    },
+    "horizon_mass_finite_rows": 0,
+    "full_physical_acceptance": false,
+    "diagnosis": "Reached100 and exited0; nonfinite evolved histories invalidate full-duration reference. Finite prefixes are not independently certified as accurate. No valid horizon mass was reported."
+  }
+}

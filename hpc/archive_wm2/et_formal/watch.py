@@ -5,23 +5,25 @@ H=Path(__file__).resolve().parent
 sys.path.insert(0,'/home/adamdarx/archive-local/ArchiveControl/20261114/runtime/validation/hpc/binary_stall_20261103')
 import archive_qnm as w
 a=w.archive;ssh=['ssh','-S','/home/adamdarx/.ssh/pku-data-5d-v1','-o','ControlMaster=no','-o','BatchMode=yes','-o','ConnectTimeout=15','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=2','2601110206@wm2-data.pku.edu.cn'];a.SSH=ssh;w.SSH=ssh+['bash --noprofile --norc -s'];a.HERE=w.HERE=H;w.STAGING=H/'staging';w.STAGING.mkdir(exist_ok=True)
-a.BASE='/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu';a.DEST=Path('/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-einstein-toolkit-gpu');a.ALLOWED={'native-tov-reference','vacuum-reference'};a.RECORDS=a.DEST/'formal-archive-records';a.REMOTE_READ_ONLY=True;a.ZSTD='/home/adamdarx/.local/pangu-host/bin/zstd'
+a.BASE='/lustre/home/2601110206/CODEX_WORKPLACE/Operations';a.DEST=Path('/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations');a.ALLOWED={'20261117-einstein-toolkit-gpu','20261117-athenak-grmhd-reference'};a.RECORDS=a.DEST/'20261117-einstein-toolkit-gpu/formal-archive-records';a.REMOTE_READ_ONLY=True;a.ZSTD='/home/adamdarx/.local/pangu-host/bin/zstd'
 SOURCE=r'''
 from pathlib import Path
 import json,time
-r=Path('/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu');proofs=[]
+base=Path('/lustre/home/2601110206/CODEX_WORKPLACE/Operations');r=base/'20261117-einstein-toolkit-gpu';repair=base/'20261117-athenak-grmhd-reference/tov-repair';proofs=[]
 for p in (r/'native-tov-reference').glob('N*_FORMAL.json'):proofs.append(p)
 for p in (r/'vacuum-reference').glob('FORMAL_*.json'):proofs.append(p)
+for p in (r/'bns-reference').glob('N*_FORMAL.json'):proofs.append(p)
+for p in repair.glob('TOV_FORMAL_N*.json'):proofs.append(p)
 rows=[]
 for proof in proofs:
  d=json.loads(proof.read_text())
- if d.get('status') not in ['formal_completed_quantitative_analysis_pending','formal_completed_analysis_pending']:continue
- folder=Path(d['work']);assert folder.is_relative_to(r) if hasattr(folder,'is_relative_to') else str(folder).startswith(str(r)+'/');assert '/runs/' in str(folder)
+ if d.get('status') not in ['formal_completed_quantitative_analysis_pending','formal_completed_analysis_pending','formal_evolution_completed_analysis_pending']:continue
+ folder=Path(d['work']);assert any(str(folder).startswith(str(scope)+'/runs/') for scope in [r/'native-tov-reference',r/'vacuum-reference',r/'bns-reference',repair])
  for p in list(folder.rglob('*'))+[proof]:
   if p.is_symlink() or not p.is_file() or p.name.endswith('.archive.json'):continue
   s=p.stat()
   if s.st_uid!=71767 or time.time()-s.st_mtime<120:continue
-  rows.append(dict(path=str(p.relative_to(r)),bytes=s.st_size,mtime_ns=s.st_mtime_ns,remove_after_verified=False,closed_phase=True,physical_acceptance='pending independent quantitative analysis'))
+  rows.append(dict(path=str(p.relative_to(base)),bytes=s.st_size,mtime_ns=s.st_mtime_ns,remove_after_verified=False,closed_phase=True,physical_acceptance='pending independent quantitative analysis'))
 print(json.dumps(rows))
 '''
 with (H/'archive.lock').open('w') as lock:

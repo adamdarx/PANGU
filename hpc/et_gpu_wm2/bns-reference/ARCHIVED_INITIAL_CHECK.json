@@ -1,0 +1,17 @@
+{
+  "64": {
+    "samples": 16000,
+    "rho_relative_L1": 2.0543824974606115e-16,
+    "rho_Linf": 3.0357660829594124e-18,
+    "psi_relative_Linf": 4.440892098500626e-16,
+    "source_phdf_sha256": "35682d1a4b534aa1160774321719883129778d6dc321d6a12507f1c87bfcac32"
+  },
+  "96": {
+    "samples": 16000,
+    "rho_relative_L1": 5.235839241486491e-16,
+    "rho_Linf": 3.2526065174565133e-18,
+    "psi_relative_Linf": 6.661338147750939e-16,
+    "source_phdf_sha256": "9189271075bb26310659d3280772df8e01b33d3787661fa56789f4784baeabb0"
+  },
+  "scope": "Static actual initializer function samples versus archived PANGU time-zero fields; no CPU evolution or independent constraint-solver claim."
+}

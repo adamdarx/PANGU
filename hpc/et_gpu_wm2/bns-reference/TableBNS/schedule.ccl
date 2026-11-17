@@ -1,0 +1,25 @@
+SCHEDULE TableBNS_Read AT WRAGH
+{
+  LANG: C
+  OPTIONS: GLOBAL
+} "Read and validate the common constraint-solved binary table"
+
+SCHEDULE TableBNS_ADM IN HydroBaseX_InitialData AFTER HydroBaseX_initial_data
+{
+  LANG: C
+  WRITES: ADMBaseX::metric(everywhere) ADMBaseX::curv(everywhere)
+  WRITES: ADMBaseX::lapse(everywhere)
+} "Evaluate initial conformally flat metric and lapse at vertices"
+
+SCHEDULE TableBNS_Hydro IN HydroBaseX_InitialData AFTER TableBNS_ADM
+{
+  LANG: C
+  WRITES: HydroBaseX::rho(everywhere) HydroBaseX::eps(everywhere)
+  WRITES: HydroBaseX::press(everywhere) HydroBaseX::vel(everywhere)
+} "Evaluate initial cold matter at cell centers"
+
+SCHEDULE TableBNS_Magnetic IN ODESolvers_Initial BEFORE AsterX_InitialGroup
+{
+  LANG: C
+  WRITES: AsterX::Avec_x(everywhere) AsterX::Avec_y(everywhere) AsterX::Avec_z(everywhere)
+} "Initialize zero magnetic vector potential"

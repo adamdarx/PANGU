@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "resolution": 64,
+      "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/tov-repair/inputs/tov_n64.athinput",
+      "sha256": "7025b2c01ab5a835f1f06640a85ae8ac8483ef17c74b8d785e806f9cf3110722",
+      "target": 100,
+      "previous_input_sha256": "10fad261a8cacdefe9df70b0d2c36ae28aeab78158b8462f87b753de5116fd15"
+    }
+  ],
+  "changes": {
+    "native_KO_dissipation": [
+      0,
+      0.1
+    ],
+    "kappa1": [
+      0,
+      0.02
+    ],
+    "chi_div_floor": [
+      -1000,
+      1e-05
+    ],
+    "floor_chi": [
+      false,
+      true
+    ],
+    "chi_min_floor": 1e-12
+  },
+  "unchanged": "Initial model/EOS/physical mesh, native evolution code/FD6, binary and output cadence",
+  "scope": "N64 first; N96 rerun only after investigating N64 stabilized result; no solved-root-cause claim"
+}

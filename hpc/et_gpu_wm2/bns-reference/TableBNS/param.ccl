@@ -1,0 +1,13 @@
+PRIVATE:
+STRING table_file "Time-symmetric binary initial-data table"
+{
+  ".*" :: "PANGU_BNS_TIME_SYMMETRIC_V1 file"
+} "bns.dat"
+REAL rho_floor "Initial atmosphere rest density"
+{
+  (0:* :: "positive"
+} 1e-14
+REAL pressure_floor "Initial atmosphere pressure"
+{
+  (0:* :: "positive"
+} 1e-26
