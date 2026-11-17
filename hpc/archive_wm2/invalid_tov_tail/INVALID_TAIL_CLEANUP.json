@@ -1,0 +1,224 @@
+{
+  "status": "completed",
+  "files": [
+    {
+      "n": 64,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.mhd_w_bcc.00020.bin",
+      "bytes": 67294592,
+      "mtime_ns": 1794901612000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.mhd_w_bcc.00020.bin.zst",
+      "sha256": "6ab579726afd9a796ab0b9d39fc3c3791599e36c0dda7e8c839d44764ba5146c",
+      "removed_utc": "2026-11-17T12:32:58.602182+00:00"
+    },
+    {
+      "n": 64,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.mhd_divb.00020.bin",
+      "bytes": 7525704,
+      "mtime_ns": 1794901611000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.mhd_divb.00020.bin.zst",
+      "sha256": "696b60fb01fc9c3e72172aa8fe409313e465bc68080e78227e364a2fa29b5b1c",
+      "removed_utc": "2026-11-17T12:33:01.203142+00:00"
+    },
+    {
+      "n": 64,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.z4c.00020.bin",
+      "bytes": 164419095,
+      "mtime_ns": 1794901612000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.z4c.00020.bin.zst",
+      "sha256": "40cde2efa59bde2e323da5e604b9d7b5b92c248bd8a726348d9407ce6e93130e",
+      "removed_utc": "2026-11-17T12:33:06.312348+00:00"
+    },
+    {
+      "n": 64,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.con_M.00020.bin",
+      "bytes": 7525705,
+      "mtime_ns": 1794901611000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.con_M.00020.bin.zst",
+      "sha256": "6bbc8e5a4d3f71ac39b88260e442d76fe770c0c094f68136adfaa340ea3320a1",
+      "removed_utc": "2026-11-17T12:33:08.764622+00:00"
+    },
+    {
+      "n": 64,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.mhd_u.00020.bin",
+      "bytes": 37410144,
+      "mtime_ns": 1794901612000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.mhd_u.00020.bin.zst",
+      "sha256": "61266cf7c21c2529e5a52d1ea5a8863f574a017602dda46f82f790e9fb708631",
+      "removed_utc": "2026-11-17T12:33:11.676398+00:00"
+    },
+    {
+      "n": 64,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.adm.00020.bin",
+      "bytes": 97179065,
+      "mtime_ns": 1794901611000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.adm.00020.bin.zst",
+      "sha256": "b0204758c3c9aaa464896f7850c5195d7b6aa7b9ea2d3f5d9c71e4419ff6f9c6",
+      "removed_utc": "2026-11-17T12:33:17.040681+00:00"
+    },
+    {
+      "n": 64,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.con_H.00020.bin",
+      "bytes": 7525705,
+      "mtime_ns": 1794901611000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371502/bin/athenak_tov_collapse_n64.con_H.00020.bin.zst",
+      "sha256": "873f5657e3d0a8efc0c10406a5d8547b9be71b7b25123726f05166b35787e9e8",
+      "removed_utc": "2026-11-17T12:33:19.835367+00:00"
+    },
+    {
+      "n": 64,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n64/17371502/rst/athenak_tov_collapse_n64.00004.rst",
+      "bytes": 1519225956,
+      "mtime_ns": 1794901614000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n64/17371502/rst/athenak_tov_collapse_n64.00004.rst.zst",
+      "sha256": "7e7c4bb87af773bc8c0601e55b138cbd382396ee718e536629524c4fb50afec9",
+      "removed_utc": "2026-11-17T12:33:38.071069+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_divb.00019.bin",
+      "bytes": 25269543,
+      "mtime_ns": 1794915788000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_divb.00019.bin.zst",
+      "sha256": "08a90d2832167043b33043db9604bdff97d31efbe9468b4207ecd10e255231a4",
+      "removed_utc": "2026-11-17T12:33:40.553981+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_w_bcc.00020.bin",
+      "bytes": 226989407,
+      "mtime_ns": 1794916808000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_w_bcc.00020.bin.zst",
+      "sha256": "a4792f89b14bdba2e9e582ad3b084659d62b0759a3c4136eb00f87d7f9969271",
+      "removed_utc": "2026-11-17T12:33:44.780576+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.z4c.00019.bin",
+      "bytes": 554784246,
+      "mtime_ns": 1794915789000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.z4c.00019.bin.zst",
+      "sha256": "43e08bc69860ebcac08e7c559c1ff0609770a878bbb9e3a549f61c530ad83743",
+      "removed_utc": "2026-11-17T12:33:51.291778+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_u.00019.bin",
+      "bytes": 126129471,
+      "mtime_ns": 1794915789000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_u.00019.bin.zst",
+      "sha256": "647c463ee73bb302b7580c7fcdfe9682f33f2182513f9a2414b03c2759dff864",
+      "removed_utc": "2026-11-17T12:33:54.007409+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.adm.00019.bin",
+      "bytes": 327849368,
+      "mtime_ns": 1794915788000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.adm.00019.bin.zst",
+      "sha256": "13fd270218f4bfd38704c081cf8d4a3ca9795d909c33dc6e2887221c4a133e94",
+      "removed_utc": "2026-11-17T12:33:58.314899+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_w_bcc.00019.bin",
+      "bytes": 226989407,
+      "mtime_ns": 1794915789000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_w_bcc.00019.bin.zst",
+      "sha256": "f03648542b8ea0688e7f866f6ee0f9eeb222c3a65d03540dc0ea54ab6830caa8",
+      "removed_utc": "2026-11-17T12:34:01.605293+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.con_H.00019.bin",
+      "bytes": 25269544,
+      "mtime_ns": 1794915787000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.con_H.00019.bin.zst",
+      "sha256": "fe38ccedf0c82423baa26874299cb88af52167155e730fe9f04c850e32c7ed17",
+      "removed_utc": "2026-11-17T12:34:03.239194+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.con_M.00020.bin",
+      "bytes": 25269544,
+      "mtime_ns": 1794916805000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.con_M.00020.bin.zst",
+      "sha256": "d1ab3ecf9788276fb54302f523eecae6646d27a070cd344aea23b00198e1589f",
+      "removed_utc": "2026-11-17T12:34:04.491575+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.con_H.00020.bin",
+      "bytes": 25269544,
+      "mtime_ns": 1794916805000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.con_H.00020.bin.zst",
+      "sha256": "c15368af4feb5224634fa6c18f5e51780f14d26a52a1ce467208fd9bfc2b85dd",
+      "removed_utc": "2026-11-17T12:34:05.803568+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_u.00020.bin",
+      "bytes": 126129471,
+      "mtime_ns": 1794916807000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_u.00020.bin.zst",
+      "sha256": "c7df18ad9bd922a97c09f3d40a8be5ac5bf0faa1899b3e0f01507cec15714158",
+      "removed_utc": "2026-11-17T12:34:08.579559+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.adm.00020.bin",
+      "bytes": 327849368,
+      "mtime_ns": 1794916806000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.adm.00020.bin.zst",
+      "sha256": "c5aef50f4d0eb2fd67d7b69e2e5ad52a9c63480adc06affdfe4006b5a2ea76d8",
+      "removed_utc": "2026-11-17T12:34:12.805992+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.z4c.00020.bin",
+      "bytes": 554784246,
+      "mtime_ns": 1794916807000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.z4c.00020.bin.zst",
+      "sha256": "7874b36f51f64481e0dd7f9361968e2eec23993386633d2fcec726072046c7e0",
+      "removed_utc": "2026-11-17T12:34:19.576485+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.con_M.00019.bin",
+      "bytes": 25269544,
+      "mtime_ns": 1794915787000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.con_M.00019.bin.zst",
+      "sha256": "e94f310fd22d37ca4c209fa52c559eeeb43c3340e1289cbce1a02e78526fa523",
+      "removed_utc": "2026-11-17T12:34:21.185513+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_divb.00020.bin",
+      "bytes": 25269543,
+      "mtime_ns": 1794916805000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/bin/athenak_tov_collapse_n96.mhd_divb.00020.bin.zst",
+      "sha256": "3a3a44c5df477dbb4f104604154287adcf963b10240e015399dd4310d1be13ec",
+      "removed_utc": "2026-11-17T12:34:22.481599+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/rst/rank_00000001/athenak_tov_collapse_n96.00004.rst",
+      "bytes": 1798691907,
+      "mtime_ns": 1794916811000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/rst/rank_00000001/athenak_tov_collapse_n96.00004.rst.zst",
+      "sha256": "f3d28e20581c938b334066fa2a062bc02168ce6e0898941d6508337f3294c639",
+      "removed_utc": "2026-11-17T12:34:37.398422+00:00"
+    },
+    {
+      "n": 96,
+      "path": "20261117-athenak-grmhd-reference/runs/tov_n96/17371507/rst/rank_00000000/athenak_tov_collapse_n96.00004.rst",
+      "bytes": 1798691907,
+      "mtime_ns": 1794916810000000000,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/runs/tov_n96/17371507/rst/rank_00000000/athenak_tov_collapse_n96.00004.rst.zst",
+      "sha256": "8ae95b6af53b1cf9252be632d1ccf1dc6fa519c6be63d5ab90f915b004aaa5ce",
+      "removed_utc": "2026-11-17T12:34:55.002862+00:00"
+    }
+  ],
+  "policy": "Completed external TOV tails proven nonfinite across the domain; fresh archived D SHA and unchanged source SHA/stat before deletion; finite prefixes and last-good restart retained",
+  "raw_logical_bytes_removed": 8128612026,
+  "resumed_archive_owner_pid": 398805
+}
