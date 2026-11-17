@@ -1,0 +1,544 @@
+{
+  "status": "initial_grid_ADM_normalization_measured_issue_unresolved",
+  "cause_established": false,
+  "created_utc": "2026-11-17T03:42:59.962400+00:00",
+  "late_AH_evidence": {
+    "status": "unresolved",
+    "cause_established": false,
+    "initial_ADM_mass": 2.6548889790689447,
+    "AH_mass_window": [
+      160,
+      198.1265624998847
+    ],
+    "resolutions": [
+      {
+        "n": 64,
+        "mean_Christodoulou_mass": 2.656914714549385,
+        "AH_mass_excess_relative": 0.0007630207878412953,
+        "whole_domain_baryon_initial": 2.9275905970077063,
+        "whole_domain_baryon_final": 2.9301108764917703,
+        "whole_domain_baryon_relative_change": 0.0008608715599236483,
+        "evidence_sha256": "f5727825ba5e8e8999e212ce81156e8c7c01f7dded10338fce685ddb87972cb8",
+        "source": "/home/adamdarx/pangu-setup/physical-acceptance-20261117/previous-evidence/source-records/Matter__20261112-bns-dt5__runs__n64__17133234__summary.json"
+      },
+      {
+        "n": 96,
+        "mean_Christodoulou_mass": 2.6553595041359106,
+        "AH_mass_excess_relative": 0.00017722965844346739,
+        "whole_domain_baryon_initial": 2.927123789849816,
+        "whole_domain_baryon_final": 2.9294784358489885,
+        "whole_domain_baryon_relative_change": 0.000804423102069407,
+        "evidence_sha256": "efca96de3012acfc1d95d1485a4a28c21fd7ca8184208ed3a7cd57e8a16e2c98",
+        "source": "/home/adamdarx/pangu-setup/physical-acceptance-20261117/previous-evidence/source-records/Matter__20261112-bns-dt5__runs__n96__17254476__summary.json"
+      }
+    ],
+    "evidence": [
+      {
+        "path": "evidence/Matter__20261112-bns-dt5__runs__n64__17133234__summary.json",
+        "sha256": "f5727825ba5e8e8999e212ce81156e8c7c01f7dded10338fce685ddb87972cb8"
+      },
+      {
+        "path": "evidence/Matter__20261112-bns-dt5__runs__n96__17254476__summary.json",
+        "sha256": "efca96de3012acfc1d95d1485a4a28c21fd7ca8184208ed3a7cd57e8a16e2c98"
+      }
+    ],
+    "limits": [
+      "A decreasing excess over two levels does not establish convergence order or explain the cause.",
+      "Baryon drift uses each grid initial integral; the continuum/table baryon mass is a separate initial quadrature check.",
+      "No pointwise accuracy claim inside masks is required; exterior budgets need moving inner-boundary and accumulated source terms.",
+      "A last-stage recovery field is not a cumulative correction."
+    ]
+  },
+  "resolutions": [
+    {
+      "n": 64,
+      "measurement": {
+        "status": "initial_ADM_monopole_measured",
+        "source": "/home/adamdarx/pangu-setup/bns-initial-adm-20261117/cache/n64.initial.phdf",
+        "source_sha256": "35682d1a4b534aa1160774321719883129778d6dc321d6a12507f1c87bfcac32",
+        "bytes": 245363515,
+        "time": 0,
+        "baryon_mass_coordinate_integral": 2.9275905970077063,
+        "fits": [
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.654902721580347,
+            "weighted_fit_rms": 0.0011356653526596236,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6550666442805206,
+            "weighted_fit_rms": 0.0011355235594903376,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.6548881849669654,
+            "weighted_fit_rms": 0.00013497614491442302,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.654877990206003,
+            "weighted_fit_rms": 0.00013497153216318546,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.6548890596516648,
+            "weighted_fit_rms": 1.6778740666914483e-05,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548904583249247,
+            "weighted_fit_rms": 1.6778042285153092e-05,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.654886877348117,
+            "weighted_fit_rms": 0.00012468855074291172,
+            "points": 3026
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.654878146147352,
+            "weighted_fit_rms": 0.00012468655417761934,
+            "points": 3026
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.6548890542558055,
+            "weighted_fit_rms": 6.541611660829741e-06,
+            "points": 3026
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548905640166263,
+            "weighted_fit_rms": 6.540473769894688e-06,
+            "points": 3026
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.6548889728002782,
+            "weighted_fit_rms": 3.583306107529458e-07,
+            "points": 3026
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548888622264046,
+            "weighted_fit_rms": 3.58219225455562e-07,
+            "points": 3026
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.654889202495398,
+            "weighted_fit_rms": 1.7597651576835358e-05,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.654891874679144,
+            "weighted_fit_rms": 1.7595219886302583e-05,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.654888975735814,
+            "weighted_fit_rms": 5.220382766700063e-07,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.654888931861587,
+            "weighted_fit_rms": 5.22016187397915e-07,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.6548889791435752,
+            "weighted_fit_rms": 1.6205969456331304e-08,
+            "points": 4142
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.654888980436836,
+            "weighted_fit_rms": 1.6205351265058653e-08,
+            "points": 4142
+          }
+        ],
+        "conformal_metric_max_deviation": 0.0,
+        "extrinsic_components_max_abs": 0.0,
+        "exterior_density_max": 1.0000000000000002e-14,
+        "mass_fit_range": [
+          2.654877990206003,
+          2.6550666442805206
+        ],
+        "limitations": "ADM monopole check for a conformally flat, time-symmetric initial exterior.\n\nFits 2*r*(psi-1) with even axial multipoles in predeclared radial windows.\nAll fits are reported; the spread is a diagnostic, not a rigorous error bound.\nThis method is inappropriate for general evolved geometry or nonvacuum shells.\n Requires a centered reflection-symmetric axial initial model; finite-grid nonaxial and unmodeled asymptotic errors are not certified by fit spread.",
+        "expected_mass": 2.6548889790689447,
+        "maximum_relative_fit_difference": 6.692001547969895e-05
+      },
+      "archive_proof": {
+        "path": "20261112-bns-dt5/runs/n64/17133234/formal/sync_plugin_grmhd.bns.00000.phdf",
+        "bytes": 245363515,
+        "mtime_ns": 1794448044000000000,
+        "remove_after_verified": true,
+        "writer_closed": true,
+        "driver_completed": true,
+        "scientific_acceptance": "not inferred from archive eligibility",
+        "sha256": "35682d1a4b534aa1160774321719883129778d6dc321d6a12507f1c87bfcac32",
+        "compressed_bytes": 160503784,
+        "verified": "2026-11-14T10:30:51.041345+08:00",
+        "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n64/17133234/formal/sync_plugin_grmhd.bns.00000.phdf.zst",
+        "server_removed": true,
+        "prior_archive_path": "/mnt/e/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n64/17133234/formal/sync_plugin_grmhd.bns.00000.phdf.zst",
+        "server_removed_utc": "2026-11-16T00:53:23.168641+00:00",
+        "cleanup_receipt": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261116-headroom/receipts/81.json",
+        "source_removal_basis": "User-authorized historical cleanup; fresh D decompressed SHA and source SHA matched before guarded unlink"
+      },
+      "late_AH_relative_excess_over_observed_initial_fit_range": [
+        0.0006960541924043717,
+        0.0007671630677175134
+      ]
+    },
+    {
+      "n": 96,
+      "measurement": {
+        "status": "initial_ADM_monopole_measured",
+        "source": "/home/adamdarx/pangu-setup/bns-initial-adm-20261117/cache/n96.initial.phdf",
+        "source_sha256": "9189271075bb26310659d3280772df8e01b33d3787661fa56789f4784baeabb0",
+        "bytes": 781989578,
+        "time": 0,
+        "baryon_mass_coordinate_integral": 2.9271237898498166,
+        "fits": [
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.654885590691277,
+            "weighted_fit_rms": 0.0011265478328013492,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548526620622828,
+            "weighted_fit_rms": 0.001126541973873711,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.6548887802325796,
+            "weighted_fit_rms": 0.0001330033523766213,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548876777626416,
+            "weighted_fit_rms": 0.00013300329674967822,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.6548889708975807,
+            "weighted_fit_rms": 1.676962618455579e-05,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              30,
+              45
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.654889070697625,
+            "weighted_fit_rms": 1.676962256919735e-05,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.6548895818748015,
+            "weighted_fit_rms": 0.0001281492941366515,
+            "points": 10212
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548998063184777,
+            "weighted_fit_rms": 0.00012814664388810946,
+            "points": 10212
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.6548890096416056,
+            "weighted_fit_rms": 6.908465168469836e-06,
+            "points": 10212
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548897392600623,
+            "weighted_fit_rms": 6.908214834685305e-06,
+            "points": 10212
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.654888982200227,
+            "weighted_fit_rms": 3.9319647109073344e-07,
+            "points": 10212
+          },
+          {
+            "radial_interval": [
+              45,
+              60
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548890577754656,
+            "weighted_fit_rms": 3.9314928113502646e-07,
+            "points": 10212
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.654888928428475,
+            "weighted_fit_rms": 1.7507570651664577e-05,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 4,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548884261060564,
+            "weighted_fit_rms": 1.7507482919332883e-05,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.654888978324238,
+            "weighted_fit_rms": 5.16202956261741e-07,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 6,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548889738762402,
+            "weighted_fit_rms": 5.162027229541621e-07,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": false,
+            "ADM_mass": 2.654888979069815,
+            "weighted_fit_rms": 1.6270965336443802e-08,
+            "points": 13980
+          },
+          {
+            "radial_interval": [
+              60,
+              90
+            ],
+            "lmax": 8,
+            "constant_offset_fitted": true,
+            "ADM_mass": 2.6548889793231805,
+            "weighted_fit_rms": 1.6270941324138232e-08,
+            "points": 13980
+          }
+        ],
+        "conformal_metric_max_deviation": 0.0,
+        "extrinsic_components_max_abs": 0.0,
+        "exterior_density_max": 1.0000000000000002e-14,
+        "mass_fit_range": [
+          2.6548526620622828,
+          2.6548998063184777
+        ],
+        "limitations": "ADM monopole check for a conformally flat, time-symmetric initial exterior.\n\nFits 2*r*(psi-1) with even axial multipoles in predeclared radial windows.\nAll fits are reported; the spread is a diagnostic, not a rigorous error bound.\nThis method is inappropriate for general evolved geometry or nonvacuum shells.\n Requires a centered reflection-symmetric axial initial model; finite-grid nonaxial and unmodeled asymptotic errors are not certified by fit spread.",
+        "expected_mass": 2.6548889790689447,
+        "maximum_relative_fit_difference": 1.3679293917046031e-05
+      },
+      "archive_proof": {
+        "source": {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00000.phdf",
+          "bytes": 781989578,
+          "mtime_ns": 1794448687000000000,
+          "sha256": "9189271075bb26310659d3280772df8e01b33d3787661fa56789f4784baeabb0",
+          "checked_utc": "2026-11-17T03:04:50.199429Z",
+          "closure": "Initial numbered field from a terminated earlier job; stable stat before and after read."
+        },
+        "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00000.phdf.zst",
+        "sha256": "9189271075bb26310659d3280772df8e01b33d3787661fa56789f4784baeabb0",
+        "compressed_bytes": 528954060,
+        "verified_utc": "2026-11-17T03:33:45.767310+00:00",
+        "verification": "Fresh full decompression SHA256 matches freshly read HPC source and analyzed raw field",
+        "server_removed": false,
+        "scientific_acceptance": "Not inferred from archive verification"
+      },
+      "late_AH_relative_excess_over_observed_initial_fit_range": [
+        0.00017315072167267687,
+        0.0001909115638960568
+      ]
+    }
+  ],
+  "limitations": [
+    "The spread among fits is a diagnostic, not a certified uncertainty bound.",
+    "Positive excess relative to these fits does not establish a physical or algorithmic cause.",
+    "N128 and matched strict horizon/flux/source error budgets remain pending."
+  ]
+}

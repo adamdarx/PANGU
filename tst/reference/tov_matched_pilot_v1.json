@@ -1,0 +1,43 @@
+{
+  "case": "stable_unmagnetized_TOV_matched_pilot",
+  "role": "Bounded50-time extension of existing short-stage comparisons; does not constitute full stable-star, collapse, or v2 module acceptance.",
+  "target_time": 50,
+  "source_reference": "AthenaK8a5d398cb50c7621d03127008aad52c80d579c9c, dyn_grmhd/dyngr_tov",
+  "initial": {
+    "rhoc": 0.00128,
+    "kappa": 100,
+    "gamma": 2,
+    "B": 0,
+    "v_pert": 0,
+    "isotropic": true
+  },
+  "grid": {
+    "domain_halfwidth": 20,
+    "root": 64,
+    "block": 32,
+    "nghost": 3,
+    "FD_order": 4
+  },
+  "numerics": {
+    "integrator": "RK2",
+    "CFL": 0.1,
+    "KO_coefficient": 0.1,
+    "kappa1": 0,
+    "kappa2": 0,
+    "lapse": "1+log",
+    "shift_Gamma": 1,
+    "shift_eta": 2,
+    "reconstruction": "PLM",
+    "Riemann_solver": "HLLE"
+  },
+  "report": [
+    "initial differences",
+    "rho_max relative errors and normalized perturbations",
+    "baryon drift for each code",
+    "reference output quantization",
+    "finite-boundary and time-step limitations"
+  ],
+  "independent_comparison_completed": false,
+  "full_physical_acceptance": false,
+  "performance_claim": false
+}
