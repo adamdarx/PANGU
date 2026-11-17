@@ -1,0 +1,28 @@
+{
+  "updated_utc": "2026-11-17T08:36:43.853749+00:00",
+  "workers": [
+    {
+      "owner": "/home/adamdarx/single-long-start/target-500",
+      "files": 139,
+      "compressed_bytes": 744772852461,
+      "removed_files": 108,
+      "removed_raw_bytes": 611493660811
+    },
+    {
+      "owner": "/home/adamdarx/pangu-setup/hpc-n128-20261116/archive-state",
+      "files": 30,
+      "compressed_bytes": 240035141797,
+      "removed_files": 0,
+      "removed_raw_bytes": 0
+    },
+    {
+      "owner": "/home/adamdarx/pangu-setup/archive-athenak-tov64-20261117",
+      "files": 71,
+      "compressed_bytes": 4027717552,
+      "removed_files": 71,
+      "removed_raw_bytes": 5408026014
+    }
+  ],
+  "stopped_athenak_worker_pid": 386204,
+  "policy": "Archive closed files to D, verify decompressed SHA and rehash source before duplicate removal; running PANGU not interrupted."
+}
