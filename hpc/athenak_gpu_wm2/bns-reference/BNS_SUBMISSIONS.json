@@ -1,11 +1,39 @@
 {
   "admission": {
-    "64": "17372828",
-    "96": "17372830"
+    "64": "17373408",
+    "96": "17373410"
   },
   "formal": {
-    "64": "17372829",
-    "96": "17372831"
+    "64": "17373409",
+    "96": "17373411"
   },
-  "target": 200
+  "target": 200,
+  "binary_sha256": "472b9e9e557ca48a1e42a5f54c80b8e5a0e07d8c6f75aaa2c4194554112d581a",
+  "superseded": {
+    "admission": {
+      "64": "17373399",
+      "96": "17373401"
+    },
+    "formal": {
+      "64": "17373400",
+      "96": "17373402"
+    },
+    "target": 200,
+    "binary_sha256": "2056a6bbc9edd088aa0f4047c86f081a5dc994a34ceac11241d556eb865a5ed8",
+    "superseded": {
+      "admission": {
+        "64": "17372828",
+        "96": "17372830"
+      },
+      "formal": {
+        "64": "17372829",
+        "96": "17372831"
+      },
+      "target": 200
+    },
+    "reason": "Time-zero initializer failed independently checked PANGU match; adapter-stage diagnostic rebuild; all new runs gated",
+    "queued_utc": "2026-11-17T10:17:50.279231Z"
+  },
+  "reason": "Time-zero initializer failed independently checked PANGU match; adapter-stage diagnostic rebuild; all new runs gated",
+  "queued_utc": "2026-11-17T10:27:42.464233Z"
 }

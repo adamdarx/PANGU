@@ -1,0 +1,43 @@
+{
+  "status": "all_six_GPU_admissions_passed_identical_leaf_coverage",
+  "geometry_sha256": "c49d55c6c40eb96cf0874b2c489c4341e6539a8a86a3ba2bc061eb2fddd0fc77",
+  "cases": [
+    {
+      "kind": "stationary",
+      "n": 32,
+      "job_id": "17371935",
+      "min_dx": 0.048828125
+    },
+    {
+      "kind": "stationary",
+      "n": 48,
+      "job_id": "17371936",
+      "min_dx": 0.032552083333333336
+    },
+    {
+      "kind": "stationary",
+      "n": 64,
+      "job_id": "17372618",
+      "min_dx": 0.0244140625
+    },
+    {
+      "kind": "spinning",
+      "n": 32,
+      "job_id": "17371938",
+      "min_dx": 0.048828125
+    },
+    {
+      "kind": "spinning",
+      "n": 48,
+      "job_id": "17371939",
+      "min_dx": 0.032552083333333336
+    },
+    {
+      "kind": "spinning",
+      "n": 64,
+      "job_id": "17373397",
+      "min_dx": 0.0244140625
+    }
+  ],
+  "scope": "Short16-step geometry/resources/exterior finiteness only;500M physical convergence pending"
+}

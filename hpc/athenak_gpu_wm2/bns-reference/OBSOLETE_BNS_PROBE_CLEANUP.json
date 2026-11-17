@@ -1,0 +1,144 @@
+{
+  "reason": "Superseded failed initializer diagnostic raw output; cause fixed and fresh GPU initial-field comparison passed. Preserve failure logs and status records.",
+  "archive_required": false,
+  "removed": [
+    {
+      "path": "runs/bns_n64/17372828/rst/rank_00000000/athenak_bns_n64.00001.rst",
+      "bytes": 1226051836
+    },
+    {
+      "path": "runs/bns_n64/17372828/rst/rank_00000000/athenak_bns_n64.00000.rst",
+      "bytes": 1226051836
+    },
+    {
+      "path": "runs/bns_n64/17372828/rst/rank_00000001/athenak_bns_n64.00001.rst",
+      "bytes": 1226051836
+    },
+    {
+      "path": "runs/bns_n64/17372828/rst/rank_00000001/athenak_bns_n64.00000.rst",
+      "bytes": 1226051836
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.mhd_u.00001.bin",
+      "bytes": 60372052
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.mhd_w_bcc.00000.bin",
+      "bytes": 108606620
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.adm.00001.bin",
+      "bytes": 156841133
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.mhd_w_bcc.00001.bin",
+      "bytes": 108606580
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.con_M.00001.bin",
+      "bytes": 12137533
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.mhd_divb.00001.bin",
+      "bytes": 12137532
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.adm.00000.bin",
+      "bytes": 156841221
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.z4c.00000.bin",
+      "bytes": 265368915
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.con_H.00000.bin",
+      "bytes": 12137653
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.z4c.00001.bin",
+      "bytes": 265368843
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.mhd_divb.00000.bin",
+      "bytes": 12137636
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.con_H.00001.bin",
+      "bytes": 12137533
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.con_M.00000.bin",
+      "bytes": 12137669
+    },
+    {
+      "path": "runs/bns_n64/17372828/bin/athenak_bns_n64.mhd_u.00000.bin",
+      "bytes": 60372108
+    },
+    {
+      "path": "runs/bns_n64/17373399/rst/rank_00000000/athenak_bns_n64.00001.rst",
+      "bytes": 2452074748
+    },
+    {
+      "path": "runs/bns_n64/17373399/rst/rank_00000000/athenak_bns_n64.00000.rst",
+      "bytes": 2452074748
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.mhd_u.00001.bin",
+      "bytes": 60372052
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.mhd_w_bcc.00000.bin",
+      "bytes": 108606620
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.adm.00001.bin",
+      "bytes": 156841133
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.mhd_w_bcc.00001.bin",
+      "bytes": 108606580
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.con_M.00001.bin",
+      "bytes": 12137533
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.mhd_divb.00001.bin",
+      "bytes": 12137532
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.adm.00000.bin",
+      "bytes": 156841221
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.z4c.00000.bin",
+      "bytes": 265368915
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.con_H.00000.bin",
+      "bytes": 12137653
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.z4c.00001.bin",
+      "bytes": 265368843
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.mhd_divb.00000.bin",
+      "bytes": 12137636
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.con_H.00001.bin",
+      "bytes": 12137533
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.con_M.00000.bin",
+      "bytes": 12137669
+    },
+    {
+      "path": "runs/bns_n64/17373399/bin/athenak_bns_n64.mhd_u.00000.bin",
+      "bytes": 60372108
+    }
+  ],
+  "removed_bytes": 12318762896,
+  "UTC": "2026-11-17T10:32:07.761795Z"
+}

@@ -1,0 +1,44 @@
+{
+  "status": "admission_passed",
+  "job_id": "17371936",
+  "kind": "stationary",
+  "n": 48,
+  "target_M": 500,
+  "binary_sha256": "0215d235a2ff3daca0d433b97da08a04f3db4953f8d425683e59259972a32500",
+  "input_sha256": "abb6e90c860fb549ef5c474dc75e734e21caf4e99ba7aac5bf2b3df75cc31b0c",
+  "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-coarse-convergence/runs/stationary_n48/17371936",
+  "started_utc": "2026-11-17T08:11:29.585046Z",
+  "physical_acceptance": false,
+  "initial_free_GiB": 249.51119232177734,
+  "latest_free_GiB": 248.1021270751953,
+  "returncode": 0,
+  "actual_GPU_observed": true,
+  "wall_seconds": 346.0799768479774,
+  "fields": [
+    {
+      "file": "nr_boosted_puncture.stationary.00000.phdf",
+      "time": 0.0,
+      "cycle": 0,
+      "blocks": 456,
+      "geometry_sha256": "c49d55c6c40eb96cf0874b2c489c4341e6539a8a86a3ba2bc061eb2fddd0fc77",
+      "min_dx": 0.032552083333333336,
+      "exterior_finite_cells": 1756032
+    },
+    {
+      "file": "nr_boosted_puncture.stationary.final.phdf",
+      "time": 0.10416666666666673,
+      "cycle": 16,
+      "blocks": 456,
+      "geometry_sha256": "c49d55c6c40eb96cf0874b2c489c4341e6539a8a86a3ba2bc061eb2fddd0fc77",
+      "min_dx": 0.032552083333333336,
+      "exterior_finite_cells": 1756032
+    }
+  ],
+  "GPU_memory": {
+    "0": {
+      "peak_MiB": 27025.0,
+      "total_MiB": 40960.0
+    }
+  },
+  "finished_utc": "2026-11-17T08:17:22.422611Z"
+}

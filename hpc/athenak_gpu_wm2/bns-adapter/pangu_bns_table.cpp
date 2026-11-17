@@ -2,6 +2,7 @@
 // Native AthenaK GRMHD/Z4c evolution and finite differences are unchanged.
 #include <cmath>
 #include <fstream>
+#include <iostream>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -26,20 +27,20 @@ struct BNSData {
   KOKKOS_INLINE_FUNCTION Real Source(const Real distance) const {
     if (distance >= surface) return 0;
     const Real coordinate = distance / source_dr;
-    const int left = static_cast<int>(fmin(fmax(floor(coordinate)-1, 0), ns-4));
+    const int left = static_cast<int>(fmin(fmax(floor(coordinate)-1, Real(0)), Real(ns-4)));
     const Real t = coordinate-left;
     const Real result = -(t-1)*(t-2)*(t-3)/6*source(left)
         +t*(t-2)*(t-3)/2*source(left+1)
         -t*(t-1)*(t-3)/2*source(left+2)
         +t*(t-1)*(t-2)/6*source(left+3);
-    return fmax(result, 0);
+    return fmax(result, Real(0));
   }
 
   KOKKOS_INLINE_FUNCTION Real Psi(const Real x, const Real y, const Real z) const {
     const Real radius = sqrt(x*x+y*y+z*z);
     const Real mu = radius > 0 ? z/radius : 0;
     const Real coordinate = radius/dr;
-    const int left = static_cast<int>(fmin(fmax(floor(coordinate)-1, 0), nr-4));
+    const int left = static_cast<int>(fmin(fmax(floor(coordinate)-1, Real(0)), Real(nr-4)));
     const Real t = coordinate-left;
     const Real w[4] = {-(t-1)*(t-2)*(t-3)/6, t*(t-2)*(t-3)/2,
                        -t*(t-1)*(t-3)/2, t*(t-1)*(t-2)/6};
@@ -124,12 +125,23 @@ void ProblemGenerator::UserProblem(ParameterInput *pin, const bool restart) {
                     "BNS table requires Gamma2");
   if (restart) return;
   const auto d=ReadData(pin->GetString("problem","initial_data_file"));
+  DvceArray1D<Real> samples("BNS source GPU probe",3);
+  par_for("BNS source GPU reference",DevExeSpace(),0,0,KOKKOS_LAMBDA(int q) {
+    samples(0)=d.Source(Real(0));samples(1)=d.source(0);
+    samples(2)=d.Psi(Real(0),Real(0),d.separation/2);
+  });
+  auto host_samples=Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),samples);
+  std::cout << "BNS_SOURCE_PROBE rank=" << global_variable::my_rank
+            << " interpolated=" << host_samples(0) << " tabulated=" << host_samples(1)
+            << " psi_center=" << host_samples(2) << std::endl;
+  PARTHENON_REQUIRE(host_samples(0)>0 && std::abs(host_samples(0)/host_samples(1)-1)<1e-12,
+                    "BNS GPU source interpolation does not match table center");
   const Real dfloor=pin->GetReal("mhd","dfloor");
   const Real pfloor=pin->GetReal("problem","pressure_floor");
   auto &ind=pmy_mesh_->mb_indcs;
   const int n1=ind.nx1+2*ind.ng,n2=ind.nx2+2*ind.ng,n3=ind.nx3+2*ind.ng;
   const int is=ind.is,js=ind.js,ks=ind.ks,nx=ind.nx1,ny=ind.nx2,nz=ind.nx3;
-  auto size=p->pmb->mb_size;auto adm=p->padm->adm;auto w=p->pmhd->w0;
+  auto &size=p->pmb->mb_size;auto &adm=p->padm->adm;auto &w=p->pmhd->w0;
   Kokkos::deep_copy(p->pmhd->b0.x1f,0.);Kokkos::deep_copy(p->pmhd->b0.x2f,0.);
   Kokkos::deep_copy(p->pmhd->b0.x3f,0.);Kokkos::deep_copy(p->pmhd->bcc0,0.);
   par_for("BNS table initial data",DevExeSpace(),0,p->nmb_thispack-1,0,n3-1,0,n2-1,0,n1-1,
@@ -154,7 +166,30 @@ void ProblemGenerator::UserProblem(ParameterInput *pin, const bool restart) {
       }
     }
   });
+  Kokkos::fence();
+  const int cells=p->nmb_thispack*n1*n2*n3;
+  int bad=0;Real maximum_rho=0;
+  Kokkos::parallel_reduce("Check BNS initial ADM",Kokkos::RangePolicy<DevExeSpace>(0,cells),
+    KOKKOS_LAMBDA(int q,int &count) {
+      const int i=q%n1;q/=n1;const int j=q%n2;q/=n2;const int k=q%n3;const int m=q/n3;
+      bool invalid=!(adm.psi4(m,k,j,i)>=1) || !(adm.alpha(m,k,j,i)>0);
+      invalid=invalid || !isfinite(w(m,IDN,k,j,i)) || w(m,IDN,k,j,i)<dfloor;
+      for(int a=0;a<3;++a)for(int b=a;b<3;++b)
+        invalid=invalid || !isfinite(adm.g_dd(m,a,b,k,j,i)) || !isfinite(adm.vK_dd(m,a,b,k,j,i));
+      if(invalid)++count;
+    },bad);
+  Kokkos::parallel_reduce("Check BNS initial rho",Kokkos::RangePolicy<DevExeSpace>(0,cells),
+    KOKKOS_LAMBDA(int q,Real &value) {
+      const int i=q%n1;q/=n1;const int j=q%n2;q/=n2;const int k=q%n3;const int m=q/n3;
+      value=fmax(value,w(m,IDN,k,j,i));
+    },Kokkos::Max<Real>(maximum_rho));
+  std::cout << "BNS_INIT_FILLED rank=" << global_variable::my_rank
+            << " bad=" << bad << " rho_max=" << maximum_rho << std::endl;
+  PARTHENON_REQUIRE(bad==0,"BNS initial ADM/primitive validation failed");
   p->pdyngr->PrimToConInit(0,n1-1,0,n2-1,0,n3-1);
+  Kokkos::fence();
+  std::cout << "BNS_INIT_PRIM_TO_CON_COMPLETE rank=" << global_variable::my_rank << std::endl;
+
   switch(ind.ng) {
     case 2:p->pz4c->ADMToZ4c<2>(p,pin);p->pz4c->ADMConstraints<2>(p);break;
     case 3:p->pz4c->ADMToZ4c<3>(p,pin);p->pz4c->ADMConstraints<3>(p);break;

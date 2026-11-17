@@ -1,0 +1,44 @@
+{
+  "status": "admission_passed",
+  "job_id": "17371939",
+  "kind": "spinning",
+  "n": 48,
+  "target_M": 500,
+  "binary_sha256": "0215d235a2ff3daca0d433b97da08a04f3db4953f8d425683e59259972a32500",
+  "input_sha256": "0bb07127b147e3442619e5bfb6c433354a18962e746c3c7c9e27653fffc8d6f5",
+  "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-coarse-convergence/runs/spinning_n48/17371939",
+  "started_utc": "2026-11-17T08:24:39.291120Z",
+  "physical_acceptance": false,
+  "initial_free_GiB": 246.1235466003418,
+  "latest_free_GiB": 243.82100296020508,
+  "returncode": 0,
+  "actual_GPU_observed": true,
+  "wall_seconds": 669.1110233950894,
+  "fields": [
+    {
+      "file": "nr_puncture.spinning.00000.phdf",
+      "time": 0.0,
+      "cycle": 0,
+      "blocks": 456,
+      "geometry_sha256": "c49d55c6c40eb96cf0874b2c489c4341e6539a8a86a3ba2bc061eb2fddd0fc77",
+      "min_dx": 0.032552083333333336,
+      "exterior_finite_cells": 1756032
+    },
+    {
+      "file": "nr_puncture.spinning.final.phdf",
+      "time": 0.10416666666666673,
+      "cycle": 16,
+      "blocks": 456,
+      "geometry_sha256": "c49d55c6c40eb96cf0874b2c489c4341e6539a8a86a3ba2bc061eb2fddd0fc77",
+      "min_dx": 0.032552083333333336,
+      "exterior_finite_cells": 1756032
+    }
+  ],
+  "GPU_memory": {
+    "0": {
+      "peak_MiB": 27025.0,
+      "total_MiB": 40960.0
+    }
+  },
+  "finished_utc": "2026-11-17T08:35:56.257529Z"
+}

@@ -23,6 +23,8 @@ try:
   geometries={f['geometry_sha256'] for p in proofs for f in p['fields']};assert len(geometries)==1,'Actual physical leaf layouts differ'
   marker=R/'COHORT_GEOMETRY_VERIFIED.json';temp=marker.with_name(marker.name+'.'+os.environ['SLURM_JOB_ID']+'.tmp');temp.write_text(json.dumps(dict(status='all_admitted_actual_GPU_initial_and_step16_mesh_geometries_identical',geometry_sha256=next(iter(geometries)))));temp.replace(marker)
  cmd=['mpirun','-np',os.environ['SLURM_NTASKS'],'--bind-to','none','bash',str(R/'rank.sh'),str(exe),'-i',str(deck),'-d','output']
+ cmd+=['parthenon/output2/hdf5_compression_level=0','parthenon/output3/hdf5_compression_level=0']
+ report['output_policy']='Uncompressed native HDF5; lossless zstd archival outside evolution'
  if mode=='admission':cmd+=['parthenon/time/nlim=16','parthenon/time/ncycle_out=1','parthenon/output2/dt=1e30','parthenon/output3/dt=1e30']
  (work/'command.json').write_text(json.dumps(cmd,indent=2)+'\n');gpu=(work/'gpu.csv').open('w');monitor=subprocess.Popen(['nvidia-smi','--query-gpu=index,memory.used,memory.total','--format=csv,noheader,nounits','--loop=1'],stdout=gpu,stderr=subprocess.STDOUT)
  start=time.monotonic();last=start;observed=False

@@ -1,20 +1,29 @@
 {
-  "status": "native_sm80_build_in_progress_GPU_initial_state_comparison_pending",
-  "cases": [
-    {
-      "n": 64,
-      "target": 200,
-      "input_sha256": "d925e0cc97baf75f76da28dd53c561399846277ae0d003bb47e613a2e58d8d80",
-      "PANGU_source_input_sha256": "6f8657cb25d0bfa867c17064069693b7b8c0879d102cfa61418acfe10c0d6ac2"
-    },
-    {
-      "n": 96,
-      "target": 200,
-      "input_sha256": "c34ed985ad190c448957405bcf0ffe80e6a4e5d4aeb96f4fdc854db627d4f740",
-      "PANGU_source_input_sha256": "5ea9eb52c3210c293cdf87688cb24672abce08f1f356b9869a5a4a5693f0791c"
-    }
+  "status": "BNS_sm80_GPU_binary_frozen_input_validation_pending",
+  "started_utc": "2026-11-17T10:25:58.911243Z",
+  "formal_reference_resolutions": [
+    64,
+    96
   ],
-  "evolution_or_FD_changes": false,
-  "adapter_scope": "read existing time-symmetric constraint-solved initial-data table only",
-  "formal_submitted": false
+  "validation": "Initial-data adapter only; matched GPU initial-state validation pending; no formal submission",
+  "returncode": 0,
+  "finished_utc": "2026-11-17T10:27:33.991338Z",
+  "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/bin/athenak-bns-sm80-472b9e9e557c",
+  "sha256": "472b9e9e557ca48a1e42a5f54c80b8e5a0e07d8c6f75aaa2c4194554112d581a",
+  "CUDA_device_images_verified": true,
+  "source_snapshot": {
+    "status": "validated_CUDA_reference_source_snapshot",
+    "sha256": "2b570de2379209b362ba6077dfd836007808bcbb4770233654baacb5f991a5ac",
+    "bytes": 26419200,
+    "base_commit": "8a5d398cb50c7621d03127008aad52c80d579c9c",
+    "kokkos": "6739bc623081648af9e752b616d9671527922cbf",
+    "prior_GPU_binary_sha256": "c914ab7541144ed8e65803d43ba91a75e3abcc1127e07735cd1e40e138af3199",
+    "reviewed_changes": "Inherited checked I/O and mesh-only destructor fixes; physical kernels and TOV pgen unchanged",
+    "target": "WM2 CUDA sm80 build for formal TOV comparisons at N64/N96 only; BNS initial-data adapter pending",
+    "utc": "2026-11-17T05:37:09.760095+00:00",
+    "staged_utc": "2026-11-17T05:51:33.494407Z",
+    "verified_sha256": "2b570de2379209b362ba6077dfd836007808bcbb4770233654baacb5f991a5ac"
+  },
+  "adapter_sha256": "321f4bf4458637a8346b851f968c7ddbeaf7128c06380854513203a8a0962987",
+  "fix_scope": "New AthenaK BNS initial-data adapter CUDA math overloads and initialization fences; native evolution/FD and PANGU unchanged"
 }

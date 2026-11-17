@@ -1,0 +1,31 @@
+{
+  "status": "admission_passed",
+  "mode": "admission",
+  "resolution": 64,
+  "job_id": "17373408",
+  "started_utc": "2026-11-17T10:27:45.514404Z",
+  "binary_sha256": "472b9e9e557ca48a1e42a5f54c80b8e5a0e07d8c6f75aaa2c4194554112d581a",
+  "input_sha256": "d925e0cc97baf75f76da28dd53c561399846277ae0d003bb47e613a2e58d8d80",
+  "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/runs/bns_n64/17373408",
+  "physical_acceptance": false,
+  "returncode": 0,
+  "wall_seconds": 19.050590132013895,
+  "actual_gpu_process_observed": true,
+  "final_time": 0.0375,
+  "final_cycle": 8,
+  "gpu_memory": {
+    "0": {
+      "total_MiB": 81920.0,
+      "peak_sampled_MiB": 31569.0
+    }
+  },
+  "initial_match": {
+    "blocks": 736,
+    "rho_relative_volume_L1": 2.125968661100647e-08,
+    "baryon_relative_bias": -1.632631030368259e-09,
+    "magnetic_absolute_Linf": 0.0,
+    "pangu_source_sha256": "35682d1a4b534aa1160774321719883129778d6dc321d6a12507f1c87bfcac32"
+  },
+  "limitations": "Eight early steps; not long-time accuracy or horizon acceptance. AH search deferred during this resource probe; AH objects and full field/restart I/O remain allocated.",
+  "finished_utc": "2026-11-17T10:28:06.147647Z"
+}

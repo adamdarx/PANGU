@@ -1,0 +1,29 @@
+{
+  "cause": "Native HDF5 deflate CPU compression dominated the short-test final output",
+  "job": "17372871",
+  "pid": 2924287,
+  "observation": "Live GDB attach through Slurm overlap step; main process consumed99.8% CPU",
+  "frames": [
+    "deflate_slow (libz.so.1)",
+    "deflate",
+    "compress2",
+    "H5Z__filter_deflate",
+    "H5Z_pipeline",
+    "H5D__mpio_collective_filtered_chunk_update",
+    "H5D__link_chunk_filtered_collective_io",
+    "H5D__piece_io",
+    "H5D__collective_write",
+    "H5D__write",
+    "H5VL__native_dataset_write",
+    "H5VL_dataset_write_direct",
+    "H5D__write_api_common",
+    "H5Dwrite",
+    "parthenon::HDF5::HDF5WriteND<double>",
+    "parthenon::PHDF5Output::WriteOutputFileImpl<false>"
+  ],
+  "fix": "Set native HDF5 compression level0 on outputs2/3 of new coarse cohort; keep frozen binary, inputs, mesh, physics, cadence and500M target; external zstd archival remains lossless",
+  "verified_gpu_job": "17373397",
+  "verified_wall_seconds": 288.084866677993,
+  "original_short_limit_seconds": 1000,
+  "scope": "Resource/IO validation only, not500M convergence acceptance"
+}

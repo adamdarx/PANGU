@@ -38,7 +38,7 @@ for d in (r/'runs').glob('*/*'):
   latest=set(numbered[-2:])
   for p in files:
    s=p.stat()
-   if p.is_symlink() or time.time()-s.st_mtime<600 or s.st_uid!=71767:continue
+   if p.is_symlink() or time.time()-s.st_mtime<(120 if mode=='ADMISSION' else 600) or s.st_uid!=71767:continue
    m=re.search(r'\.(\d{5})\.'+suffix+'$',p.name)
    # Final data need a completed process; formal initial and newest two stay on HPC.
    if not m and not complete:continue

@@ -7,7 +7,7 @@
     "stationary_n64": "17372618",
     "spinning_n32": "17371938",
     "spinning_n48": "17371939",
-    "spinning_n64": "17372871"
+    "spinning_n64": "17373397"
   },
   "formal": {
     "stationary_n32": "17372872",
@@ -45,5 +45,10 @@
     "spinning_n32": "17372812",
     "spinning_n48": "17372813",
     "spinning_n64": "17372814"
+  },
+  "uncompressed_IO_retry": {
+    "previous": "17372871",
+    "retry": "17373397",
+    "reason": "Live gdb stack confirmed HDF5 deflate CPU compression; disable internal compression for new cohort only; preserve frozen physics/input hashes"
   }
 }
