@@ -1,0 +1,15 @@
+{
+  "policy": "User explicitly authorizes direct deletion of valueless or accepted testing data without archive",
+  "scope": "Only completed BNS MPI-I/O backend gate and superseded single-BH diagnostic validation raw outputs; receipts/scripts retained",
+  "archive_required": false,
+  "removed_bytes": 9374388628,
+  "completed_utc": "2026-11-17T09:32:50.526564Z",
+  "removed_files": 166,
+  "skipped_files": 0,
+  "existing_BNS_duplicate_cleanup": {
+    "pid": 389138,
+    "files": 25,
+    "candidate_raw_bytes": 333241014047,
+    "status": "running; fresh source and D decompression SHA before deletion; no new transfer"
+  }
+}

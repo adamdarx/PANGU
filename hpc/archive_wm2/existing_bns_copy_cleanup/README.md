@@ -1,0 +1,3 @@
+Clean server duplicates of already archived historical BNS output
+
+Exact scope: Matter/20261104-bns-from-rest. Frozen manifest selects25 files with existing D archives, totaling333.24GB before retaining latest native restarts. This is a candidate size, not completed reclaimed space. No new transfers are allowed. Each source must match original size/mtime/owner and be free of symlink ancestors; decompress and hash the D archive, then rehash the unchanged source before deletion. Formal diagnostics and latest two restart files per directory remain. All active scheduler paths under CODEX_WORKPLACE are excluded. Runtime and inventory: /home/adamdarx/pangu-setup/cleanup-archived-bns-20261117.
