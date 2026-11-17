@@ -1,0 +1,111 @@
+{
+  "observed_utc": "2026-11-17T07:15:24.331131+00:00",
+  "policy": "physical_consistency_native_initializers_allowed",
+  "plan": {
+    "status": "native_physical_reference_prepared_GPU_resource_admission_required",
+    "cases": [
+      {
+        "n": 64,
+        "admission_input": "native_tov_n64_admit.par",
+        "sha256": "bafb6aeff20d1699b7f13625b1ffac94aa815c9a4efd5cae47e17b53ecff4641",
+        "formal_target": 100
+      },
+      {
+        "n": 96,
+        "admission_input": "native_tov_n96_admit.par",
+        "sha256": "ed4f4bf501adf149635971351e7f7b004cff4a6b9c0aedbf3d3abd92e049cf49",
+        "formal_target": 100
+      }
+    ],
+    "physical_model": "Unstable magnetized Gamma2/K100 TOV, rhoc0.007993, weak poloidal field, full Z4c/GRMHD",
+    "differences": [
+      "ET native pressure depletion1% triggers collapse; PANGU/AthenaK radial velocity perturbation-0.01",
+      "ET native pressure-poloidal seed has no density taper; Ab0.4931383477810524 normalizes continuum magnetic energy to the PANGU seed, with GPU discrete energy checked separately.",
+      "Native reconstruction, integrator, grid placement and atmosphere implementations are reported separately"
+    ],
+    "comparison_scope": "Mass and baryon budgets, exterior constraints, BH formation and final mass normalized to each measured initial model; collapse-time difference alone is not solver error",
+    "formal_submitted": false,
+    "diagnostic_seed_calibration": {
+      "status": "static_continuum_seed_energy_calibration",
+      "fine": {
+        "ADM_mass": 1.4475941891603057,
+        "areal_radius": 5.838112743031962,
+        "PANGU_continuum_seed_energy": 1.0640232161716961e-05,
+        "ET_native_Ab1_energy": 4.37535758595072e-05,
+        "ET_Ab_equal_energy": 0.4931383477810524
+      },
+      "tolerance_refinement": {
+        "ADM_mass": 1.447594189226513,
+        "areal_radius": 5.838112742970084,
+        "PANGU_continuum_seed_energy": 1.0640232161146132e-05,
+        "ET_native_Ab1_energy": 4.375357585689605e-05,
+        "ET_Ab_equal_energy": 0.4931383477825393
+      },
+      "relative_Ab_refinement_difference": -3.015143690277e-12,
+      "scope": "Same total initial magnetic energy using different native seed profiles; static quadrature consistency is not a discretized GPU validation."
+    },
+    "diagnostic_AsterSeeds_Ab": 0.4931383477810524
+  },
+  "basic_N64": {
+    "status": "native_ET_N64_basic_16_step_GPU_run_completed",
+    "job_id": "17371751",
+    "iterations": 16,
+    "final_time": 0.05000000000000001,
+    "sampled_GPU_peak_MiB": 6283.0,
+    "initial_baryon_mass": 1.5304535602281253,
+    "max_relative_baryon_drift": 1.8661509137984922e-07,
+    "initial_rho_max": 0.007989045488565953,
+    "physical_acceptance": false,
+    "additional_diagnostics": "AHFinderDirect, magnetic energy and constraints validation queued separately",
+    "UTC": "2026-11-17T07:11:53.260914Z"
+  },
+  "diagnostic_build": {
+    "status": "gpu_binary_compiled_frozen_compute_smoke_pending",
+    "started_utc": "2026-11-17T06:58:39.120055Z",
+    "source_commits": {
+      "CarpetX": "f5ef96c1109e12af4275937ab10c06b8076f7026",
+      "SpacetimeX": "e162dd1111b149618cd5ed964656bfa41e17e6f3",
+      "AsterX": "b046e1d9f6a3026fc1f40a0e883d587d7decc45c"
+    },
+    "added_native_dependency": "CactusNumerical/AEILocalInterp: upstream surface interpolation for AHFinderDirect",
+    "actual_thornlist_sha256": "5cdfab113e67758e3e306aeb71b952849c2eebff3793df50fbb1f249469aa8c8",
+    "source_overrides_manifest": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/COMPATIBLE_SOURCE_SELECTION.json",
+    "returncode": 0,
+    "finished_utc": "2026-11-17T07:02:49.822331Z",
+    "binary": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/bin/cactus-ah-64f3b5e9b7ed",
+    "sha256": "64f3b5e9b7edd80efc00f3f8a971f976bbb7927be489bb5e3c8332cef41898a2",
+    "CUDA_device_images_verified": true,
+    "source_manifest": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/FETCH_RESULT.json",
+    "selection": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/BUILD_SELECTION.json",
+    "runtime_validation": "Pending Slurm compute allocation; no solver run on LOGIN/DATA."
+  },
+  "submissions": {
+    "status": "GPU_diagnostic_validations_submitted",
+    "UTC": "2026-11-17T07:07:29.612895Z",
+    "validation": {
+      "64": "17371787",
+      "96": "17371788"
+    },
+    "formal": {}
+  },
+  "physical_acceptance": false,
+  "seed_calibration": {
+    "status": "static_continuum_seed_energy_calibration",
+    "fine": {
+      "ADM_mass": 1.4475941891603057,
+      "areal_radius": 5.838112743031962,
+      "PANGU_continuum_seed_energy": 1.0640232161716961e-05,
+      "ET_native_Ab1_energy": 4.37535758595072e-05,
+      "ET_Ab_equal_energy": 0.4931383477810524
+    },
+    "tolerance_refinement": {
+      "ADM_mass": 1.447594189226513,
+      "areal_radius": 5.838112742970084,
+      "PANGU_continuum_seed_energy": 1.0640232161146132e-05,
+      "ET_native_Ab1_energy": 4.375357585689605e-05,
+      "ET_Ab_equal_energy": 0.4931383477825393
+    },
+    "relative_Ab_refinement_difference": -3.015143690277e-12,
+    "scope": "Same total initial magnetic energy using different native seed profiles; static quadrature consistency is not a discretized GPU validation."
+  }
+}

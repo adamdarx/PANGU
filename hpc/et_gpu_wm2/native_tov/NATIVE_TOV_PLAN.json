@@ -1,0 +1,45 @@
+{
+  "status": "native_physical_reference_prepared_GPU_resource_admission_required",
+  "cases": [
+    {
+      "n": 64,
+      "admission_input": "native_tov_n64_admit.par",
+      "sha256": "bafb6aeff20d1699b7f13625b1ffac94aa815c9a4efd5cae47e17b53ecff4641",
+      "formal_target": 100
+    },
+    {
+      "n": 96,
+      "admission_input": "native_tov_n96_admit.par",
+      "sha256": "ed4f4bf501adf149635971351e7f7b004cff4a6b9c0aedbf3d3abd92e049cf49",
+      "formal_target": 100
+    }
+  ],
+  "physical_model": "Unstable magnetized Gamma2/K100 TOV, rhoc0.007993, weak poloidal field, full Z4c/GRMHD",
+  "differences": [
+    "ET native pressure depletion1% triggers collapse; PANGU/AthenaK radial velocity perturbation-0.01",
+    "ET native pressure-poloidal seed has no density taper; Ab0.4931383477810524 normalizes continuum magnetic energy to the PANGU seed, with GPU discrete energy checked separately.",
+    "Native reconstruction, integrator, grid placement and atmosphere implementations are reported separately"
+  ],
+  "comparison_scope": "Mass and baryon budgets, exterior constraints, BH formation and final mass normalized to each measured initial model; collapse-time difference alone is not solver error",
+  "formal_submitted": false,
+  "diagnostic_seed_calibration": {
+    "status": "static_continuum_seed_energy_calibration",
+    "fine": {
+      "ADM_mass": 1.4475941891603057,
+      "areal_radius": 5.838112743031962,
+      "PANGU_continuum_seed_energy": 1.0640232161716961e-05,
+      "ET_native_Ab1_energy": 4.37535758595072e-05,
+      "ET_Ab_equal_energy": 0.4931383477810524
+    },
+    "tolerance_refinement": {
+      "ADM_mass": 1.447594189226513,
+      "areal_radius": 5.838112742970084,
+      "PANGU_continuum_seed_energy": 1.0640232161146132e-05,
+      "ET_native_Ab1_energy": 4.375357585689605e-05,
+      "ET_Ab_equal_energy": 0.4931383477825393
+    },
+    "relative_Ab_refinement_difference": -3.015143690277e-12,
+    "scope": "Same total initial magnetic energy using different native seed profiles; static quadrature consistency is not a discretized GPU validation."
+  },
+  "diagnostic_AsterSeeds_Ab": 0.4931383477810524
+}
