@@ -68,5 +68,37 @@ class PhysicalAcceptanceTests(unittest.TestCase):
         result=evaluate(doc,self.protocol,self.base)
         self.assertEqual(result['status'],'pending');self.assertIn('reference_phase_max_rad',result['pending'])
 
+    def review_protocols(self):
+        folder=Path(__file__).resolve().parents[1]/'reference'
+        return [json.loads((folder/('compact_physical_acceptance_'+version+'.json')).read_text())
+                for version in ['v1','v2']]
+
+    def test_v2_preserves_existing_numerical_budgets(self):
+        v1,v2=self.review_protocols()
+        for key,rule in v1['common'].items():self.assertEqual(rule,v2['common'][key])
+        for case,rules in v1['cases'].items():
+            for key,rule in rules.items():self.assertEqual(rule,v2['cases'][case][key])
+        self.assertEqual(v2['parent_protocol']['id'],v1['id'])
+
+    def test_v1_success_cannot_substitute_for_new_review_evidence(self):
+        v1,v2=self.review_protocols();rules={**v1['common'],**v1['cases']['bns']}
+        doc=dict(case='bns',metrics={key:dict(value=rule.get('min',0),evidence=self.evidence)
+                                  for key,rule in rules.items()})
+        self.assertTrue(evaluate(doc,v1,self.base)['physical_acceptance'])
+        result=evaluate(doc,v2,self.base)
+        self.assertFalse(result['physical_acceptance'])
+        self.assertEqual(set(result['pending']),{'grid_convergence_evidence_complete',
+            'mature_code_direct_comparison_complete','error_budget_separated',
+            'post_AH_baryon_balance_verified'})
+
+    def test_uncompleted_direct_comparison_cannot_pass(self):
+        _,v2=self.review_protocols();rules={**v2['common'],**v2['cases']['bns']}
+        doc=dict(case='bns',metrics={key:dict(value=rule.get('min',0),evidence=self.evidence)
+                                  for key,rule in rules.items()})
+        doc['metrics']['mature_code_direct_comparison_complete']['value']=0
+        result=evaluate(doc,v2,self.base)
+        self.assertEqual(result['failed'],['mature_code_direct_comparison_complete'])
+        self.assertFalse(result['physical_acceptance'])
+
 
 if __name__=='__main__':unittest.main()

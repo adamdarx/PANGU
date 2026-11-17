@@ -82,7 +82,7 @@ def evaluate(document, protocol, base):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--measurements',type=Path,required=True)
-    parser.add_argument('--protocol',type=Path,default=Path(__file__).resolve().parents[1]/'reference/compact_physical_acceptance_v1.json')
+    parser.add_argument('--protocol',type=Path,default=Path(__file__).resolve().parents[1]/'reference/compact_physical_acceptance_v2.json')
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
     protocol=json.loads(args.protocol.read_text());document=json.loads(args.measurements.read_text())

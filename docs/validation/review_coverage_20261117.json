@@ -1,0 +1,76 @@
+{
+  "schema": "pangu.validation-review-ledger.v1",
+  "review_date": "2026-11-17",
+  "scope": "Evidence status for the current report; not a claim about every historical or future problem.",
+  "labels": {
+    "B": "basic evolution/software checks",
+    "C": "convergence/order/uncertainty",
+    "R": "matched independent quantitative comparison"
+  },
+  "overall_physical_acceptance": false,
+  "priority": [
+    "BBH convergence and direct comparison",
+    "GRMHD comparison and mass issues",
+    "weak/single BH error attribution and fair performance",
+    "spherical EMS invariant/static comparison"
+  ],
+  "modules": {
+    "weak_field": {
+      "B": "archived basic runs exist",
+      "C": "nonmonotone precision plateau unresolved",
+      "R": "matching quantitative reference evaluation pending",
+      "status": "incomplete"
+    },
+    "single_BH": {
+      "B": "original500M runs active",
+      "C": "common-time resolution study and error-source separation pending",
+      "R": "original AthenaK paired runs/analysis pending",
+      "status": "incomplete"
+    },
+    "BBH": {
+      "B": "three archived N32 evolutions completed",
+      "C": "at least one representative complete three-grid merger missing",
+      "R": "coarse AthenaK pairs exist; qualified waveform/remnant/merger errors pending",
+      "status": "incomplete"
+    },
+    "TOV_collapse": {
+      "B": "N64/N96 completed; N128 active",
+      "C": "three-grid study pending",
+      "R": "existing short-stage TOV comparison scripts do not complete this long-collapse comparison",
+      "status": "incomplete"
+    },
+    "BNS_head_on": {
+      "B": "N64/N96 completed; N128 active",
+      "C": "three-grid study pending",
+      "R": "matched initial-data mature-code comparison pending",
+      "mass_issues": "unresolved; see MASS_ISSUES.json in operational review record",
+      "status": "incomplete"
+    },
+    "EMS_spherical_nonPG": {
+      "B": "spherical native BSSN/Z4c pilots completed",
+      "C": "radial multi-grid evidence exists; full late-time precision acceptance pending",
+      "R": "same-theory/static-branch invariant comparison pending",
+      "symmetry": "spherical symmetry imposed; unrestricted3D accuracy is not established by this test",
+      "previous_PG": "retain successful prior reference",
+      "status": "incomplete"
+    },
+    "performance": {
+      "status": "matched-condition and matched-accuracy accounting pending",
+      "advantage_established_by_this_review": false
+    }
+  },
+  "required_before_closeout": [
+    "All applicable V2 quantitative and evidence gates satisfied.",
+    "Report case-level B/C/R coverage and unresolved issues.",
+    "Existing requested production/archives completed; successful PG results retained."
+  ],
+  "optional_reference_routes": {
+    "GW150914": "Optional published benchmark; choose one complete parameter set and audit resources before production.",
+    "EinsteinToolkit": "Preferred additional independent code/data; do not label its inspiraling BNS gallery as the current from-rest head-on pair."
+  },
+  "operational_constraints": [
+    "Original500M single BH and active N128 jobs keep their frozen binaries/inputs.",
+    "New resolution/resource selection needs mesh leaf-count, memory and short throughput evidence before long submissions.",
+    "No unrestricted3D scalar requirement is inferred from this feedback."
+  ]
+}

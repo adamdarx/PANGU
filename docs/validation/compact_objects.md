@@ -2,8 +2,12 @@
 
 本协议补充运行完成、有限值、重启和视界寻找器检查。仅有这些软件检查，
 不能标记为物理验收通过。机器可读规则为
-`tst/reference/compact_physical_acceptance_v1.json`，执行器为
+`tst/reference/compact_physical_acceptance_v2.json`，执行器为
 `tst/regression/compact_physical_acceptance.py`。
+
+2026-11-17评审新增的收敛、成熟程序直接对照及误差分解要求见
+[逐项响应](reviewer_response_20261117.md)。v2保留v1下表的全部数值预算，补充
+这些必要证据；旧v1协议和已生成报告保留，使用`--protocol`可重现旧结果。
 
 除沿用的坍缩前重子质量和视界残差门限外，下列数值是明确声明的**项目精度预算**，
 不是论文给出的普适标准，也不代表原用户指定过这些阈值。
