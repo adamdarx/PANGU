@@ -1,0 +1,379 @@
+{
+  "status": "six_existing_AthenaK_series_used_in_time_matched_diagnostic_comparison",
+  "not_a_long_run_or_convergence_acceptance": true,
+  "caveats": [
+    "Native AH residuals have different normalizations. Preserve both columns; do not interpret raw finder mass discrepancies as solver error.",
+    "PANGU rows satisfy their native scaled expansion tolerance; AthenaK rows require finite values and a recorded found shape, but are not certified against the PANGU residual tolerance.",
+    "Diagnostic timestamps matched to<=0.01M, no time interpolation. These are existing0-25M windows, not500M results.",
+    "Native fixed-AMR N96/N128/N192 may share finest spacing. These comparisons are not the N32/N48/N64 convergence series.",
+    "Native rank-separated checkpoint restoration/repartition requires a separate GPU gate. Archive receipts alone do not prove currently accessible bytes."
+  ],
+  "cases": [
+    {
+      "case": "d200_stationary_n96",
+      "AthenaK_job": "16457629",
+      "PANGU_job": "17313453",
+      "matched_samples": 50,
+      "time_range": [
+        0.003255208333333333,
+        24.567057291664714
+      ],
+      "last": {
+        "time_PANGU": 24.567057291664714,
+        "time_AthenaK": 24.5671,
+        "PANGU_Mirr": 0.9999224447762631,
+        "AthenaK_Mirr": 0.9616051244713119,
+        "Mirr_relative_difference": -0.038320292243789855,
+        "PANGU_Mch": 0.9999224447762631,
+        "AthenaK_Mch": 0.961605124471312,
+        "Mch_relative_difference": -0.038320292243789744,
+        "PANGU_J": 2.027593516218715e-15,
+        "AthenaK_J": 3.019542337950501e-08,
+        "J_absolute_difference": 3.0195421351911496e-08,
+        "PANGU_scaled_H_rms": 9.584036055988702e-05,
+        "PANGU_H_tolerance": 0.0001,
+        "AthenaK_native_H_rms": 0.12820727595373532
+      },
+      "max_abs_Mirr_relative_difference": 0.038483139413156064,
+      "max_abs_J_difference": 1.8326426890424487e-07,
+      "AthenaK_raw_series": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/16457629/attempt-0/athenak/output/stationary_n96.horizon_summary_0.txt",
+      "AthenaK_raw_series_sha256": "f5cce99cf149c856679d008029fc045a49c4946279cdbd304c396f2f13be1ba6",
+      "AthenaK_binary_sha256": "62f3433617629529e63cf3fd4bca6296a347d41fa54f69a3bb44831494ffd659",
+      "PANGU_AH_source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/17313453/attempt-0/pangu/output/diagnostics/nr_horizon.csv",
+      "PANGU_AH_source_snapshot_sha256": "3f129e95467759681d7f2f54401f1334d340d69aad5e3849a1c49e3c893c2c1d",
+      "checkpoint_archive_receipts": [
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/16457629/attempt-0/athenak/output/rst/rank_00000000/stationary_n96.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/16457629/attempt-0/athenak/output/rst/rank_00000000/stationary_n96.00001.rst.zst",
+            "sha256": "5bba17cec28302063b2aa9b23c937243cf654887a706ed745d804bae81223ddb",
+            "bytes": 4622831897
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/16457629/attempt-0/athenak/output/rst/rank_00000001/stationary_n96.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/16457629/attempt-0/athenak/output/rst/rank_00000001/stationary_n96.00001.rst.zst",
+            "sha256": "4c0d4af96acea03e4a6d415453b91d91442ef97aea292c28708eefbbb587ebd1",
+            "bytes": 4622831897
+          }
+        }
+      ],
+      "matched_csv": "d200_stationary_n96.csv",
+      "matched_csv_sha256": "47b3269d05baeccd0e14a5a0d801f13baaa489fb372a1fd2044b81e76542b6bd"
+    },
+    {
+      "case": "d200_stationary_n128",
+      "AthenaK_job": "16457630",
+      "PANGU_job": "17260149",
+      "matched_samples": 49,
+      "time_range": [
+        0.00244140625,
+        24.5263671875
+      ],
+      "last": {
+        "time_PANGU": 24.5263671875,
+        "time_AthenaK": 24.5264,
+        "PANGU_Mirr": 0.9999248138837039,
+        "AthenaK_Mirr": 0.9736381143202418,
+        "Mirr_relative_difference": -0.026288676106921094,
+        "PANGU_Mch": 0.9999248138837039,
+        "AthenaK_Mch": 0.9736381143202424,
+        "Mch_relative_difference": -0.02628867610692054,
+        "PANGU_J": 2.4502231487705394e-15,
+        "AthenaK_J": 6.561658094416181e-08,
+        "J_absolute_difference": 6.561657849393866e-08,
+        "PANGU_scaled_H_rms": 9.610203367732701e-05,
+        "PANGU_H_tolerance": 0.0001,
+        "AthenaK_native_H_rms": 0.09781834879883271
+      },
+      "max_abs_Mirr_relative_difference": 0.044833005683799554,
+      "max_abs_J_difference": 1.4787308749630918e-07,
+      "AthenaK_raw_series": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/stationary_n128.horizon_summary_0.txt",
+      "AthenaK_raw_series_sha256": "876722b5c83b292f79a47fd372901774e9c04e212b163cc6ea536c75fb944d4a",
+      "AthenaK_binary_sha256": "62f3433617629529e63cf3fd4bca6296a347d41fa54f69a3bb44831494ffd659",
+      "PANGU_AH_source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/17260149/attempt-0/pangu/output/diagnostics/nr_horizon.csv",
+      "PANGU_AH_source_snapshot_sha256": "3897120101093bde6ba7cc13845e8525e57f476c97fae478a30e6b6138d7d79d",
+      "checkpoint_archive_receipts": [
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000000/stationary_n128.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000000/stationary_n128.00001.rst.zst",
+            "sha256": "b5229c9e10c3fdbddaaaf67f246240bbc8c4d5105e0b910e0c9669a73a0baa2e",
+            "bytes": 3866180794
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000001/stationary_n128.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000001/stationary_n128.00001.rst.zst",
+            "sha256": "1e2204819abe2157714194ed5c959e06b3e2a3ff0bd4cebd7a7b8555035c01e5",
+            "bytes": 3866180794
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000002/stationary_n128.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000002/stationary_n128.00001.rst.zst",
+            "sha256": "4af1808dc449af512aebe24de95c8a57b72e03ce78b30b47e1c93e634e2829c2",
+            "bytes": 3868613818
+          }
+        }
+      ],
+      "matched_csv": "d200_stationary_n128.csv",
+      "matched_csv_sha256": "c608f58030f2ce5d5c3609ba5e3227c40e392c07be883845d131ffb67ba1e769"
+    },
+    {
+      "case": "d200_stationary_n192",
+      "AthenaK_job": "16457631",
+      "PANGU_job": "17260150",
+      "matched_samples": 27,
+      "time_range": [
+        0.0016276041666666659,
+        22.560221354169112
+      ],
+      "last": {
+        "time_PANGU": 22.560221354169112,
+        "time_AthenaK": 22.5602,
+        "PANGU_Mirr": 0.9999316719871927,
+        "AthenaK_Mirr": 0.9571243673061004,
+        "Mirr_relative_difference": -0.042810229819023604,
+        "PANGU_Mch": 0.9999316719871927,
+        "AthenaK_Mch": 0.9571243673061005,
+        "Mch_relative_difference": -0.04281022981902349,
+        "PANGU_J": 2.057564933816319e-15,
+        "AthenaK_J": 2.506599361164995e-08,
+        "J_absolute_difference": 2.5065991554085016e-08,
+        "PANGU_scaled_H_rms": 8.789021029250689e-05,
+        "PANGU_H_tolerance": 0.0001,
+        "AthenaK_native_H_rms": 0.12116795372557973
+      },
+      "max_abs_Mirr_relative_difference": 0.042810229819023604,
+      "max_abs_J_difference": 7.962712087503402e-08,
+      "AthenaK_raw_series": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/stationary_n192.horizon_summary_0.txt",
+      "AthenaK_raw_series_sha256": "204e7ea7b7949eb5592b5ad1c2d2fdb75c98410bbcb623d8c97b141eed7f6164",
+      "AthenaK_binary_sha256": "62f3433617629529e63cf3fd4bca6296a347d41fa54f69a3bb44831494ffd659",
+      "PANGU_AH_source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/17260150/attempt-0/pangu/output/diagnostics/nr_horizon.csv",
+      "PANGU_AH_source_snapshot_sha256": "3618fc2274f060a267218ac8d3dbb2861563c4a14120d97a05bcaa3af011fe96",
+      "checkpoint_archive_receipts": [
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000000/stationary_n192.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000000/stationary_n192.00001.rst.zst",
+            "sha256": "2c9eec954096c76d65662be4cd164220271e97cab079b0224e1af5ebbc9ff0b3",
+            "bytes": 5104662490
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000001/stationary_n192.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000001/stationary_n192.00001.rst.zst",
+            "sha256": "1c3d76cf4ee1e7991bc7e804d50828981a9c0339bd91ad9f9e8f8fc24bce5258",
+            "bytes": 5104662490
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000002/stationary_n192.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000002/stationary_n192.00001.rst.zst",
+            "sha256": "082f293f59e66ebea636fce83c07fa1871c1bdce26625507fde680520824d3fe",
+            "bytes": 5104662490
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000003/stationary_n192.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000003/stationary_n192.00001.rst.zst",
+            "sha256": "e5eeea2b246ffe8152816c0e27caa74b7ce816e5cdb68d2b4c58ee280aaad573",
+            "bytes": 5104662490
+          }
+        }
+      ],
+      "matched_csv": "d200_stationary_n192.csv",
+      "matched_csv_sha256": "e1690130dbc34399706f1afb199d1b307ba38cfd95bf6336076b478522d8b14d"
+    },
+    {
+      "case": "d200_spinning_n96",
+      "AthenaK_job": "16696486",
+      "PANGU_job": "17313451",
+      "matched_samples": 25,
+      "time_range": [
+        0.003255208333333333,
+        24.065755208331563
+      ],
+      "last": {
+        "time_PANGU": 24.065755208331563,
+        "time_AthenaK": 24.0658,
+        "PANGU_Mirr": 1.0585004183556408,
+        "AthenaK_Mirr": 1.0288564868826209,
+        "Mirr_relative_difference": -0.02800559259019586,
+        "PANGU_Mch": 1.084529385359502,
+        "AthenaK_Mch": 1.057160805828652,
+        "Mch_relative_difference": -0.02523544304129466,
+        "PANGU_J": 0.49999262859642374,
+        "AthenaK_J": 0.5000001132054465,
+        "J_absolute_difference": 7.484609022723188e-06,
+        "PANGU_scaled_H_rms": 9.262250751700914e-05,
+        "PANGU_H_tolerance": 0.0001,
+        "AthenaK_native_H_rms": 0.10898834532560746
+      },
+      "max_abs_Mirr_relative_difference": 0.045075115426206014,
+      "max_abs_J_difference": 7.484609022723188e-06,
+      "AthenaK_raw_series": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/16696486/attempt-0/athenak/output/spinning_n96.horizon_summary_0.txt",
+      "AthenaK_raw_series_sha256": "66c902b98b32bf097f415e98644ca213b18c9efd1b74085c24166bd752c35136",
+      "AthenaK_binary_sha256": "db54c2630b4c2abad0d7d3cd047a8f78e7feb5c5fb1c74a6d220e7d975f0ebe0",
+      "PANGU_AH_source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/17313451/attempt-0/pangu/output/diagnostics/nr_horizon.csv",
+      "PANGU_AH_source_snapshot_sha256": "59a99438a1f36361543ec84b2a71c401b265f55954894db034c68160c7f92d25",
+      "checkpoint_archive_receipts": [
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/16696486/attempt-0/athenak/output/rst/rank_00000000/spinning_n96.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/16696486/attempt-0/athenak/output/rst/rank_00000000/spinning_n96.00001.rst.zst",
+            "sha256": "7486a84841fdc7a8f5f7a9deba49290fee4b7166fa88557b882c366d969dc008",
+            "bytes": 4622833151
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/16696486/attempt-0/athenak/output/rst/rank_00000001/spinning_n96.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/16696486/attempt-0/athenak/output/rst/rank_00000001/spinning_n96.00001.rst.zst",
+            "sha256": "df6880e2f6b638806dd22abaa642d139c64dbb77846ea02deee87680e05a8485",
+            "bytes": 4622833151
+          }
+        }
+      ],
+      "matched_csv": "d200_spinning_n96.csv",
+      "matched_csv_sha256": "74c8b4b0cbe6b2ced23099152507560ade1376aa97798faa6c05c8bd1a762c54"
+    },
+    {
+      "case": "d200_spinning_n128",
+      "AthenaK_job": "16696487",
+      "PANGU_job": "17313452",
+      "matched_samples": 25,
+      "time_range": [
+        0.00244140625,
+        24.02587890625
+      ],
+      "last": {
+        "time_PANGU": 24.02587890625,
+        "time_AthenaK": 24.0161,
+        "PANGU_Mirr": 1.0585028613106866,
+        "AthenaK_Mirr": 1.01720934074517,
+        "Mirr_relative_difference": -0.03901125077204326,
+        "PANGU_Mch": 1.0845318317797952,
+        "AthenaK_Mch": 1.046478821007146,
+        "Mch_relative_difference": -0.035087039086903804,
+        "PANGU_J": 0.4999943862051956,
+        "AthenaK_J": 0.4999998533889384,
+        "J_absolute_difference": 5.467183742779991e-06,
+        "PANGU_scaled_H_rms": 9.273431469848495e-05,
+        "PANGU_H_tolerance": 0.0001,
+        "AthenaK_native_H_rms": 0.11192410480266496
+      },
+      "max_abs_Mirr_relative_difference": 0.03920507270436013,
+      "max_abs_J_difference": 5.467183742779991e-06,
+      "AthenaK_raw_series": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/spinning_n128.horizon_summary_0.txt",
+      "AthenaK_raw_series_sha256": "dcacab9fd8f4272882c5713e9f7181b2bb3269d80d8d830c9fd502b6e3803b42",
+      "AthenaK_binary_sha256": "db54c2630b4c2abad0d7d3cd047a8f78e7feb5c5fb1c74a6d220e7d975f0ebe0",
+      "PANGU_AH_source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/17313452/attempt-0/pangu/output/diagnostics/nr_horizon.csv",
+      "PANGU_AH_source_snapshot_sha256": "ecfe7fcb72bb094f79cdc73217785d0e553b7e9adb3111a8c0b33a6719247f1d",
+      "checkpoint_archive_receipts": [
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000000/spinning_n128.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000000/spinning_n128.00001.rst.zst",
+            "sha256": "f2c20957c4c239a1abd0155072e29a9e8ee47a99816e3dd5d3d13a8ee6b656bd",
+            "bytes": 3866182048
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000001/spinning_n128.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000001/spinning_n128.00001.rst.zst",
+            "sha256": "1fd88e58fd5bbc5681c10d732d7ff4941c9d253ee69e82fab8b956d2e10e401a",
+            "bytes": 3866182048
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000002/spinning_n128.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000002/spinning_n128.00001.rst.zst",
+            "sha256": "a27416b702cb75607e2910f642e276308e1bf6c6316701d5c7d45d955af22a81",
+            "bytes": 3868615072
+          }
+        }
+      ],
+      "matched_csv": "d200_spinning_n128.csv",
+      "matched_csv_sha256": "bb6c00839956f3cc6aadd702f0a5fe9d0999408813f48a0388970f2809cd868c"
+    },
+    {
+      "case": "d200_spinning_n192",
+      "AthenaK_job": "16696488",
+      "PANGU_job": "17260147",
+      "matched_samples": 21,
+      "time_range": [
+        0.0016276041666666659,
+        24.025065104170178
+      ],
+      "last": {
+        "time_PANGU": 24.025065104170178,
+        "time_AthenaK": 24.0251,
+        "PANGU_Mirr": 1.0585031469850787,
+        "AthenaK_Mirr": 1.0159151906278743,
+        "Mirr_relative_difference": -0.04023413296267209,
+        "PANGU_Mch": 1.0845321666228092,
+        "AthenaK_Mch": 1.045294582411538,
+        "Mch_relative_difference": -0.03617927196521553,
+        "PANGU_J": 0.4999950657769233,
+        "AthenaK_J": 0.4999999336824543,
+        "J_absolute_difference": 4.867905531003025e-06,
+        "PANGU_scaled_H_rms": 9.274277894958294e-05,
+        "PANGU_H_tolerance": 0.0001,
+        "AthenaK_native_H_rms": 0.10698864921509561
+      },
+      "max_abs_Mirr_relative_difference": 0.041849832720326496,
+      "max_abs_J_difference": 4.867905531003025e-06,
+      "AthenaK_raw_series": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/spinning_n192.horizon_summary_0.txt",
+      "AthenaK_raw_series_sha256": "62729bc02403637a7079d4233a93109ca60ce5c293a7c7731470dcddb6df27d0",
+      "AthenaK_binary_sha256": "db54c2630b4c2abad0d7d3cd047a8f78e7feb5c5fb1c74a6d220e7d975f0ebe0",
+      "PANGU_AH_source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/17260147/attempt-0/pangu/output/diagnostics/nr_horizon.csv",
+      "PANGU_AH_source_snapshot_sha256": "c072eed975c17898a225bbea81505028ca93e245187096167052ad43a0ba34f1",
+      "checkpoint_archive_receipts": [
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000000/spinning_n192.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000000/spinning_n192.00001.rst.zst",
+            "sha256": "b4110de29cbbc41067babd0479fd2376ad32dfe986a71fec5b3c8a8ae47cb352",
+            "bytes": 5104663744
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000001/spinning_n192.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000001/spinning_n192.00001.rst.zst",
+            "sha256": "ef5c77d39449a6d1ce3c91ef803ae0839e18a2b728b91b7802605377ab8c49b5",
+            "bytes": 5104663744
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000002/spinning_n192.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000002/spinning_n192.00001.rst.zst",
+            "sha256": "ef7f78f98548469a0a93d92ff655bec2f5e5903df87dc40efb836bc8e6272907",
+            "bytes": 5104663744
+          }
+        },
+        {
+          "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000003/spinning_n192.00001.rst.archive.json",
+          "receipt": {
+            "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000003/spinning_n192.00001.rst.zst",
+            "sha256": "02da3e29946ac84803c368555ca1a837ca019ae6ede07191b3eb29fe98647f93",
+            "bytes": 5104663744
+          }
+        }
+      ],
+      "matched_csv": "d200_spinning_n192.csv",
+      "matched_csv_sha256": "4c2919fc2a5e5fa1dfc08345b042b7a7745395486e2c33c2927c9b7cd16702e8"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-11-17T13:31:14.812280+00:00",
+  "updated_utc": "2026-11-17T15:00:49.630440+00:00",
   "cohorts": {
     "single-coarse-20261117": {
       "target_M": 500,
@@ -222,6 +222,51 @@
       "formal_waits_for_AH_probe": true,
       "AH_parameter_correction": "Native hmean_tol100 is an iteration-divergence guard; mass_tol remains1e-5, residual quality independent",
       "updated_utc": "2026-11-17T12:25:52.543277Z"
+    },
+    "single-checkpoint-continuation-20261117": {
+      "updated_utc": "2026-11-17T14:57:50.775606+00:00",
+      "user_instruction": "继续续跑，athenak已有数据要用上",
+      "authorization": "User explicitly authorizes checkpoint continuation; supersedes prior clarification-pending record.",
+      "status": "two_N192_GPU_restart_admissions_and_dependent500M_continuations_queued",
+      "submissions": {
+        "authorized_utc": "2026-11-17T14:53:35.138952Z",
+        "user_instruction": "继续续跑，athenak已有数据要用上",
+        "target": 500,
+        "original_running_jobs_unchanged": true,
+        "cases": {
+          "stationary": {
+            "original": "17260150",
+            "admission": "17376915",
+            "formal": "17376916",
+            "dependency": "afterany:17260150,afterok:17376915"
+          },
+          "spinning": {
+            "original": "17260147",
+            "admission": "17376917",
+            "formal": "17376918",
+            "dependency": "afterany:17260147,afterok:17376917"
+          }
+        }
+      },
+      "existing_AthenaK": {
+        "status": "six_existing_AthenaK_series_used_in_time_matched_diagnostic_comparison",
+        "cases": 6,
+        "matched_samples": 197,
+        "window_M": [
+          0,
+          25
+        ],
+        "original_25M_checkpoint_shards": 18,
+        "original_25M_archive_paths_accessible_now": 0,
+        "comparison_is_not_solver_error_certification": true
+      },
+      "original_running_jobs_unchanged": true,
+      "GPU_restart_acceptance": "PENDING actual GPU allocation; frozen binary/input checks plus zero-step state comparison and8-step restart required",
+      "archive": {
+        "owner_directory": "/home/adamdarx/pangu-setup/archive-single-continuation-20261117",
+        "scope": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation",
+        "original_single_owner_unchanged": true
+      }
     }
   },
   "formal_jobs": 23,

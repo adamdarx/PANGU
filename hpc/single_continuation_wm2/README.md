@@ -1,0 +1,15 @@
+# N192 checkpoint continuation and reuse of existing AthenaK data
+
+The user explicitly authorized continuation on 2026-11-17: “继续续跑，athenak已有数据要用上”. This supersedes the earlier fresh-only clarification. Original running PANGU jobs remain untouched.
+
+Stationary N192: original17260150, GPU restart admission17376915, continuation17376916. Spinning N192: original17260147, admission17376917, continuation17376918. Continuations wait for their original job to finish and for their own admission to pass. Target is absolute500M. Checkpoint continuation is automatic only for TIMEOUT/NODE_FAIL/PREEMPTED; cancellation does not trigger evolution. A completed500M original phase skips continuation.
+
+The executable and input files are exact frozen copies of the originals. Four80GB GPUs, fourMPI ranks and original16-cell blocks are retained. Native FD4 and chi=psi^-4 remain unchanged; the spinning initial lapse exponent -2 is a separate, valid lapse parameter. New output compression is disabled; this is lossless I/O policy only. Inputs, binaries and closed checkpoints are staged through DATA; LOGIN submits; evolution runs only on allocated GPUs.
+
+GPU admission validates checkpoint datasets, then compares a same-cycle restart against the evolved checkpoint state using physical cells and AMR logical block keys (scaled maximum difference<1e-11). A separate eight-step restart must progress, remain finite and retain>8GiB/GPU free memory. These checks are currently queued, not passed. They are restart compatibility checks, not500M physics acceptance. Formal startup selects and pins the latest closed checkpoint after the original ends, validates it, and records old/new segment boundaries without rewriting the original receipt.
+
+`existing-athenak-comparison/` contains197 time-matched samples from six retained AthenaK stationary/spinning N96/N128/N192 series and current PANGU series, using the existing0–25M data. Native AH residuals are retained separately. Found/finite AthenaK horizons have not been certified against the PANGU scaled residual tolerance; raw mass differences therefore cannot be interpreted as evolution errors. These six comparisons do not replace the controlled N32/N48/N64 convergence cohort.
+
+There are18 recorded rank-separated25M AthenaK restart shards. Their historical archive paths are not currently present on mounted D. Retained receipts preserve expected hashes and byte counts. The two stopped partialN96 runs only have time-zero shards located so far. Do not pretend those restart at their late diagnostic timestamps. Existing data are used in comparison now; checkpoint restoration awaits original bytes and rank-layout GPU validation.
+
+A dedicated local watcher archives only completed continuation work and pinned checkpoints under `Operations/20261117-single-continuation`. Source removal requires fresh decompressed archive SHA256 plus source SHA/stat/UID verification. Original single-run archival ownership remains separate. Short-test output and failed continuations are retained pending review. Physics/convergence acceptance remains pending long-run results.

@@ -1,0 +1,150 @@
+{
+  "status": "recorded_archive_paths_checked",
+  "checkpoints": [
+    {
+      "case": "d200_stationary_n96",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/16457629/attempt-0/athenak/output/rst/rank_00000000/stationary_n96.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/16457629/attempt-0/athenak/output/rst/rank_00000000/stationary_n96.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 4622831897,
+      "expected_source_sha256": "5bba17cec28302063b2aa9b23c937243cf654887a706ed745d804bae81223ddb"
+    },
+    {
+      "case": "d200_stationary_n96",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/16457629/attempt-0/athenak/output/rst/rank_00000001/stationary_n96.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n96/16457629/attempt-0/athenak/output/rst/rank_00000001/stationary_n96.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 4622831897,
+      "expected_source_sha256": "4c0d4af96acea03e4a6d415453b91d91442ef97aea292c28708eefbbb587ebd1"
+    },
+    {
+      "case": "d200_stationary_n128",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000000/stationary_n128.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000000/stationary_n128.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 3866180794,
+      "expected_source_sha256": "b5229c9e10c3fdbddaaaf67f246240bbc8c4d5105e0b910e0c9669a73a0baa2e"
+    },
+    {
+      "case": "d200_stationary_n128",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000001/stationary_n128.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000001/stationary_n128.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 3866180794,
+      "expected_source_sha256": "1e2204819abe2157714194ed5c959e06b3e2a3ff0bd4cebd7a7b8555035c01e5"
+    },
+    {
+      "case": "d200_stationary_n128",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000002/stationary_n128.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n128/16457630/attempt-0/athenak/output/rst/rank_00000002/stationary_n128.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 3868613818,
+      "expected_source_sha256": "4af1808dc449af512aebe24de95c8a57b72e03ce78b30b47e1c93e634e2829c2"
+    },
+    {
+      "case": "d200_stationary_n192",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000000/stationary_n192.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000000/stationary_n192.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 5104662490,
+      "expected_source_sha256": "2c9eec954096c76d65662be4cd164220271e97cab079b0224e1af5ebbc9ff0b3"
+    },
+    {
+      "case": "d200_stationary_n192",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000001/stationary_n192.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000001/stationary_n192.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 5104662490,
+      "expected_source_sha256": "1c3d76cf4ee1e7991bc7e804d50828981a9c0339bd91ad9f9e8f8fc24bce5258"
+    },
+    {
+      "case": "d200_stationary_n192",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000002/stationary_n192.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000002/stationary_n192.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 5104662490,
+      "expected_source_sha256": "082f293f59e66ebea636fce83c07fa1871c1bdce26625507fde680520824d3fe"
+    },
+    {
+      "case": "d200_stationary_n192",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000003/stationary_n192.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_stationary_n192/16457631/attempt-0/athenak/output/rst/rank_00000003/stationary_n192.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 5104662490,
+      "expected_source_sha256": "e5eeea2b246ffe8152816c0e27caa74b7ce816e5cdb68d2b4c58ee280aaad573"
+    },
+    {
+      "case": "d200_spinning_n96",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/16696486/attempt-0/athenak/output/rst/rank_00000000/spinning_n96.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/16696486/attempt-0/athenak/output/rst/rank_00000000/spinning_n96.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 4622833151,
+      "expected_source_sha256": "7486a84841fdc7a8f5f7a9deba49290fee4b7166fa88557b882c366d969dc008"
+    },
+    {
+      "case": "d200_spinning_n96",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/16696486/attempt-0/athenak/output/rst/rank_00000001/spinning_n96.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n96/16696486/attempt-0/athenak/output/rst/rank_00000001/spinning_n96.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 4622833151,
+      "expected_source_sha256": "df6880e2f6b638806dd22abaa642d139c64dbb77846ea02deee87680e05a8485"
+    },
+    {
+      "case": "d200_spinning_n128",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000000/spinning_n128.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000000/spinning_n128.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 3866182048,
+      "expected_source_sha256": "f2c20957c4c239a1abd0155072e29a9e8ee47a99816e3dd5d3d13a8ee6b656bd"
+    },
+    {
+      "case": "d200_spinning_n128",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000001/spinning_n128.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000001/spinning_n128.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 3866182048,
+      "expected_source_sha256": "1fd88e58fd5bbc5681c10d732d7ff4941c9d253ee69e82fab8b956d2e10e401a"
+    },
+    {
+      "case": "d200_spinning_n128",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000002/spinning_n128.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n128/16696487/attempt-0/athenak/output/rst/rank_00000002/spinning_n128.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 3868615072,
+      "expected_source_sha256": "a27416b702cb75607e2910f642e276308e1bf6c6316701d5c7d45d955af22a81"
+    },
+    {
+      "case": "d200_spinning_n192",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000000/spinning_n192.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000000/spinning_n192.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 5104663744,
+      "expected_source_sha256": "b4110de29cbbc41067babd0479fd2376ad32dfe986a71fec5b3c8a8ae47cb352"
+    },
+    {
+      "case": "d200_spinning_n192",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000001/spinning_n192.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000001/spinning_n192.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 5104663744,
+      "expected_source_sha256": "ef5c77d39449a6d1ce3c91ef803ae0839e18a2b728b91b7802605377ab8c49b5"
+    },
+    {
+      "case": "d200_spinning_n192",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000002/spinning_n192.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000002/spinning_n192.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 5104663744,
+      "expected_source_sha256": "ef7f78f98548469a0a93d92ff655bec2f5e5903df87dc40efb836bc8e6272907"
+    },
+    {
+      "case": "d200_spinning_n192",
+      "source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000003/spinning_n192.00001.rst.archive.json",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/16696488/attempt-0/athenak/output/rst/rank_00000003/spinning_n192.00001.rst.zst",
+      "present": false,
+      "expected_source_bytes": 5104663744,
+      "expected_source_sha256": "02da3e29946ac84803c368555ca1a837ca019ae6ede07191b3eb29fe98647f93"
+    }
+  ],
+  "conclusion": "Use preserved diagnostic series now; do not claim restart availability until original archive bytes are located and validated."
+}
