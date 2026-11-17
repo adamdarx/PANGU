@@ -9,7 +9,7 @@
     "spinning_n64": "17373869",
     "quasicircular_n32": "17373934"
   },
-  "status": "native_GPU_vacuum_gates_and_formal_dependencies_queued",
+  "status": "all_three_GPU_admissions_passed_formals_pending_priority",
   "physics_acceptance": false,
   "queued_utc": "2026-11-17T11:08:23.508030Z",
   "superseded_admission": {
@@ -22,5 +22,6 @@
     "old_admission": "17373903",
     "old_formal": "17373871",
     "reason": "Native QC floors/dissipation and off-vertex grid; initial horizons were found but beta invalid by step4; no PANGU changes"
-  }
+  },
+  "last_verified_utc": "2026-11-17T11:47:10.340756+00:00"
 }

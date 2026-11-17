@@ -17,5 +17,14 @@
     }
   ],
   "UTC": "2026-11-17T11:01:32.822149Z",
-  "status": "Cactus parameter check reaches AMReX CUDA startup; login lacks GPU; full check deferred to queued GPU admission; no CPU evolution executed"
+  "status": "Cactus parameter check reaches AMReX CUDA startup; login lacks GPU; full check deferred to queued GPU admission; no CPU evolution executed",
+  "GPU_strict_parameter_and_runtime_validation": {
+    "utc": "2026-11-17T11:47:10.340756+00:00",
+    "passed_jobs": {
+      "stationary_n64": "17373901",
+      "spinning_n64": "17373902",
+      "quasicircular_n32": "17373933"
+    },
+    "physical_acceptance": false
+  }
 }

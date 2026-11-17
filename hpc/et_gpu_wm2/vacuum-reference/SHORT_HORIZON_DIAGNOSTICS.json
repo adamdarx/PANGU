@@ -1,0 +1,31 @@
+{
+  "stationary_n64": {
+    "job_id": "17373901",
+    "first_Mirr": 0.9999992161,
+    "last_Mirr": 0.9999989035,
+    "relative_change": -3.126002450437756e-07,
+    "iterations": [
+      0,
+      32,
+      64
+    ],
+    "scope": "64-step t0..0.3125 GPU diagnostic, not long-time or convergence acceptance",
+    "column_1based": 27,
+    "column_description": "m_irreducible",
+    "initial_relative_error_vs_Schwarzschild_mass1": -7.839000000231522e-07
+  },
+  "spinning_n64": {
+    "job_id": "17373902",
+    "first_Mirr": 1.058374988,
+    "last_Mirr": 1.058375324,
+    "relative_change": 3.174678198698976e-07,
+    "iterations": [
+      0,
+      32,
+      64
+    ],
+    "scope": "64-step t0..0.3125 GPU diagnostic, not long-time or convergence acceptance",
+    "column_1based": 27,
+    "column_description": "m_irreducible"
+  }
+}
