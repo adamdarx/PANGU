@@ -1,0 +1,300 @@
+{
+  "job": "17254476",
+  "phase": "completed_pending_convergence_analysis",
+  "target_time": 200,
+  "field_files_present": 41,
+  "fields": [
+    {
+      "nominal_time": 0,
+      "actual_time": 0.0,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00000.phdf.zst",
+      "stored_bytes": 528954060,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 5,
+      "actual_time": 5.00312499999985,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00001.phdf.zst",
+      "stored_bytes": 4554988126,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 10,
+      "actual_time": 10.000000000000133,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00002.phdf.zst",
+      "stored_bytes": 4581474951,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 15,
+      "actual_time": 15.00000000000127,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00003.phdf.zst",
+      "stored_bytes": 4583884811,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 20,
+      "actual_time": 20.000000000002405,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00004.phdf.zst",
+      "stored_bytes": 4593269818,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 25,
+      "actual_time": 25.000000000003542,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00005.phdf.zst",
+      "stored_bytes": 4603372584,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 30,
+      "actual_time": 30.00000000000468,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00006.phdf.zst",
+      "stored_bytes": 4608774935,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 35,
+      "actual_time": 35.0000000000024,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00007.phdf.zst",
+      "stored_bytes": 4614065796,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 40,
+      "actual_time": 40.00312499999785,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00008.phdf.zst",
+      "stored_bytes": 5899206609,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 45,
+      "actual_time": 45.003124999993304,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00009.phdf.zst",
+      "stored_bytes": 5903913564,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 50,
+      "actual_time": 50.003124999988756,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00010.phdf.zst",
+      "stored_bytes": 5908881103,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 55,
+      "actual_time": 55.00312499998421,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00011.phdf.zst",
+      "stored_bytes": 5910790025,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 60,
+      "actual_time": 60.00312499997966,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00012.phdf.zst",
+      "stored_bytes": 5912761965,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 65,
+      "actual_time": 65.00312499997511,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00013.phdf.zst",
+      "stored_bytes": 5911650674,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 70,
+      "actual_time": 70.00312499997057,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00014.phdf.zst",
+      "stored_bytes": 5911496420,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 75,
+      "actual_time": 75.00312499996602,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00015.phdf.zst",
+      "stored_bytes": 5911415274,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 80,
+      "actual_time": 80.00312499996147,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00016.phdf.zst",
+      "stored_bytes": 5913550782,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 85,
+      "actual_time": 85.00312499995692,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00017.phdf.zst",
+      "stored_bytes": 5916392672,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 90,
+      "actual_time": 90.00312499995238,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00018.phdf.zst",
+      "stored_bytes": 5916970460,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 95,
+      "actual_time": 95.00312499994783,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00019.phdf.zst",
+      "stored_bytes": 5919567359,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 100,
+      "actual_time": 100.00312499994328,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17133235/formal/sync_plugin_grmhd.bns.00020.phdf.zst",
+      "stored_bytes": 5922780912,
+      "existing_archive_SHA256": null
+    },
+    {
+      "nominal_time": 105,
+      "actual_time": 105.00312499993873,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00021.phdf.zst",
+      "stored_bytes": 5930095212,
+      "existing_archive_SHA256": "b5d4964d5dec225e6dd1aea7e03c49358e6f4283dded2d060b1ba040dd1c2bd7"
+    },
+    {
+      "nominal_time": 110,
+      "actual_time": 110.00312499993419,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00022.phdf.zst",
+      "stored_bytes": 5936817506,
+      "existing_archive_SHA256": "c2a0882b8699f46581e0233c093a73c107b1350108c0b4f0eca3226c1bb51fcf"
+    },
+    {
+      "nominal_time": 115,
+      "actual_time": 115.00312499992964,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00023.phdf.zst",
+      "stored_bytes": 5945207967,
+      "existing_archive_SHA256": "1114e5935723aee2791d388d164e4c37c94a9b54f08fdf72a6af2e7990281b52"
+    },
+    {
+      "nominal_time": 120,
+      "actual_time": 120.00312499992509,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00024.phdf.zst",
+      "stored_bytes": 5952200556,
+      "existing_archive_SHA256": "9345b59deb31e0a8839f865221ae8522af92448ef3da061904014737435ede54"
+    },
+    {
+      "nominal_time": 125,
+      "actual_time": 125.00312499992054,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00025.phdf.zst",
+      "stored_bytes": 5962266279,
+      "existing_archive_SHA256": "a7cde4ea10ddc27470609369588b1c396f352910521b4b2743042dc03212ef37"
+    },
+    {
+      "nominal_time": 130,
+      "actual_time": 130.0031249999251,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00026.phdf.zst",
+      "stored_bytes": 5969570985,
+      "existing_archive_SHA256": "9fbdf5b9cb67145c2c262ce4e21dbd7f2d57ba95dfad4c7eefb833cd59e23c89"
+    },
+    {
+      "nominal_time": 135,
+      "actual_time": 135.00312499994328,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00027.phdf.zst",
+      "stored_bytes": 5978226581,
+      "existing_archive_SHA256": "2843c718dfcc5354b9f9702357c17a48a7ff681bee989878d7afc7cee6e46cea"
+    },
+    {
+      "nominal_time": 140,
+      "actual_time": 140.00312499996147,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00028.phdf.zst",
+      "stored_bytes": 5983268414,
+      "existing_archive_SHA256": "8f870bdade0a579f195c6b1fc81e2cf2f2915098b4056db7e3f39293e30e4c8c"
+    },
+    {
+      "nominal_time": 145,
+      "actual_time": 145.00312499997966,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00029.phdf.zst",
+      "stored_bytes": 5987691427,
+      "existing_archive_SHA256": "1d5b153b58fe0588930c4f61ce5b11c1845bc800ff43084b25a0cb6015a33bba"
+    },
+    {
+      "nominal_time": 150,
+      "actual_time": 150.00312499999785,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00030.phdf.zst",
+      "stored_bytes": 5989870836,
+      "existing_archive_SHA256": "ea7c7f236978fd45114863a78d71c57f5cde03ba5b3739183bba438b7934e4ff"
+    },
+    {
+      "nominal_time": 155,
+      "actual_time": 155.00000000001603,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00031.phdf.zst",
+      "stored_bytes": 5990954710,
+      "existing_archive_SHA256": "cbefca8d41d04a3c87c6034462b8b3c4a67fd34c907b09f2dbfda89be76b2e64"
+    },
+    {
+      "nominal_time": 160,
+      "actual_time": 160.00000000003422,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00032.phdf.zst",
+      "stored_bytes": 5991470311,
+      "existing_archive_SHA256": "d145fde2bfbcf61740dfe1f769870537273ed6a87e132bbbc99810888de4300a"
+    },
+    {
+      "nominal_time": 165,
+      "actual_time": 165.0000000000524,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00033.phdf.zst",
+      "stored_bytes": 5991718948,
+      "existing_archive_SHA256": "bf615919b514877ab27b89d5ef0d3412422ceea46b097e8d12a598a46df46541"
+    },
+    {
+      "nominal_time": 170,
+      "actual_time": 170.0000000000706,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00034.phdf.zst",
+      "stored_bytes": 5992999535,
+      "existing_archive_SHA256": "4d702cd461cf62049d486427331940801025488a57439d10d92948fe5dac9c93"
+    },
+    {
+      "nominal_time": 175,
+      "actual_time": 175.0000000000888,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00035.phdf.zst",
+      "stored_bytes": 5994907201,
+      "existing_archive_SHA256": "843b822fe152edc3046212ae3067daa74ad525c5225c16034f4a316d4513a070"
+    },
+    {
+      "nominal_time": 180,
+      "actual_time": 180.00000000010698,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00036.phdf.zst",
+      "stored_bytes": 5996222535,
+      "existing_archive_SHA256": "f084d8c358407ecebcf3b40e349da96a71b5222ca2ee86568b801f7343c4ccd3"
+    },
+    {
+      "nominal_time": 185,
+      "actual_time": 185.00000000012517,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00037.phdf.zst",
+      "stored_bytes": 5997506479,
+      "existing_archive_SHA256": "e8d4145418cd7ed498544d0b5073516cdaf188ce72ea5e11e6e7765009163401"
+    },
+    {
+      "nominal_time": 190,
+      "actual_time": 190.00000000014336,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00038.phdf.zst",
+      "stored_bytes": 5998106902,
+      "existing_archive_SHA256": "3b32d166f30a1229082157c4a8c5e93a0d050eb15156c3f3c797adfde959602a"
+    },
+    {
+      "nominal_time": 195,
+      "actual_time": 195.00000000016155,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00039.phdf.zst",
+      "stored_bytes": 5998189358,
+      "existing_archive_SHA256": "b92f109065f1b8f50163b76fc632e266fe584fed2f2f2aac530f7b9b93850100"
+    },
+    {
+      "nominal_time": 200,
+      "actual_time": 200.0,
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.final.phdf.zst",
+      "stored_bytes": 5998936136,
+      "existing_archive_SHA256": "54271d2864d8235f3eabdd24ca09114ea0c78cc490f6fc4751b796dbc7f7bd38"
+    }
+  ],
+  "final_restart": {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.out3.final.rhdf.zst",
+    "sha256": "9d5b6106f17131fab4a23438578c0cdeab99a9923747a8ae6a1659f9f1584c12",
+    "stored_bytes": 2026468771
+  }
+}

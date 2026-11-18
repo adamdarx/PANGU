@@ -1,0 +1,109 @@
+{
+  "model": "time_symmetric_conformal_tov_pair",
+  "initial_solved_ADM_mass": 2.6548889790689447,
+  "separation": 24,
+  "initial_table_sha256": "fad451f7c365d9642e735aea9223f0c6829313cea232ce7ea0fe28a5f01165b5",
+  "histories": "Baryon mass drift uses each run's own time-zero mass. The complete volume includes the black hole interior.",
+  "horizon_measurement": "PANGU found flag and native scaled-expansion tolerance. Failed searches are retained in the source snapshots.",
+  "source_hashes": {
+    "PROTOCOL.json": "d153c9eee2367f79e6f0eeca0af57b16a87458574cb371cd56bb7d6ebc616972",
+    "n128/nr_horizon.csv": "b72a46db64529c1212022f84647014dd1e38c972dcd7919d42f61222f05ffcbd",
+    "n128/summary.json": "ec9fc02f40b39fe50550bef5b70935217ac757d898e9e2ba6728c51c9919aec5",
+    "n128/sync_plugin_grmhd.out2.hst": "9f65509bfd52be994642f6d65fe9fe3b57e434c4c090646b15957848e4894d19",
+    "n64/nr_horizon.csv": "83aea31b164fcfefc36fdfca57d687b307b99ccab25922a8eb7eeff6753606b3",
+    "n64/phase-validated.json": "caf39e1aca44478d1bc5e496c895814b6b18465a3309661bf16fd1422ec06cc3",
+    "n64/summary.json": "f5727825ba5e8e8999e212ce81156e8c7c01f7dded10338fce685ddb87972cb8",
+    "n64/sync_plugin_grmhd.out2.hst": "173336fecd3969b33f347e45776d2e0bc181754022de1c02c16452bff0a49f47",
+    "n96/nr_horizon.csv": "e7ccd3ef1103e703fced0836a571903836371e5b28d3067e668cce5900b6626b",
+    "n96/phase-validated.json": "7b10886a56e032871f6fb40897a2ab40f5dabc9fdbbd9dbfd50f6857b4928da9",
+    "n96/summary.json": "efca96de3012acfc1d95d1485a4a28c21fd7ca8184208ed3a7cd57e8a16e2c98",
+    "n96/sync_plugin_grmhd.out2.hst": "112cf2f976e483efe4145036cd371c539d60fc39732c3fb02b765e60a8bd2934",
+    "n96-prefix/nr_horizon.csv": "0eb6c7fdd275a8bbf982719c163bd472b0b979cf0f116fd1091b25da0e97861a",
+    "n96-prefix/sync_plugin_grmhd.out2.hst": "b2aa15acbd3bc8ff0370f2b0c2ad75ed17c27ef6f505101dcae729fccd2e8281"
+  },
+  "cases": {
+    "n64": {
+      "job": "17133234",
+      "status": "completed_pending_convergence_analysis",
+      "latest_history_time": 200.0,
+      "initial_baryon_mass": 2.927590597007707,
+      "latest_relative_baryon_change": 0.0008608715599225381,
+      "max_absolute_relative_baryon_change_through_80": 3.5441960477555767e-10,
+      "horizon_attempts": 80,
+      "qualified_horizons": 30,
+      "horizon_sampling_bracket": [
+        138.07968750003033,
+        140.08125000002548
+      ],
+      "last_qualified_horizon": {
+        "time": 198.1265624998847,
+        "irreducible_mass": 2.6579570529229204,
+        "christodoulou_mass": 2.6579570529229204,
+        "max_radius": 5.466839099324222,
+        "scaled_rms_expansion": 9.901903139482723e-05,
+        "expansion_tolerance": 0.0001,
+        "cycle": 42267,
+        "qualified": true,
+        "relative_christodoulou_mass_minus_initial_ADM": 0.0011556316961516266
+      },
+      "shell_8_to_30_at_200": {
+        "coordinate_volume": 110973.5,
+        "proper_volume": 148069.7364546869,
+        "hmax": 4.771144265289896e-05,
+        "divb_max": 0.0,
+        "baryon_mass": 0.0005818190766836199,
+        "last_stage_recovery_mass": -1.6957202557337067e-23,
+        "cells": 591240,
+        "hamiltonian_proper_rms": 9.882677686239356e-07,
+        "hamiltonian_proper_l1": 5.563706318166732e-07
+      }
+    },
+    "n96": {
+      "job": "17254476",
+      "status": "completed_pending_convergence_analysis",
+      "latest_history_time": 200.0,
+      "initial_baryon_mass": 2.927123789849819,
+      "latest_relative_baryon_change": 0.0008044231020745141,
+      "max_absolute_relative_baryon_change_through_80": 3.3314928593597415e-10,
+      "horizon_attempts": 80,
+      "qualified_horizons": 30,
+      "horizon_sampling_bracket": [
+        138.13749999995468,
+        140.13749999996196
+      ],
+      "last_qualified_horizon": {
+        "time": 198.13750000017296,
+        "irreducible_mass": 2.6557352134490255,
+        "christodoulou_mass": 2.6557352134490255,
+        "max_radius": 5.4716206888408925,
+        "scaled_rms_expansion": 9.953543169526816e-05,
+        "expansion_tolerance": 0.0001,
+        "cycle": 63404,
+        "qualified": true,
+        "relative_christodoulou_mass_minus_initial_ADM": 0.00031874567514966756
+      },
+      "shell_8_to_30_at_200": {
+        "coordinate_volume": 111108.55555555563,
+        "proper_volume": 148148.75910870955,
+        "hmax": 1.5225870779734354e-05,
+        "divb_max": 0.0,
+        "baryon_mass": 0.00010139425967566336,
+        "last_stage_recovery_mass": 4.243130179207201e-24,
+        "cells": 1995928,
+        "hamiltonian_proper_rms": 2.893388017505315e-07,
+        "hamiltonian_proper_l1": 1.8867729884180097e-07
+      }
+    },
+    "n128": {
+      "job": "17355477",
+      "status": "formal_running",
+      "latest_history_time": 84.6914062499772,
+      "initial_baryon_mass": 2.926991492147844,
+      "latest_relative_baryon_change": 3.59628549162494e-10,
+      "max_absolute_relative_baryon_change_through_80": 3.174789320325999e-10,
+      "horizon_attempts": 23,
+      "qualified_horizons": 0
+    }
+  },
+  "N64_to_N96_positive_AH_mass_excess_reduction_fraction": 0.724180570495666
+}
