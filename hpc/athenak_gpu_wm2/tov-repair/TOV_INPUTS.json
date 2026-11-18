@@ -6,6 +6,13 @@
       "sha256": "7025b2c01ab5a835f1f06640a85ae8ac8483ef17c74b8d785e806f9cf3110722",
       "target": 100,
       "previous_input_sha256": "10fad261a8cacdefe9df70b0d2c36ae28aeab78158b8462f87b753de5116fd15"
+    },
+    {
+      "resolution": 96,
+      "input": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/tov-repair/inputs/tov_n96.athinput",
+      "sha256": "7cc6f7fc982f32f5b3fdcd163098d2abae45be24ddd651a4c6d7d21f053d3e50",
+      "target": 100,
+      "previous_input_sha256": "fac06724a8b077a867b24ff6e7bc712207094d1dceb40fe8e6a1309092db3e49"
     }
   ],
   "changes": {
@@ -28,5 +35,6 @@
     "chi_min_floor": 1e-12
   },
   "unchanged": "Initial model/EOS/physical mesh, native evolution code/FD6, binary and output cadence",
-  "scope": "N64 first; N96 rerun only after investigating N64 stabilized result; no solved-root-cause claim"
+  "scope": "N64 first; N96 rerun only after investigating N64 stabilized result; no solved-root-cause claim",
+  "N64_review": "Reached100M; complete histories finite; all four final100M field outputs finite. Physical mass/horizon comparison remains pending."
 }

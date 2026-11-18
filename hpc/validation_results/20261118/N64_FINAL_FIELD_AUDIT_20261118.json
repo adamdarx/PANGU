@@ -1,0 +1,29 @@
+{
+  "files": [
+    {
+      "file": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00020.bin",
+      "time": 100.0,
+      "nonfinite": {},
+      "sha256": "623bc457c1c1d91352f349a0ec2cc7a99682ede1845d75c284be3877b121a72b"
+    },
+    {
+      "file": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_M.00020.bin",
+      "time": 100.0,
+      "nonfinite": {},
+      "sha256": "ecf24a5256f4cfc92959a69b2b04fe2c0b9ff50528339cb1330a079a627d9fa2"
+    },
+    {
+      "file": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_divb.00020.bin",
+      "time": 100.0,
+      "nonfinite": {},
+      "sha256": "8107a053b84b22078f84188339f79585030aa13f7aa7277ac4b9ecbf1b27bfe4"
+    },
+    {
+      "file": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00020.bin",
+      "time": 100.0,
+      "nonfinite": {},
+      "sha256": "ec1fbc1f6b655c4ef5f251f56b6354dc1a738a0e6acd067c491b9134e3b38821"
+    }
+  ],
+  "physical_acceptance": false
+}

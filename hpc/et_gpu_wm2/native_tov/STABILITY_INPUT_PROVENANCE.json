@@ -1,0 +1,26 @@
+[
+  {
+    "file": "native_tov_n96_validation_stability.par",
+    "deployed_runtime_sha256": "fa58204e205b95b7ae01926396db9fffadedb3ee13be6df855744b15e28d26fb",
+    "published_sha256": "0c8a0ed66a4c63dffc463cc0dac52408c308b57e8b695bc4dd891254d73346de",
+    "difference": "Published copies strip trailing whitespace only. Existing running/queued solver decks remain untouched."
+  },
+  {
+    "file": "native_tov_n64_formal_stability.par",
+    "deployed_runtime_sha256": "65d093f8a81f141aabbcf78bdd6dc1f87bee7e01eee77d7c7d92443bd27a55ba",
+    "published_sha256": "90c2a7a2f02d7f0a700a30875e5011b14ac2dc5f72fa59d21674f2dcd510ccbd",
+    "difference": "Published copies strip trailing whitespace only. Existing running/queued solver decks remain untouched."
+  },
+  {
+    "file": "native_tov_n64_validation_stability.par",
+    "deployed_runtime_sha256": "fb917c015e668e9f5312b05997f039432f6b9bc89c369a7dbe08ab4ff8ea0531",
+    "published_sha256": "2f0a8ca92ba5e27b0f84099abf69bd05f1763d9953ec58ad7481addfcd6b5200",
+    "difference": "Published copies strip trailing whitespace only. Existing running/queued solver decks remain untouched."
+  },
+  {
+    "file": "native_tov_n96_formal_stability.par",
+    "deployed_runtime_sha256": "e1b2e79eba9dc96a58bc12dffdf681dcd7433c494a5133ef4d0254804432cfa3",
+    "published_sha256": "c456b16d12ed060c73cbb021e4752aa1e10c6576bfd98621f6a780705df17065",
+    "difference": "Published copies strip trailing whitespace only. Existing running/queued solver decks remain untouched."
+  }
+]

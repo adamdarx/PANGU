@@ -1,0 +1,29 @@
+{
+  "status": "formal_evolution_completed_analysis_pending",
+  "mode": "formal",
+  "resolution": 64,
+  "job_id": "17374027",
+  "started_utc": "2026-11-17T16:17:31.074076Z",
+  "binary_sha256": "ed658646e2188b59b57cd52aa0ad21c5f3127ed3bd5047549c045d2a00907997",
+  "input_sha256": "7025b2c01ab5a835f1f06640a85ae8ac8483ef17c74b8d785e806f9cf3110722",
+  "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027",
+  "physical_acceptance": false,
+  "effective_overrides": {
+    "fastflow/hmean_tol_0": 100.0,
+    "reason": "Native divergence-abort bound, not expansion convergence tolerance"
+  },
+  "admission_job_id": "17374129",
+  "latest_free_GiB": 608.7363014221191,
+  "returncode": 0,
+  "wall_seconds": 7298.25401244394,
+  "actual_gpu_process_observed": true,
+  "final_time": 100.0,
+  "final_cycle": 32001,
+  "gpu_memory": {
+    "0": {
+      "total_MiB": 40960.0,
+      "peak_sampled_MiB": 20019.0
+    }
+  },
+  "finished_utc": "2026-11-17T18:19:09.528335Z"
+}

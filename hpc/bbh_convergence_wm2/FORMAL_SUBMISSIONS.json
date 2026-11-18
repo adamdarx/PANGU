@@ -1,9 +1,20 @@
 {
   "resource_gate": "17369148",
+  "full_io_gate": "17378934",
   "formal": {
-    "32": "17372824",
-    "48": "17372825",
-    "64": "17372826"
+    "32": "17378935",
+    "48": "17378936",
+    "64": "17378937"
   },
-  "full_io_gate": "17372823"
+  "superseded": {
+    "resource_gate": "17369148",
+    "formal": {
+      "32": "17372824",
+      "48": "17372825",
+      "64": "17372826"
+    },
+    "full_io_gate": "17372823"
+  },
+  "changes": "Uncompressed HDF5 outputs/restarts; bounded full-output GPU acceptance; physics and native code unchanged",
+  "previous_failure": "N48 MPI_File_write_at_all MPI_ERR_IO followed by wrapper timeout; compression not established as unique cause"
 }

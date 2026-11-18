@@ -1,0 +1,36 @@
+{
+  "status": "admission_passed",
+  "mode": "admission",
+  "resolution": 96,
+  "job_id": "17378945",
+  "started_utc": "2026-11-18T00:20:25.930827Z",
+  "binary_sha256": "ed658646e2188b59b57cd52aa0ad21c5f3127ed3bd5047549c045d2a00907997",
+  "input_sha256": "7cc6f7fc982f32f5b3fdcd163098d2abae45be24ddd651a4c6d7d21f053d3e50",
+  "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n96/17378945",
+  "physical_acceptance": false,
+  "effective_overrides": {
+    "fastflow/hmean_tol_0": 100.0,
+    "reason": "Native divergence-abort bound, not expansion convergence tolerance"
+  },
+  "returncode": 0,
+  "wall_seconds": 22.090846097911708,
+  "actual_gpu_process_observed": true,
+  "final_time": 0.01666667,
+  "final_cycle": 8,
+  "gpu_memory": {
+    "0": {
+      "total_MiB": 81920.0,
+      "peak_sampled_MiB": 42163.0
+    }
+  },
+  "initial_match": {
+    "blocks": 456,
+    "rho_relative_volume_L1": 2.18175760490186e-08,
+    "baryon_relative_bias": 2.117128694578696e-11,
+    "magnetic_relative_volume_L1": 2.143281516726797e-08,
+    "pangu_source_sha256": "76ae36f0ff80ae32f4e94889c389ff24f066dcd3911585a726058aeb2a5285f6"
+  },
+  "limitations": "Eight early steps; not long-time accuracy or horizon acceptance. AH search deferred during this resource probe; AH objects and full field/restart I/O remain allocated.",
+  "AH_probe": "Actual native horizon searches enabled; no horizon expected for initial star; residual quality still independently reviewed",
+  "finished_utc": "2026-11-18T00:20:51.835110Z"
+}

@@ -1,0 +1,5 @@
+{
+  "reason": "FourGPU trajectory finite and initial/conservation checks passed, but projected119.18h exceeds110h admission budget; unchanged solver/table/physics, test8GPUs/two nodes",
+  "admission": "17378963",
+  "formal": "17378964"
+}

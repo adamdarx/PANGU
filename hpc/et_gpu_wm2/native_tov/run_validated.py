@@ -5,10 +5,12 @@ ROOT=Path('/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-
 sys.path.insert(0,str(ROOT))
 from reference_history_guard import check_norms
 n=int(os.environ['REFERENCE_N']);mode=os.environ.get('REFERENCE_MODE','validation');assert mode in ('validation','formal') and n in (64,96)
+profile=os.environ.get('REFERENCE_PROFILE','original');assert profile in ('original','stability')
 assert os.environ.get('SLURM_JOB_ID') and os.environ.get('CUDA_VISIBLE_DEVICES')
 build=json.loads((ROOT/'AH_BUILD_STATUS.json').read_text());exe=Path(build['binary']);assert hashlib.sha256(exe.read_bytes()).hexdigest()==build['sha256']
 work=suite/'runs'/('n%d'%n)/os.environ['SLURM_JOB_ID'];work.mkdir(parents=True,exist_ok=False)
-report=dict(status=mode+'_running',job_id=os.environ['SLURM_JOB_ID'],n=n,mode=mode,binary_sha256=build['sha256'],started_utc=datetime.datetime.utcnow().isoformat()+'Z',physical_acceptance=False,work=str(work));receipt=suite/('N%d_%s.json'%(n,mode.upper()))
+report=dict(status=mode+'_running',job_id=os.environ['SLURM_JOB_ID'],n=n,mode=mode,binary_sha256=build['sha256'],started_utc=datetime.datetime.utcnow().isoformat()+'Z',physical_acceptance=False,work=str(work));receipt=suite/(('N%d_STABILITY_%s.json' if profile=='stability' else 'N%d_%s.json')%(n,mode.upper()))
+report['profile']=profile
 def save():
  p=receipt.with_suffix('.tmp');p.write_text(json.dumps(report,indent=2,allow_nan=False)+'\n');p.replace(receipt)
 def free():
@@ -17,9 +19,9 @@ def free():
 save()
 try:
  assert free()>200,'Protect existing production quota'
- deck=suite/('native_tov_n%d_%s.par'%(n,mode));report['input_sha256']=hashlib.sha256(deck.read_bytes()).hexdigest();save()
+ deck=suite/(('native_tov_n%d_%s_stability.par' if profile=='stability' else 'native_tov_n%d_%s.par')%(n,mode));report['input_sha256']=hashlib.sha256(deck.read_bytes()).hexdigest();save()
  if mode=='formal':
-  proof=json.loads((suite/('N%d_VALIDATION.json'%n)).read_text());assert proof['status']=='validation_passed_formal_ready' and proof['binary_sha256']==build['sha256']
+  proof=json.loads((suite/(('N%d_STABILITY_VALIDATION.json' if profile=='stability' else 'N%d_VALIDATION.json')%n)).read_text());assert proof['status']=='validation_passed_formal_ready' and proof['binary_sha256']==build['sha256']
  cmd=['mpirun','-np',os.environ['SLURM_NTASKS'],'--bind-to','none','bash',str(suite/'rank.sh'),str(exe),str(deck)];(work/'command.json').write_text(json.dumps(cmd,indent=2)+'\n')
  gpu=(work/'gpu.csv').open('w');monitor=subprocess.Popen(['nvidia-smi','--query-gpu=index,memory.used,memory.total','--format=csv,noheader,nounits','--loop=1'],stdout=gpu,stderr=subprocess.STDOUT)
  observed=False;start=time.monotonic();last=start
@@ -34,7 +36,7 @@ try:
      if time.monotonic()-last>60:
       check_norms(work)
       assert free()>150,'Terminate this new reference only to protect production quota';last=time.monotonic()
-     if mode=='validation' and time.monotonic()-start>1000:raise TimeoutError('GPU validation exceeded1000seconds')
+     if mode=='validation' and time.monotonic()-start>(3600 if profile=='stability' else 1000):raise TimeoutError('GPU validation exceeded1000seconds')
      time.sleep(1)
    except BaseException:
     os.killpg(child.pid,signal.SIGTERM)
@@ -57,7 +59,8 @@ try:
  assert np.isfinite(mass).all() and np.isfinite(density).all() and np.isfinite(energy).all() and np.isfinite(h).all()
  report['measurements']=dict(initial_baryon_mass=float(mass[0]),initial_rho_max=float(density[0]),initial_magnetic_energy=float(energy[0]),max_relative_baryon_drift=float(np.max(abs(mass/mass[0]-1))),initial_H_L2=float(h[0,hc['z4c::hc.L2norm']]),final_time=float(d[-1,1]))
  if mode=='validation':
-  assert int(d[-1,0])==16,'Incomplete short trajectory'
+  assert int(d[-1,0])==(n*10 if profile=='stability' else 16),'Incomplete validation trajectory'
+  if profile=='stability':assert abs(float(d[-1,1])-2)<1e-9,'Must exceed earlier0.9/1.4M nonfinite onset'
   assert memory and all(v['peak_MiB']<.8*v['total_MiB'] and v['total_MiB']-v['peak_MiB']>8192 for v in memory.values()),'Insufficient GPU memory reserve'
   assert 1.4<mass[0]<1.65 and abs(density[0]/.007993-1)<.05 and 0<energy[0]<.01*1.4475941892,'Unexpected physical model scale'
   target=json.loads((suite/'SEED_ENERGY_CALIBRATION.json').read_text())['fine']['PANGU_continuum_seed_energy']

@@ -1,0 +1,35 @@
+{
+  "status": "passed",
+  "job_id": "17378934",
+  "mode": "io",
+  "cases": [
+    {
+      "n": 32,
+      "time": 0.025,
+      "cycle": 4,
+      "returncode": 0,
+      "actual_GPU_observed": true,
+      "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-bbh-convergence/runs/n32/17378934",
+      "wall_seconds": 65.7953729829751
+    },
+    {
+      "n": 48,
+      "time": 0.016666666666666666,
+      "cycle": 4,
+      "returncode": 0,
+      "actual_GPU_observed": true,
+      "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-bbh-convergence/runs/n48/17378934",
+      "wall_seconds": 98.41729970695451
+    },
+    {
+      "n": 64,
+      "time": 0.0125,
+      "cycle": 4,
+      "returncode": 0,
+      "actual_GPU_observed": true,
+      "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-bbh-convergence/runs/n64/17378934",
+      "wall_seconds": 170.8221721239388
+    }
+  ],
+  "physical_acceptance": false
+}

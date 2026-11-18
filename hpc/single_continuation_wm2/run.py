@@ -63,7 +63,7 @@ def main(mode,kind):
  try:
   assert free()>200,'Protect existing production quota'
   if mode=='formal':
-   gate=json.loads((R/('ADMISSION_'+kind+'.json')).read_text());assert gate['status']=='admission_passed' and gate['binary_sha256']==SHA
+   gate=json.loads((R/('ADMISSION_'+kind+'.json')).read_text());assert gate['status']=='admission_passed' and gate['binary_sha256']==SHA and gate['kind']==kind and gate['input_sha256']==CASES[kind][1]
    existing=origin(kind)/'phase-validated.json'
    if existing.exists():
     proof=json.loads(existing.read_text())
@@ -77,7 +77,7 @@ def main(mode,kind):
   report['checkpoint']=entry;write();report['checkpoint_validation']=validate(entry);write()
   if mode=='formal':assert gate['checkpoint_validation']['status']=='snapshot_checks_passed'
   def run(label,nlim):
-   folder=work/label;folder.mkdir();cmd=['mpirun','-np','4','--map-by','ppr:4:node','--bind-to','none','bash',str(R/'rank.sh'),str(exe),'-i',str(deck),'-r',entry['absolute_source'],'-d','output','parthenon/time/tlim=500','parthenon/time/nlim='+str(nlim),'parthenon/output2/hdf5_compression_level=0','parthenon/output3/hdf5_compression_level=0']
+   folder=work/label;folder.mkdir();gpu_dir=folder/'gpu-ranks';gpu_dir.mkdir();os.environ['CONT_GPU_DIR']=str(gpu_dir);cmd=['mpirun','-np',os.environ['SLURM_NTASKS'],'--map-by','ppr:4:node','--bind-to','none','-x','CONT_GPU_DIR','bash',str(R/'rank.sh'),'python',str(R/'monitor_rank.py'),str(exe),'-i',str(deck),'-r',entry['absolute_source'],'-d','output','parthenon/time/tlim=500','parthenon/time/nlim='+str(nlim),'parthenon/output2/hdf5_compression_level=0','parthenon/output3/hdf5_compression_level=0']
    if mode=='admission':cmd+=['parthenon/time/ncycle_out=1','parthenon/output2/dt=1e30','parthenon/output3/dt=1e30']
    save(folder/'command.json',cmd);start=time.monotonic();last=start;observed=False;peak=0;reserve=float('inf')
    with (folder/'run.log').open('w') as log:
@@ -96,8 +96,11 @@ def main(mode,kind):
      except subprocess.TimeoutExpired:os.killpg(p.pid,signal.SIGKILL);p.wait()
      raise
    assert p.returncode==0 and observed
+   ranks=[json.loads(x.read_text()) for x in gpu_dir.glob('rank*.json')];assert len(ranks)==int(os.environ['SLURM_NTASKS']) and len({(v['host'],v['gpu']) for v in ranks})==len(ranks)
+   assert all(v['returncode']==0 and v['actual_GPU_observed'] for v in ranks),'Missing actual per-rank GPU evidence'
+   reserve=min(v['minimum_reserve_MiB'] for v in ranks);peak=max(v['peak_MiB'] for v in ranks)
    files=list((folder/'output').glob('*.phdf'));assert files
-   final=max((field(x) for x in files),key=lambda v:v['cycle']);result=dict(final=final,wall_seconds=time.monotonic()-start,actual_GPU_observed=observed,peak_MiB=peak,minimum_reserve_MiB=reserve)
+   final=max((field(x) for x in files),key=lambda v:v['cycle']);result=dict(final=final,wall_seconds=time.monotonic()-start,actual_GPU_observed=observed,peak_MiB=peak,minimum_reserve_MiB=reserve,per_rank_GPU=ranks)
    report[label]=result;write();return final
   if mode=='admission':
    zero=run('restart_same_cycle',entry['cycle']);assert zero['cycle']==entry['cycle'] and abs(zero['time']-entry['time'])<1e-10

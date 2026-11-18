@@ -1,0 +1,28 @@
+{
+  "utc": "2026-11-18T00:10:51.805250Z",
+  "single": {
+    "stationary": {
+      "original": "17260150",
+      "admission": "17378930",
+      "formal": "17378931"
+    },
+    "spinning": {
+      "original": "17260147",
+      "admission": "17378932",
+      "formal": "17378933"
+    }
+  },
+  "reason": "Both four-GPU restart trajectories succeeded exactly, but measured reserve7575MiB failed8192MiB policy. Preserve threshold; test eight GPUs across two nodes. Original jobs unchanged.",
+  "bbh": {
+    "full_io_gate": "17378934",
+    "formal": {
+      "32": "17378935",
+      "48": "17378936",
+      "64": "17378937"
+    }
+  },
+  "ET_BNS96": {
+    "admission": "17378938",
+    "formal": "17378939"
+  }
+}

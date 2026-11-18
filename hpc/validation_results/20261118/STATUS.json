@@ -1,0 +1,72 @@
+{
+  "updated_utc": "2026-11-18T00:20:30.726237+00:00",
+  "single": {
+    "stationary": {
+      "original": "17260150",
+      "admission": "17378930",
+      "formal": "17378931"
+    },
+    "spinning": {
+      "original": "17260147",
+      "admission": "17378932",
+      "formal": "17378933"
+    }
+  },
+  "single_previous": "Exact restart state and8 GPU steps passed; fourGPU reserve7575MiB below8192MiB policy; retry8GPUs/two nodes, per-rank memory monitoring",
+  "bbh": {
+    "full_io_gate": "17378934",
+    "formal": {
+      "32": "17378935",
+      "48": "17378936",
+      "64": "17378937"
+    }
+  },
+  "bbh_previous": "N48 MPI I/O write failure and timeout; N32/N48 full-output retry now passed, N64 in progress at last check",
+  "ET_BNS96": {
+    "reason": "FourGPU trajectory finite and initial/conservation checks passed, but projected119.18h exceeds110h admission budget; unchanged solver/table/physics, test8GPUs/two nodes",
+    "admission": "17378963",
+    "formal": "17378964"
+  },
+  "ET_BNS96_previous": "Both2GPU and4GPU32step physical/finite/memory checks passed; projected200M149.32h and119.18h exceed110h admission budget. EightGPU/two-node speed gate queued, requirement unchanged.",
+  "ET_TOV": {
+    "64": {
+      "gate": "17378941",
+      "formal": "17378942"
+    },
+    "96": {
+      "gate": "17378943",
+      "formal": "17378944"
+    }
+  },
+  "ET_TOV_previous": "NaN at0.9/1.4M in previous nativeRK2/zeroKO references. New nativeRK4/KO0.1/kappa1.02 input-only candidate must pass2M before100M. Not a confirmed root-cause fix.",
+  "AthenaK_TOV_N64": {
+    "job": "17374027",
+    "time": 100,
+    "complete_final_fields_finite": true,
+    "baryon_relative_change": 3.586999999916074e-06,
+    "physical_acceptance": false
+  },
+  "AthenaK_TOV_N96": {
+    "gate": "17378945",
+    "formal": "17378946",
+    "gate_status": "admission_passed"
+  },
+  "original_single_time": {
+    "stationary128": 376.76025390625,
+    "spinning128": 264.02099609375,
+    "stationary192": 160.49641927079318,
+    "spinning192": 242.4397786453162
+  },
+  "PANGU_BNS128_time": 74.953125,
+  "archive": {
+    "historical_formal_BNS_54_files": "completed;239.67GB logical;48 source files removed after verified archival;latest restarts retained",
+    "ET_and_native_TOV_repair": "162 archived files,68 large source files removed at last check"
+  },
+  "physical_comparison_pending": true,
+  "bbh_full_io_status": "All N32/N48/N64 passed actual GPU4step/full-output acceptance in65.8/98.4/170.8seconds;300M formals now eligible for scheduling",
+  "temporary_restart_test_cleanup": {
+    "files": 8,
+    "bytes": 93556933984,
+    "policy": "Reviewed disposable fourGPU restart-test raw; source SHA256 recorded before direct discard; original scientific checkpoints/receipts/logs retained"
+  }
+}

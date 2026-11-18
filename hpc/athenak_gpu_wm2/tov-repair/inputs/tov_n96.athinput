@@ -1,0 +1,216 @@
+# Native AthenaK GPU reference: original magnetized TOV collapse, target100.
+# SMR requires even nghost: native nghost4 uses FD6; PANGU uses FD4.
+# Atmosphere reset and diode/NR outflow implementations differ; no performance claim.
+<job>
+basename = athenak_tov_collapse_n96
+
+<mesh>
+nghost = 4
+nx1 = 96
+x1min = -128
+x1max = 128
+ix1_bc = diode
+ox1_bc = diode
+nx2 = 96
+x2min = -128
+x2max = 128
+ix2_bc = diode
+ox2_bc = diode
+nx3 = 96
+x3min = -128
+x3max = 128
+ix3_bc = diode
+ox3_bc = diode
+
+<meshblock>
+nx1 = 24
+nx2 = 24
+nx3 = 24
+
+<mesh_refinement>
+refinement = static
+
+<time>
+evolution = dynamic
+integrator = rk2
+cfl_number = 0.1
+tlim = 100
+nlim = -1
+ndiag = 20
+
+<coord>
+general_rel = true
+excise = false
+m = 1
+a = 0
+
+<mhd>
+eos = ideal
+dyn_eos = ideal
+dyn_error = reset_floor
+reconstruct = plm
+rsolver = hlle
+dfloor = 1e-16
+tfloor = 1e-16
+dthreshold = 1.02
+gamma = 1.999999999999
+gamma_max = 1000
+max_bsq = 1e12
+dyn_scratch = 1
+fofc = true
+enforce_maximum = false
+
+<adm>
+
+
+<z4c>
+diss = 0.1
+damp_kappa1 = 0.02
+damp_kappa2 = 0
+chi_psi_power = -4
+chi_div_floor = 1e-5
+floor_chi = true
+chi_min_floor = 1e-12
+lapse_oplog = 2
+lapse_advect = 1
+slow_start_lapse = false
+shift_Gamma = 1
+shift_eta = 2
+shift_advect = 1
+
+<problem>
+rhoc = 0.007993
+kappa = 100.0
+npoints = 20000
+dr = 1.0e-3
+rho_cut = 1.0e-16
+v_pert = -0.01
+b_norm = 1
+pcut = 1.0e-6
+magindex = 1.0
+isotropic = true
+minkowski = false
+p_pert = 0
+user_hist = true
+
+<fastflow>
+num_horizons = 1
+ntheta = 40
+lmax = 12
+initial_radius_0 = 2
+start_time_0 = 0
+stop_time_0 = 1e30
+flow_iterations_0 = 300
+hmean_tol_0 = 1e-5
+mass_tol_0 = 1e-5
+output_grid = false
+
+<refined_region0>
+level = 1
+x1min = -31.68
+x1max = 31.68
+x2min = -31.68
+x2max = 31.68
+x3min = -31.68
+x3max = 31.68
+
+<refined_region1>
+level = 2
+x1min = -15.84
+x1max = 15.84
+x2min = -15.84
+x2max = 15.84
+x3min = -15.84
+x3max = 15.84
+
+<refined_region2>
+level = 3
+x1min = -7.92
+x1max = 7.92
+x2min = -7.92
+x2max = 7.92
+x3min = -7.92
+x3max = 7.92
+
+<refined_region3>
+level = 4
+x1min = -3.96
+x1max = 3.96
+x2min = -3.96
+x2max = 3.96
+x3min = -3.96
+x3max = 3.96
+
+<refined_region4>
+level = 5
+x1min = -1.98
+x1max = 1.98
+x2min = -1.98
+x2max = 1.98
+x3min = -1.98
+x3max = 1.98
+
+<refined_region5>
+level = 6
+x1min = -0.99
+x1max = 0.99
+x2min = -0.99
+x2max = 0.99
+x3min = -0.99
+x3max = 0.99
+
+<refined_region6>
+level = 7
+x1min = -0.99
+x1max = 0.99
+x2min = -0.99
+x2max = 0.99
+x3min = -0.99
+x3max = 0.99
+
+<output1>
+file_type = hst
+dt = 0.1
+data_format = %20.15e
+
+<output2>
+file_type = bin
+variable = mhd_w_bcc
+dt = 5
+
+<output3>
+file_type = bin
+variable = mhd_u
+dt = 5
+
+<output4>
+file_type = bin
+variable = z4c
+dt = 5
+
+<output5>
+file_type = bin
+variable = adm
+dt = 5
+
+<output6>
+file_type = bin
+variable = mhd_divb
+dt = 5
+
+<output7>
+file_type = bin
+variable = con_H
+dt = 5
+
+<output8>
+file_type = bin
+variable = con_M
+dt = 5
+
+<output9>
+file_type = rst
+dt = 25
+
+# Native rank-separated restart avoids the failed collective MPI-I/O path.
+single_file_per_rank = true

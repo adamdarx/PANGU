@@ -1,11 +1,9 @@
 {
-  "updated_utc": "2026-11-17T14:57:50.775606+00:00",
-  "user_instruction": "继续续跑，athenak已有数据要用上",
-  "authorization": "User explicitly authorizes checkpoint continuation; supersedes prior clarification-pending record.",
-  "status": "two_N192_GPU_restart_admissions_and_dependent500M_continuations_queued",
-  "submissions": {
+  "updated_utc": "2026-11-18T00:17:10.221602+00:00",
+  "status": "eight_GPU_two_node_restart_repartition_gate_pending",
+  "initial_four_GPU_submission": {
     "authorized_utc": "2026-11-17T14:53:35.138952Z",
-    "user_instruction": "继续续跑，athenak已有数据要用上",
+    "user_instruction": "\u7ee7\u7eed\u7eed\u8dd1\uff0cathenak\u5df2\u6709\u6570\u636e\u8981\u7528\u4e0a",
     "target": 500,
     "original_running_jobs_unchanged": true,
     "cases": {
@@ -23,23 +21,19 @@
       }
     }
   },
-  "existing_AthenaK": {
-    "status": "six_existing_AthenaK_series_used_in_time_matched_diagnostic_comparison",
-    "cases": 6,
-    "matched_samples": 197,
-    "window_M": [
-      0,
-      25
-    ],
-    "original_25M_checkpoint_shards": 18,
-    "original_25M_archive_paths_accessible_now": 0,
-    "comparison_is_not_solver_error_certification": true
+  "cases": {
+    "stationary": {
+      "original": "17260150",
+      "admission": "17378930",
+      "formal": "17378931"
+    },
+    "spinning": {
+      "original": "17260147",
+      "admission": "17378932",
+      "formal": "17378933"
+    }
   },
-  "original_running_jobs_unchanged": true,
-  "GPU_restart_acceptance": "PENDING actual GPU allocation; frozen binary/input checks plus zero-step state comparison and8-step restart required",
-  "archive": {
-    "owner_directory": "/home/adamdarx/pangu-setup/archive-single-continuation-20261117",
-    "scope": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation",
-    "original_single_owner_unchanged": true
-  }
+  "target": 500,
+  "reason": "Both four-GPU restart trajectories succeeded exactly, but measured reserve7575MiB failed8192MiB policy. Preserve threshold; test eight GPUs across two nodes. Original jobs unchanged.",
+  "original_running_jobs_unchanged": true
 }

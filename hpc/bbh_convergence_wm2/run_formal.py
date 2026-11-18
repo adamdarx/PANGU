@@ -21,6 +21,7 @@ try:
    measured=next(c for c in gate['cases'] if c['n']==n);assert measured['rough300M_mean_step_hours']<110,'Measured throughput exceeds five-day budget'
   work=R/'runs'/('n%d'%n)/job;work.mkdir(parents=True,exist_ok=False)
   cmd=['mpirun','-np','4','--map-by','ppr:4:node','--bind-to','none','bash',str(R/'rank.sh'),str(exe),'-i',str(deck)]
+  cmd+=['parthenon/output2/hdf5_compression_level=0','parthenon/output3/hdf5_compression_level=0']
   if mode=='io':cmd+=['parthenon/time/nlim=4','parthenon/time/ncycle_out=1']
   (work/'command.json').write_text(json.dumps(cmd));start=time.monotonic();last=start;seen=False
   with (work/'run.log').open('w') as log:
@@ -29,7 +30,7 @@ try:
     while p.poll() is None:
      apps=subprocess.check_output(['nvidia-smi','--query-compute-apps=process_name','--format=csv,noheader']).decode();seen=seen or exe.name in apps
      if time.monotonic()-last>60:assert free()>150,'Protect production quota';last=time.monotonic()
-     if mode=='io' and time.monotonic()-start>800:raise TimeoutError('Full IO probe limit')
+     if mode=='io' and time.monotonic()-start>1800:raise TimeoutError('Full IO probe limit')
      time.sleep(2)
    except BaseException:
     os.killpg(p.pid,signal.SIGTERM)

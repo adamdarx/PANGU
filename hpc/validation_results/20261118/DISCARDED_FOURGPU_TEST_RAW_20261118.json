@@ -1,0 +1,58 @@
+[
+  {
+    "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/stationary/17376915/restart_same_cycle/output/nr_boosted_puncture.restart.final.rhdf",
+    "bytes": 6332328180,
+    "sha256": "eccc7776436f2d6840e3b2b019ede32a7dee93391630f31eb12136dda1099919",
+    "reason": "Discard disposable GPU restart test raw; immutable checkpoint, exact-state comparison, logs, failed memory-policy receipt and successful8step trajectory record retained",
+    "removed": true
+  },
+  {
+    "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/stationary/17376915/restart_same_cycle/output/nr_boosted_puncture.stationary.final.phdf",
+    "bytes": 17056903924,
+    "sha256": "4304f73780952591f23accff680c175853f0b8f95603ced32e6a127efc9e8c6b",
+    "reason": "Discard disposable GPU restart test raw; immutable checkpoint, exact-state comparison, logs, failed memory-policy receipt and successful8step trajectory record retained",
+    "removed": true
+  },
+  {
+    "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/stationary/17376915/restart_step8/output/nr_boosted_puncture.restart.final.rhdf",
+    "bytes": 6332328180,
+    "sha256": "5ad42808fb89613457825b6bd29ca94007a85bf3deaf60a0b1670832bfcdad75",
+    "reason": "Discard disposable GPU restart test raw; immutable checkpoint, exact-state comparison, logs, failed memory-policy receipt and successful8step trajectory record retained",
+    "removed": true
+  },
+  {
+    "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/stationary/17376915/restart_step8/output/nr_boosted_puncture.stationary.final.phdf",
+    "bytes": 17056903924,
+    "sha256": "b86642d465197d0acafa25d35d6aefa927c7150411d32b09a70ff00700620203",
+    "reason": "Discard disposable GPU restart test raw; immutable checkpoint, exact-state comparison, logs, failed memory-policy receipt and successful8step trajectory record retained",
+    "removed": true
+  },
+  {
+    "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/spinning/17376917/restart_same_cycle/output/nr_puncture.restart.final.rhdf",
+    "bytes": 6332329572,
+    "sha256": "02a58b132556e0c836e05457baf6f7bd7be3a178ae9e5aef8e17f00c2c32394b",
+    "reason": "Discard disposable GPU restart test raw; immutable checkpoint, exact-state comparison, logs, failed memory-policy receipt and successful8step trajectory record retained",
+    "removed": true
+  },
+  {
+    "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/spinning/17376917/restart_same_cycle/output/nr_puncture.spinning.final.phdf",
+    "bytes": 17056905316,
+    "sha256": "357c2dd323bea0862ce956061352468c7297c8470b9dd6a92f4426a7098a4a62",
+    "reason": "Discard disposable GPU restart test raw; immutable checkpoint, exact-state comparison, logs, failed memory-policy receipt and successful8step trajectory record retained",
+    "removed": true
+  },
+  {
+    "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/spinning/17376917/restart_step8/output/nr_puncture.restart.final.rhdf",
+    "bytes": 6332329572,
+    "sha256": "35ac213759c6c629f7d8780536637179273ceaf449f94b126a9237773be7730f",
+    "reason": "Discard disposable GPU restart test raw; immutable checkpoint, exact-state comparison, logs, failed memory-policy receipt and successful8step trajectory record retained",
+    "removed": true
+  },
+  {
+    "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/spinning/17376917/restart_step8/output/nr_puncture.spinning.final.phdf",
+    "bytes": 17056905316,
+    "sha256": "1f4639f9280dbaecc53da8ee36f4201481e5151c76c9d4d45dff171c741fec86",
+    "reason": "Discard disposable GPU restart test raw; immutable checkpoint, exact-state comparison, logs, failed memory-policy receipt and successful8step trajectory record retained",
+    "removed": true
+  }
+]
