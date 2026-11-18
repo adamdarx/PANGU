@@ -1,11 +1,11 @@
 {
   "admission": {
     "64": "17374252",
-    "96": "17378963"
+    "96": "17378938"
   },
   "formal": {
     "64": "17374273",
-    "96": "17378964"
+    "96": "17379021"
   },
   "superseded": {
     "admission": {
@@ -35,7 +35,7 @@
     "retry_reason": "Duplicate IO::out_dir removed; generator rejects duplicate scalar parameters; N96 GPU gate waits on N64 gate; strict checks retained"
   },
   "reviewed_N64_graph": true,
-  "status": "N64_unchanged_N96_eight_GPU_speed_retry_queued",
+  "status": "N64_unchanged_N96_fourGPU_reviewed_formal_queued",
   "physical_acceptance": false,
   "updated_utc": "2026-11-17T13:22:32.129925Z",
   "N64_admission_note": "Solver completed32CUDAsteps with exit0; Slurm wrapper FAILED only at exact-zero magnetic diagnostic assertion. Full recheck recorded in N64_ROUNDOFF_REVIEW.json; no repeat evolution and no fake afterok dependency on failed wrapper. Formal runner requires reviewed admission proof/input hashes.",
@@ -48,5 +48,9 @@
     "admission": "17378938",
     "formal": "17378939",
     "measured200M_hours": 119.17873529240578
+  },
+  "N96_eight_GPU_superseded": {
+    "admission": "17378963",
+    "formal": "17378964"
   }
 }

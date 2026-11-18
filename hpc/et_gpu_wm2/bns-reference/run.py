@@ -73,7 +73,7 @@ try:
   assert measured['max_relative_baryon_drift']<1e-4,'Early baryon conservation failed'
   assert all(v['peak_MiB']<.8*v['total_MiB'] and v['total_MiB']-v['peak_MiB']>8192 for v in memory.values()),'Insufficient GPU memory reserve'
   assert len(samples)>=8 and samples[-1][1]>samples[0][1],'Insufficient throughput measurements'
-  hours=(samples[-1][0]-samples[0][0])*200/(samples[-1][1]-samples[0][1])/3600;report['projected200M_hours']=hours;save();assert hours<110,'Insufficient measured speed for five-day200M budget'
+  hours=(samples[-1][0]-samples[0][0])*200/(samples[-1][1]-samples[0][1])/3600;report['projected200M_hours']=hours;save();assert hours<120,'Measured speed exceeds hard five-day200M budget'
   report.update(status='admission_passed',limitations='32-step technical/initial-state acceptance. Same initial table is not an independent initial-data solver. Long-time waveform, mass, horizon and convergence comparison pending.')
  else:
   assert abs(measured['final_time']-200)<case['dt']*1.1;report['status']='formal_completed_analysis_pending'

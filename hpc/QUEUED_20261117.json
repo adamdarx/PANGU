@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-11-18T00:20:30.726237+00:00",
+  "updated_utc": "2026-11-18T01:08:54.164370+00:00",
   "cohorts": {
     "single-coarse-20261117": {
       "target_M": 500,
@@ -224,42 +224,23 @@
       "updated_utc": "2026-11-17T12:25:52.543277Z"
     },
     "single-checkpoint-continuation-20261117": {
-      "updated_utc": "2026-11-18T00:17:10.221602+00:00",
-      "status": "eight_GPU_two_node_restart_repartition_gate_pending",
-      "initial_four_GPU_submission": {
-        "authorized_utc": "2026-11-17T14:53:35.138952Z",
-        "user_instruction": "继续续跑，athenak已有数据要用上",
-        "target": 500,
-        "original_running_jobs_unchanged": true,
-        "cases": {
-          "stationary": {
-            "original": "17260150",
-            "admission": "17376915",
-            "formal": "17376916",
-            "dependency": "afterany:17260150,afterok:17376915"
-          },
-          "spinning": {
-            "original": "17260147",
-            "admission": "17376917",
-            "formal": "17376918",
-            "dependency": "afterany:17260147,afterok:17376917"
-          }
-        }
-      },
+      "updated_utc": "2026-11-18T01:06:38.927746+00:00",
+      "status": "reviewed_fourGPU_continuations_queued",
       "cases": {
         "stationary": {
           "original": "17260150",
-          "admission": "17378930",
-          "formal": "17378931"
+          "formal": "17379019",
+          "reviewed_GPU_admission": "17376915"
         },
         "spinning": {
           "original": "17260147",
-          "admission": "17378932",
-          "formal": "17378933"
+          "formal": "17379020",
+          "reviewed_GPU_admission": "17376917"
         }
       },
       "target": 500,
-      "reason": "Both four-GPU restart trajectories succeeded exactly, but measured reserve7575MiB failed8192MiB policy. Preserve threshold; test eight GPUs across two nodes. Original jobs unchanged.",
+      "user_instruction": "不需要过分严格",
+      "physical_GPU_restart": "Actual exact same-cycle comparison and8step GPU evolution passed; failed wrapper states retained; only conservative resource margin reviewed",
       "original_running_jobs_unchanged": true
     }
   },
@@ -272,17 +253,17 @@
     "physical_comparison": "pending"
   },
   "followup_20261118": {
-    "updated_utc": "2026-11-18T00:20:30.726237+00:00",
+    "updated_utc": "2026-11-18T01:06:38.927746+00:00",
     "single": {
       "stationary": {
         "original": "17260150",
-        "admission": "17378930",
-        "formal": "17378931"
+        "formal": "17379019",
+        "reviewed_GPU_admission": "17376915"
       },
       "spinning": {
         "original": "17260147",
-        "admission": "17378932",
-        "formal": "17378933"
+        "formal": "17379020",
+        "reviewed_GPU_admission": "17376917"
       }
     },
     "single_previous": "Exact restart state and8 GPU steps passed; fourGPU reserve7575MiB below8192MiB policy; retry8GPUs/two nodes, per-rank memory monitoring",
@@ -296,9 +277,8 @@
     },
     "bbh_previous": "N48 MPI I/O write failure and timeout; N32/N48 full-output retry now passed, N64 in progress at last check",
     "ET_BNS96": {
-      "reason": "FourGPU trajectory finite and initial/conservation checks passed, but projected119.18h exceeds110h admission budget; unchanged solver/table/physics, test8GPUs/two nodes",
-      "admission": "17378963",
-      "formal": "17378964"
+      "formal": "17379021",
+      "reviewed_GPU_admission": "17378938"
     },
     "ET_BNS96_previous": "Both2GPU and4GPU32step physical/finite/memory checks passed; projected200M149.32h and119.18h exceed110h admission budget. EightGPU/two-node speed gate queued, requirement unchanged.",
     "ET_TOV": {
@@ -341,6 +321,15 @@
       "files": 8,
       "bytes": 93556933984,
       "policy": "Reviewed disposable fourGPU restart-test raw; source SHA256 recorded before direct discard; original scientific checkpoints/receipts/logs retained"
+    },
+    "user_policy": "Practical acceptance; no repeated GPU short tests solely for arbitrary resource margins",
+    "ET_TOV_gates": "N64 andN96 completed2M realGPU validation;100M formals eligible",
+    "TOV_existing_data_comparison": {
+      "summary": "/home/adamdarx/pangu-setup/tov-long-comparison-20261118/SUMMARY.json",
+      "density_pre_AH_max_relative_difference": 0.009177342075947115,
+      "first_AH_report_inside_PANGU_cadence_bracket": true,
+      "endpoint_baryon_difference_localized_inside_reported_horizons": true,
+      "read_only_analysis": true
     }
   }
 }

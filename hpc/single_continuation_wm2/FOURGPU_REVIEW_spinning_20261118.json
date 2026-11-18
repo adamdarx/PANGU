@@ -1,0 +1,152 @@
+{
+  "status": "admission_passed",
+  "kind": "spinning",
+  "job_id": "17376917",
+  "original_job": "17260147",
+  "binary_sha256": "0215d235a2ff3daca0d433b97da08a04f3db4953f8d425683e59259972a32500",
+  "input_sha256": "c3c2066cc9ff54cd0c910990e416fa773cb27c7f775d947ae06c61ca21bcf4c1",
+  "target": 500,
+  "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/spinning/17376917",
+  "physical_acceptance": false,
+  "started_utc": "2026-11-17T21:28:46.252541Z",
+  "checkpoint": {
+    "group": "single",
+    "kind": "checkpoint",
+    "absolute_source": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/pinned/spinning/nr_puncture.restart.00008.rhdf",
+    "original_source": "/lustre/home/2601110206/CODEX_WORKPLACE/SinglePuncture/20261030-spin-accuracy-rerun/runs/d200_spinning_n192/17260147/attempt-0/pangu/output/nr_puncture.restart.00008.rhdf",
+    "bytes": 5529110768,
+    "mtime_ns": 1794916589000000000,
+    "time": 200.00162760389657,
+    "cycle": 122881,
+    "original_job": "17260147"
+  },
+  "checkpoint_validation": {
+    "status": "snapshot_checks_passed",
+    "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/pinned/spinning/nr_puncture.restart.00008.rhdf",
+    "time": 200.00162760389657,
+    "datasets": {
+      "Blocks/xmin": {
+        "shape": [
+          8392,
+          3
+        ],
+        "dtype": "float64",
+        "finite_physical_values": 25176
+      },
+      "Locations/x": {
+        "shape": [
+          8392,
+          17
+        ],
+        "dtype": "float64",
+        "finite_physical_values": 142664
+      },
+      "Locations/y": {
+        "shape": [
+          8392,
+          17
+        ],
+        "dtype": "float64",
+        "finite_physical_values": 142664
+      },
+      "Locations/z": {
+        "shape": [
+          8392,
+          17
+        ],
+        "dtype": "float64",
+        "finite_physical_values": 142664
+      },
+      "VolumeLocations/x": {
+        "shape": [
+          8392,
+          16
+        ],
+        "dtype": "float64",
+        "finite_physical_values": 134272
+      },
+      "VolumeLocations/y": {
+        "shape": [
+          8392,
+          16
+        ],
+        "dtype": "float64",
+        "finite_physical_values": 134272
+      },
+      "VolumeLocations/z": {
+        "shape": [
+          8392,
+          16
+        ],
+        "dtype": "float64",
+        "finite_physical_values": 134272
+      },
+      "nr.constraint_mask": {
+        "shape": [
+          8392,
+          1,
+          16,
+          16,
+          16
+        ],
+        "dtype": "float64",
+        "finite_physical_values": 34373632
+      },
+      "nr.z4c": {
+        "shape": [
+          8392,
+          22,
+          16,
+          16,
+          16
+        ],
+        "dtype": "float64",
+        "finite_physical_values": 756219904
+      }
+    },
+    "scope": "Closed snapshot structure, physical-cell finiteness, geometry and cadence; not completed-run physical acceptance",
+    "declared_chi_psi_power": -4.0,
+    "checked_metric_representation": "conformal_metric_with_positive_chi",
+    "minimum_chi": 2.752031243764997e-05,
+    "minimum_spatial_determinant": 0.999999999999999,
+    "constraint_mask_cells": 0,
+    "hamiltonian_L2": null,
+    "momentum_L2": null,
+    "minimum_primitive_density": null,
+    "source_sha256": "d58ae695a26e07fd6a5e1241f03265648eabe0b2a46c175f18e806ad26feae88",
+    "bytes": 5529110768,
+    "mtime_ns": 1794916589000000000,
+    "checked_utc": "2026-11-17T21:30:31Z",
+    "ghost_cells_excluded": false
+  },
+  "restart_same_cycle": {
+    "final": {
+      "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/spinning/17376917/restart_same_cycle/output/nr_puncture.spinning.final.phdf",
+      "time": 200.00162760389657,
+      "cycle": 122881,
+      "blocks": 8392
+    },
+    "wall_seconds": 64.86792540200986,
+    "actual_GPU_observed": true,
+    "peak_MiB": 56927.0,
+    "minimum_reserve_MiB": 24993.0
+  },
+  "restart_state_scaled_max_difference": 0.0,
+  "restart_step8": {
+    "final": {
+      "path": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-single-continuation/runs/spinning/17376917/restart_step8/output/nr_puncture.spinning.final.phdf",
+      "time": 200.01464843722982,
+      "cycle": 122889,
+      "blocks": 8392
+    },
+    "wall_seconds": 76.28587216697633,
+    "actual_GPU_observed": true,
+    "peak_MiB": 74345.0,
+    "minimum_reserve_MiB": 7575.0
+  },
+  "original_wrapper_status": "admission_failed",
+  "original_slurm_state": "FAILED",
+  "reviewed_utc": "2026-11-18T01:03:39.003960Z",
+  "review": "User explicitly instructed not to overconstrain validation. Frozen-binary checkpoint integrity, exact0 same-cycle state difference and8 finite GPU steps succeeded. Measured7575MiB reserve is adequate for original fourGPU configuration; replace arbitrary8GiB margin with4GiB. Preserve original failed wrapper and receipt; do not repeat GPU trajectory.",
+  "original_error": "AssertionError()"
+}

@@ -1,0 +1,30 @@
+{
+  "status": "validation_passed_formal_ready",
+  "job_id": "17378943",
+  "n": 96,
+  "mode": "validation",
+  "binary_sha256": "64f3b5e9b7edd80efc00f3f8a971f976bbb7927be489bb5e3c8332cef41898a2",
+  "started_utc": "2026-11-18T00:14:58.336181Z",
+  "physical_acceptance": false,
+  "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/native-tov-reference/runs/n96/17378943",
+  "profile": "stability",
+  "input_sha256": "fa58204e205b95b7ae01926396db9fffadedb3ee13be6df855744b15e28d26fb",
+  "returncode": 0,
+  "actual_GPU_process_observed": true,
+  "GPU_memory": {
+    "0": {
+      "peak_MiB": 19851.0,
+      "total_MiB": 81920.0
+    }
+  },
+  "measurements": {
+    "initial_baryon_mass": 1.5331414440649818,
+    "initial_rho_max": 0.007991241831480474,
+    "initial_magnetic_energy": 1.0667823791892298e-05,
+    "max_relative_baryon_drift": 4.69054766627508e-06,
+    "initial_H_L2": 0.001717016466155113,
+    "final_time": 2.0000000000000466,
+    "initial_magnetic_energy_relative_to_continuum_target": 0.002593141743148175
+  },
+  "finished_utc": "2026-11-18T00:54:38.135499Z"
+}

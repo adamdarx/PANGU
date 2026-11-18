@@ -1,0 +1,506 @@
+[
+  {
+    "nominal_time": 0,
+    "PANGU": {
+      "rho_max": 0.007989043777442174,
+      "baryon_mass_field": 1.5350304597211202,
+      "shell_baryon_inventory": 0.19664193502265423,
+      "H_shell_proper_RMS": 0.0014454792463781344,
+      "H_shell_Linf": 0.08701148096477378,
+      "shell_proper_volume": 140201.78785219352,
+      "shell_cells": 746128,
+      "time": 0.0
+    },
+    "AthenaK": {
+      "rho_max": 0.00798904336988926,
+      "baryon_mass_field": 1.53503045960832,
+      "shell_baryon_inventory": 0.19664193514952455,
+      "H_shell_proper_RMS": 0.0015679518606764916,
+      "H_shell_Linf": 0.08709900081157684,
+      "shell_proper_volume": 140201.78760144667,
+      "shell_cells": 746128,
+      "time": 0.0
+    },
+    "pre_first_reported_AH": true
+  },
+  {
+    "nominal_time": 5,
+    "PANGU": {
+      "rho_max": 0.008205790312670479,
+      "baryon_mass_field": 1.5350304597211313,
+      "shell_baryon_inventory": 0.18699646801331857,
+      "H_shell_proper_RMS": 0.0007476803548377145,
+      "H_shell_Linf": 0.10208815240859816,
+      "shell_proper_volume": 140201.10689465993,
+      "shell_cells": 746128,
+      "time": 5.00312499999985
+    },
+    "AthenaK": {
+      "rho_max": 0.008204908110201359,
+      "baryon_mass_field": 1.5350304595651476,
+      "shell_baryon_inventory": 0.18703367793727504,
+      "H_shell_proper_RMS": 0.00015072093761293656,
+      "H_shell_Linf": 0.006817083340138197,
+      "shell_proper_volume": 140201.1143246046,
+      "shell_cells": 746128,
+      "time": 4.99999999999985
+    },
+    "pre_first_reported_AH": true
+  },
+  {
+    "nominal_time": 10,
+    "PANGU": {
+      "rho_max": 0.008471574372173963,
+      "baryon_mass_field": 1.535030459721198,
+      "shell_baryon_inventory": 0.17575358203718275,
+      "H_shell_proper_RMS": 0.0006399220834063863,
+      "H_shell_Linf": 0.05034975433291757,
+      "shell_proper_volume": 140198.94656308426,
+      "shell_cells": 746128,
+      "time": 10.000000000000133
+    },
+    "AthenaK": {
+      "rho_max": 0.008464343845844269,
+      "baryon_mass_field": 1.5350304599382656,
+      "shell_baryon_inventory": 0.1760051011568106,
+      "H_shell_proper_RMS": 8.749303679097497e-05,
+      "H_shell_Linf": 0.004159147385507822,
+      "shell_proper_volume": 140198.79173640476,
+      "shell_cells": 746128,
+      "time": 10.000000000000133
+    },
+    "pre_first_reported_AH": true
+  },
+  {
+    "nominal_time": 15,
+    "PANGU": {
+      "rho_max": 0.008892608223127542,
+      "baryon_mass_field": 1.5350304597213154,
+      "shell_baryon_inventory": 0.16026718820668773,
+      "H_shell_proper_RMS": 0.0005281512037469911,
+      "H_shell_Linf": 0.02717002068280947,
+      "shell_proper_volume": 140196.67616900575,
+      "shell_cells": 746128,
+      "time": 15.00000000000127
+    },
+    "AthenaK": {
+      "rho_max": 0.008872263133525848,
+      "baryon_mass_field": 1.5350304595211324,
+      "shell_baryon_inventory": 0.16100704694307363,
+      "H_shell_proper_RMS": 8.062156110109363e-05,
+      "H_shell_Linf": 0.0018602721393108368,
+      "shell_proper_volume": 140195.57832467035,
+      "shell_cells": 746128,
+      "time": 15.00000000000127
+    },
+    "pre_first_reported_AH": true
+  },
+  {
+    "nominal_time": 20,
+    "PANGU": {
+      "rho_max": 0.00952847224155769,
+      "baryon_mass_field": 1.5350304597214812,
+      "shell_baryon_inventory": 0.13859488658012925,
+      "H_shell_proper_RMS": 0.0004025685993415462,
+      "H_shell_Linf": 0.03172241856703627,
+      "shell_proper_volume": 140197.9132024038,
+      "shell_cells": 746128,
+      "time": 20.000000000002405
+    },
+    "AthenaK": {
+      "rho_max": 0.009501185268163681,
+      "baryon_mass_field": 1.5350304594283855,
+      "shell_baryon_inventory": 0.13980746031477911,
+      "H_shell_proper_RMS": 8.212617264648232e-05,
+      "H_shell_Linf": 0.0015731417806819081,
+      "shell_proper_volume": 140194.90230227608,
+      "shell_cells": 746128,
+      "time": 20.000000000002405
+    },
+    "pre_first_reported_AH": true
+  },
+  {
+    "nominal_time": 25,
+    "PANGU": {
+      "rho_max": 0.010714145999564792,
+      "baryon_mass_field": 1.5350304597216924,
+      "shell_baryon_inventory": 0.10921781760238351,
+      "H_shell_proper_RMS": 0.0003153453423485952,
+      "H_shell_Linf": 0.017727152515352094,
+      "shell_proper_volume": 140203.43491606024,
+      "shell_cells": 746128,
+      "time": 25.000000000003542
+    },
+    "AthenaK": {
+      "rho_max": 0.010655907914042473,
+      "baryon_mass_field": 1.535030459441277,
+      "shell_baryon_inventory": 0.1106325745047178,
+      "H_shell_proper_RMS": 9.862376027645684e-05,
+      "H_shell_Linf": 0.0012322660768404603,
+      "shell_proper_volume": 140198.35742255568,
+      "shell_cells": 746128,
+      "time": 25.000000000003542
+    },
+    "pre_first_reported_AH": true
+  },
+  {
+    "nominal_time": 30,
+    "PANGU": {
+      "rho_max": 0.012591112390373823,
+      "baryon_mass_field": 1.535030459721951,
+      "shell_baryon_inventory": 0.06997319326902526,
+      "H_shell_proper_RMS": 0.0002371870169797466,
+      "H_shell_Linf": 0.011780142178305156,
+      "shell_proper_volume": 140207.2896756974,
+      "shell_cells": 746128,
+      "time": 30.00000000000468
+    },
+    "AthenaK": {
+      "rho_max": 0.012491538189351559,
+      "baryon_mass_field": 1.5350304599132238,
+      "shell_baryon_inventory": 0.07141967782492238,
+      "H_shell_proper_RMS": 9.535980391845841e-05,
+      "H_shell_Linf": 0.000716487760655582,
+      "shell_proper_volume": 140200.91855896325,
+      "shell_cells": 746128,
+      "time": 30.00000000000468
+    },
+    "pre_first_reported_AH": true
+  },
+  {
+    "nominal_time": 35,
+    "PANGU": {
+      "rho_max": 0.01540781190429305,
+      "baryon_mass_field": 1.535030459722266,
+      "shell_baryon_inventory": 0.026180482860679664,
+      "H_shell_proper_RMS": 0.00019110665218502305,
+      "H_shell_Linf": 0.005337891248351973,
+      "shell_proper_volume": 140206.63085891577,
+      "shell_cells": 746128,
+      "time": 35.0000000000024
+    },
+    "AthenaK": {
+      "rho_max": 0.015266409143805504,
+      "baryon_mass_field": 1.5350304595898283,
+      "shell_baryon_inventory": 0.027360111915075785,
+      "H_shell_proper_RMS": 9.901798267046371e-05,
+      "H_shell_Linf": 0.0006783548160456121,
+      "shell_proper_volume": 140201.56133465478,
+      "shell_cells": 746128,
+      "time": 35.0000000000024
+    },
+    "pre_first_reported_AH": true
+  },
+  {
+    "nominal_time": 40,
+    "PANGU": {
+      "rho_max": 0.01845603139957095,
+      "baryon_mass_field": 1.5350304597226183,
+      "shell_baryon_inventory": 0.002030890332386628,
+      "H_shell_proper_RMS": 0.00018123734308364003,
+      "H_shell_Linf": 0.005573658471962228,
+      "shell_proper_volume": 140198.8339882657,
+      "shell_cells": 746128,
+      "time": 40.00312499999785
+    },
+    "AthenaK": {
+      "rho_max": 0.018346339464187622,
+      "baryon_mass_field": 1.5350304589422032,
+      "shell_baryon_inventory": 0.002267177816681662,
+      "H_shell_proper_RMS": 9.841160532213502e-05,
+      "H_shell_Linf": 0.0011451512109488249,
+      "shell_proper_volume": 140201.76242964293,
+      "shell_cells": 746128,
+      "time": 39.999999999997854
+    },
+    "pre_first_reported_AH": true
+  },
+  {
+    "nominal_time": 45,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350304597230169,
+      "shell_baryon_inventory": 3.6245794861539364e-05,
+      "H_shell_proper_RMS": 0.00021716657776997824,
+      "H_shell_Linf": 0.011286436909608257,
+      "shell_proper_volume": 140180.07243951946,
+      "shell_cells": 746128,
+      "time": 45.003124999993304
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350304631027978,
+      "shell_baryon_inventory": 3.8810080570750913e-05,
+      "H_shell_proper_RMS": 9.188311675003893e-05,
+      "H_shell_Linf": 0.0010406222427263856,
+      "shell_proper_volume": 140206.44773635958,
+      "shell_cells": 746128,
+      "time": 44.99999999999331
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 50,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.535030459723462,
+      "shell_baryon_inventory": 3.076249742698593e-06,
+      "H_shell_proper_RMS": 0.00020309777763425214,
+      "H_shell_Linf": 0.0055223523475328475,
+      "shell_proper_volume": 140121.36062134986,
+      "shell_cells": 746128,
+      "time": 50.003124999988756
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.535030475504445,
+      "shell_baryon_inventory": 3.2215776768372185e-06,
+      "H_shell_proper_RMS": 7.763769180543517e-05,
+      "H_shell_Linf": 0.0005339241470210254,
+      "shell_proper_volume": 140172.51603455553,
+      "shell_cells": 746128,
+      "time": 49.99999999998876
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 55,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350304597239575,
+      "shell_baryon_inventory": 3.303906138250064e-07,
+      "H_shell_proper_RMS": 0.00018145866310583956,
+      "H_shell_Linf": 0.002549697731362733,
+      "shell_proper_volume": 139985.6393341614,
+      "shell_cells": 746128,
+      "time": 55.00312499998421
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350304491273763,
+      "shell_baryon_inventory": 3.3983903668721165e-07,
+      "H_shell_proper_RMS": 6.582980774717096e-05,
+      "H_shell_Linf": 0.0003889961517415941,
+      "shell_proper_volume": 140033.10896626153,
+      "shell_cells": 746128,
+      "time": 54.99999999998421
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 60,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350304597244941,
+      "shell_baryon_inventory": 8.488964954145396e-08,
+      "H_shell_proper_RMS": 0.00016346729410647375,
+      "H_shell_Linf": 0.0017444109443468863,
+      "shell_proper_volume": 139744.82932619195,
+      "shell_cells": 746128,
+      "time": 60.00312499997966
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350304580265721,
+      "shell_baryon_inventory": 8.67137149780273e-08,
+      "H_shell_proper_RMS": 4.246186168441941e-05,
+      "H_shell_Linf": 0.0002036966325249523,
+      "shell_proper_volume": 139769.72981995414,
+      "shell_cells": 746128,
+      "time": 59.999999999979664
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 65,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5354385275360336,
+      "shell_baryon_inventory": 3.649146216771958e-08,
+      "H_shell_proper_RMS": 0.00015665371841067107,
+      "H_shell_Linf": 0.0017106999502793882,
+      "shell_proper_volume": 139366.95016613137,
+      "shell_cells": 746128,
+      "time": 65.00312499997511
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350304494619356,
+      "shell_baryon_inventory": 3.70024796513767e-08,
+      "H_shell_proper_RMS": 3.6459024739905245e-05,
+      "H_shell_Linf": 0.000137019669637084,
+      "shell_proper_volume": 139383.39180199016,
+      "shell_cells": 746128,
+      "time": 64.99999999997512
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 70,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.535969435976936,
+      "shell_baryon_inventory": 2.0251098050713747e-08,
+      "H_shell_proper_RMS": 0.00015158940957128857,
+      "H_shell_Linf": 0.001558004333313046,
+      "shell_proper_volume": 138869.31073916747,
+      "shell_cells": 746128,
+      "time": 70.00312499997057
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350308643547994,
+      "shell_baryon_inventory": 2.0425606943326658e-08,
+      "H_shell_proper_RMS": 2.153249615941257e-05,
+      "H_shell_Linf": 0.00011866777640534565,
+      "shell_proper_volume": 138895.38617675856,
+      "shell_cells": 746128,
+      "time": 69.99999999997057
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 75,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.536515725563041,
+      "shell_baryon_inventory": 1.2929853679117574e-08,
+      "H_shell_proper_RMS": 0.00015110123159747135,
+      "H_shell_Linf": 0.001342657803789186,
+      "shell_proper_volume": 138383.80546510938,
+      "shell_cells": 746128,
+      "time": 75.00312499996602
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350308731840892,
+      "shell_baryon_inventory": 1.2997541102655587e-08,
+      "H_shell_proper_RMS": 1.776278729212533e-05,
+      "H_shell_Linf": 8.46792827360332e-05,
+      "shell_proper_volume": 138421.54093539822,
+      "shell_cells": 746128,
+      "time": 74.99999999996602
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 80,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5370624695505877,
+      "shell_baryon_inventory": 9.100760607726171e-09,
+      "H_shell_proper_RMS": 0.00013993302597560005,
+      "H_shell_Linf": 0.0012935230396488055,
+      "shell_proper_volume": 138033.89432206785,
+      "shell_cells": 746128,
+      "time": 80.00312499996147
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350308983245409,
+      "shell_baryon_inventory": 9.119724820942666e-09,
+      "H_shell_proper_RMS": 1.2497960823633083e-05,
+      "H_shell_Linf": 9.753178164828569e-05,
+      "shell_proper_volume": 138082.91792238384,
+      "shell_cells": 746128,
+      "time": 79.99999999996147
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 85,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.537605966165699,
+      "shell_baryon_inventory": 6.8614542653841005e-09,
+      "H_shell_proper_RMS": 0.00011520311397137832,
+      "H_shell_Linf": 0.001432660809883999,
+      "shell_proper_volume": 137810.66817954564,
+      "shell_cells": 746128,
+      "time": 85.00312499995692
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350311072678402,
+      "shell_baryon_inventory": 6.853716480803603e-09,
+      "H_shell_proper_RMS": 7.964852345718934e-06,
+      "H_shell_Linf": 0.00010076667967950925,
+      "shell_proper_volume": 137865.55130866784,
+      "shell_cells": 746128,
+      "time": 84.99999999995693
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 90,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5381485564695827,
+      "shell_baryon_inventory": 5.420003981597244e-09,
+      "H_shell_proper_RMS": 0.00010992608928587376,
+      "H_shell_Linf": 0.0013968812133018924,
+      "shell_proper_volume": 137618.03352931814,
+      "shell_cells": 746128,
+      "time": 90.00312499995238
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350327110754047,
+      "shell_baryon_inventory": 5.397673183430983e-09,
+      "H_shell_proper_RMS": 6.914246607863031e-06,
+      "H_shell_Linf": 0.00010080693755298853,
+      "shell_proper_volume": 137674.56538514706,
+      "shell_cells": 746128,
+      "time": 89.99999999995238
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 95,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5386923502661078,
+      "shell_baryon_inventory": 4.425393955440685e-09,
+      "H_shell_proper_RMS": 0.00010915604195880765,
+      "H_shell_Linf": 0.0011447149035887657,
+      "shell_proper_volume": 137400.73963968718,
+      "shell_cells": 746128,
+      "time": 95.00312499994783
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350343049237352,
+      "shell_baryon_inventory": 4.39405766555069e-09,
+      "H_shell_proper_RMS": 6.4417218590745375e-06,
+      "H_shell_Linf": 6.820213457103819e-05,
+      "shell_proper_volume": 137455.65766096447,
+      "shell_cells": 746128,
+      "time": 94.99999999994783
+    },
+    "pre_first_reported_AH": false
+  },
+  {
+    "nominal_time": 100,
+    "PANGU": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5392373880850572,
+      "shell_baryon_inventory": 3.7094158663919554e-09,
+      "H_shell_proper_RMS": 0.0001082275571583438,
+      "H_shell_Linf": 0.0029002842383794103,
+      "shell_proper_volume": 137162.53241648705,
+      "shell_cells": 746128,
+      "time": 100.0
+    },
+    "AthenaK": {
+      "rho_max": null,
+      "baryon_mass_field": 1.5350359486598053,
+      "shell_baryon_inventory": 3.671282116966721e-09,
+      "H_shell_proper_RMS": 6.059026592136088e-06,
+      "H_shell_Linf": 5.458727173390798e-05,
+      "shell_proper_volume": 137213.0636412691,
+      "shell_cells": 746128,
+      "time": 100.0
+    },
+    "pre_first_reported_AH": false
+  }
+]

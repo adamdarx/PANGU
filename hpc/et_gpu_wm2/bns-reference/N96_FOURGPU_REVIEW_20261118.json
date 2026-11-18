@@ -1,0 +1,54 @@
+{
+  "status": "admission_passed",
+  "job_id": "17378938",
+  "n": 96,
+  "mode": "admission",
+  "work": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-einstein-toolkit-gpu/bns-reference/runs/n96/17378938",
+  "target": 200,
+  "binary_sha256": "1da148496f80c476de133cac94e7a5f609e1f8883efaf6cd0b397371b2c47f2a",
+  "input_sha256": "f49b070a3eaf5eafe7c7bca58c8f5420c632d65fb7a1e6b08c16d57ecbcc1ded",
+  "table_sha256": "fad451f7c365d9642e735aea9223f0c6829313cea232ce7ea0fe28a5f01165b5",
+  "physical_acceptance": false,
+  "free_GiB": 585.29052734375,
+  "returncode": 0,
+  "wall_seconds": 190.28058928705286,
+  "actual_GPU_process_observed": true,
+  "GPU_memory": {
+    "0": {
+      "peak_MiB": 11121.0,
+      "total_MiB": 81920.0
+    },
+    "1": {
+      "peak_MiB": 11067.0,
+      "total_MiB": 81920.0
+    },
+    "2": {
+      "peak_MiB": 11211.0,
+      "total_MiB": 81920.0
+    },
+    "3": {
+      "peak_MiB": 11075.0,
+      "total_MiB": 81920.0
+    }
+  },
+  "measurements": {
+    "initial_baryon_mass": 2.925619851787524,
+    "initial_rho_max": 0.0011463481241746028,
+    "initial_magnetic_energy": 3.298194496123049e-36,
+    "initial_velocity_maxabs": 0.0,
+    "relative_baryon_difference_to_PANGU": -0.0005137938024724065,
+    "max_relative_baryon_drift": 1.505796665135506e-07,
+    "initial_H_L2": 8.54438739021744e-06,
+    "final_time": 0.06666666666666667,
+    "final_cycle": 32,
+    "initial_B_maxabs": 8.185426804257766e-19,
+    "magnetic_roundoff_B_tolerance": 4.811477528237092e-16,
+    "magnetic_roundoff_energy_tolerance": 9.231628498454674e-30
+  },
+  "projected200M_hours": 119.17873529240578,
+  "original_wrapper_status": "admission_failed",
+  "original_slurm_state": "FAILED",
+  "reviewed_utc": "2026-11-18T01:03:39.003960Z",
+  "review": "User requests practical rather than overly conservative gates. All numerical/physical/memory checks passed.119.18h projection is below120h hard cap;110h margin waived. Formal output norms are less frequent than the per-step short probe. Hard five-day allocation and live nonfinite guards retained; full200M physics acceptance remains pending.",
+  "original_error": "AssertionError('Insufficient measured speed for five-day200M budget')"
+}

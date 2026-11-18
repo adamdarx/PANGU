@@ -1,0 +1,38 @@
+{
+  "N": 64,
+  "physical_cells_and_AMR_layout": "Same456leafblocks,16cells/axis/block; all21outputs verified against logical keys and physical bounds",
+  "stellar_model": {
+    "rhoc": 0.007993,
+    "kappa": 100,
+    "gamma": 2,
+    "v_pert": -0.01,
+    "b_norm": 1,
+    "pcut": 1e-06,
+    "magindex": 1,
+    "radial_points": 20000,
+    "radial_dr": 0.001
+  },
+  "PANGU": {
+    "FD": 4,
+    "integrator": "RK2",
+    "CFL": 0.1,
+    "KO": 0,
+    "kappa1": 0,
+    "chi_psi_power": -4,
+    "chi_div_floor": -1000,
+    "floor_chi": false
+  },
+  "AthenaK": {
+    "FD": 6,
+    "integrator": "RK2",
+    "CFL": 0.1,
+    "KO": 0.1,
+    "kappa1": 0.02,
+    "chi_psi_power": -4,
+    "chi_div_floor": 1e-05,
+    "floor_chi": true,
+    "chi_min_floor": 1e-12
+  },
+  "interpretation": "Shared physical case, native numerical implementations and stabilized settings retained; no equal-order accuracy or speed ranking.",
+  "native_AH_stopping_rule": "Native fastflow.cpp ends flow on abs(mass_prev-mass)<mass_tol; no independent small-expansion requirement in that success clause. Native found flag is not equivalent to PANGU mass-and-expansion acceptance."
+}

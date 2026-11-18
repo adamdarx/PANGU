@@ -1,0 +1,29 @@
+{
+  "utc": "2026-11-18T01:03:44.970584Z",
+  "user_instruction": "不需要过分严格",
+  "superseded_pending_jobs": [
+    "17378930",
+    "17378931",
+    "17378932",
+    "17378933",
+    "17378963",
+    "17378964"
+  ],
+  "original_running_jobs_unchanged": true,
+  "single": {
+    "stationary": {
+      "original": "17260150",
+      "formal": "17379019",
+      "reviewed_GPU_admission": "17376915"
+    },
+    "spinning": {
+      "original": "17260147",
+      "formal": "17379020",
+      "reviewed_GPU_admission": "17376917"
+    }
+  },
+  "ET_BNS96": {
+    "formal": "17379021",
+    "reviewed_GPU_admission": "17378938"
+  }
+}

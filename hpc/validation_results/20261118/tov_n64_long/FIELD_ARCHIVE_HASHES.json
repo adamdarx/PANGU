@@ -1,0 +1,547 @@
+[
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00000.phdf.zst",
+    "sha256": "767575dd87d51688b6bc69034e316215e7d59cfefe9ca885249bc358606f485c",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00000.bin.zst",
+    "sha256": "2ddc3b13c38e29e75fea3fa44f3a70bbd6f294594edc51d6e222c4b6e7028879",
+    "bytes": 97179083
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00000.bin.zst",
+    "sha256": "cf3b9bf7b56a63451c34f6c1e9a9fc881f24f5bf609c5b5a1440b8a2f5b37dc1",
+    "bytes": 67294562
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00000.bin.zst",
+    "sha256": "3a81abadd42fe95250bb4ffc97bc817f032f9420f305060309fa981f80949942",
+    "bytes": 37410130
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00000.bin.zst",
+    "sha256": "4761a7f704215dd0f5d56389ce66d06bce18c200fec7a333365c44218afae1f6",
+    "bytes": 7525755
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00001.phdf.zst",
+    "sha256": "7a8f87008d2b3c917e9a4941f054201b0af862e1ece7a8cfa9efc6357713aad1",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00001.bin.zst",
+    "sha256": "a72c795e97f47b164d66dd0f0f2e0ff0960cf2c4cfd871a6aa8371b9c6fbd187",
+    "bytes": 97178998
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00001.bin.zst",
+    "sha256": "ef42ec62af04d5c75cecbf6db1c890a20cd4438f912c4067dfc535f52a415563",
+    "bytes": 67294525
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00001.bin.zst",
+    "sha256": "263df93b03090715609be0408d19280545315a6e96eaaf44a397dfb3208c67e7",
+    "bytes": 37410077
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00001.bin.zst",
+    "sha256": "a0f9a1a7e15bac7fd2cbac0eec5dc02ff58e0f9daab620e0babb8f8f6f4ed199",
+    "bytes": 7525638
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00002.phdf.zst",
+    "sha256": "6d354409a55206470538951f15ea5e34f6bd60e2d195e60533d3a4a7b414b828",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00002.bin.zst",
+    "sha256": "86f6ef0a74d060b2f768c7c4e8b63d8e193c3e6d105c458ecb3c4618df6066be",
+    "bytes": 97178998
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00002.bin.zst",
+    "sha256": "7d78e61439b7641bae0d09dfb50710dd1fdec8f23841ae18e342a2ada0779e82",
+    "bytes": 67294525
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00002.bin.zst",
+    "sha256": "e623eb341fd4bced5f7a338772b41579302bf21f9fb6f95fcc3825c9d2006a33",
+    "bytes": 37410077
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00002.bin.zst",
+    "sha256": "ee6f74cac86204338af0571777ce78b837130a80813567d1ae53f288332bbaf4",
+    "bytes": 7525638
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00003.phdf.zst",
+    "sha256": "7bca113db27f1fe45e8f7bae924af29a6636297e437a0961d16ed853ac27f215",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00003.bin.zst",
+    "sha256": "b1268fa759b04a8803b014b730dac723cb28f23e63e753907464bde2b7a45634",
+    "bytes": 97178998
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00003.bin.zst",
+    "sha256": "27242451edcd6af393105827c6ce0c7f4270dea3a95fde9892a2d6f825cffde7",
+    "bytes": 67294525
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00003.bin.zst",
+    "sha256": "981c86f0cbdf777e8accfbe6e8c7c0909e31d78eb77de7ada541247c13c0d7a3",
+    "bytes": 37410077
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00003.bin.zst",
+    "sha256": "fff328d14e79f261ea48c1f30a9d979c89701770f9dc1e3480b9f121330ac8a7",
+    "bytes": 7525638
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00004.phdf.zst",
+    "sha256": "237af6f332065b9f1b0011018ff80853751cd6da30fec7212f67f280b2476b2f",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00004.bin.zst",
+    "sha256": "3d42a52cded2da7b6c2b2c5578577a614ec5e7786f4d6119024f148c042e9d67",
+    "bytes": 97178998
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00004.bin.zst",
+    "sha256": "e5bbe2ce7f9da2dd60c85cedf04aaead15021d3cfc65ae55beba43ed5db67074",
+    "bytes": 67294525
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00004.bin.zst",
+    "sha256": "51c56d84bc971c342df2eb8b2df353203c82d7d664964aea964c42e383937d19",
+    "bytes": 37410077
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00004.bin.zst",
+    "sha256": "31706c8b3a79d3468dcdaf7af0592d34341557dace83edcce27aaaa998eb067b",
+    "bytes": 7525638
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00005.phdf.zst",
+    "sha256": "814edc1d64b0775d1b451ca692d7833bd09fedf7a441d0fe24d08b13454fb0be",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00005.bin.zst",
+    "sha256": "f963e27cd591e469ccb4bcb3698a39d154a2c06928b5a556b08cbcc08dcaa03e",
+    "bytes": 97178998
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00005.bin.zst",
+    "sha256": "7d62162590115a8aa49f1481c87adadb184507c94a636d69348b76cf0587c7df",
+    "bytes": 67294525
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00005.bin.zst",
+    "sha256": "5294f6b1a7e61704e4d6cc171f89f71062f165a05c8ffab84cc68f139adce547",
+    "bytes": 37410077
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00005.bin.zst",
+    "sha256": "5d1ba7579963b2ffca3cd5a508873347a53bfb5f66ecd5853117899ccfe677ad",
+    "bytes": 7525638
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00006.phdf.zst",
+    "sha256": "42196b433bd2b06fe079e21faebe8fc3d45d7027bd95f7ee339480d9f5c825df",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00006.bin.zst",
+    "sha256": "728c9c516558616f5bbbf0ace69a6d0f267689a981b6939c4f25349272fd7da2",
+    "bytes": 97178998
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00006.bin.zst",
+    "sha256": "a67781356b212d1654ab0c56df4b16d98ac4d1c235f4ebf486f16bfcc526e380",
+    "bytes": 67294525
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00006.bin.zst",
+    "sha256": "8f23917dae0e0d88627b13e4a91328cf08ab7657de45168f09baa8988e358a8f",
+    "bytes": 37410077
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00006.bin.zst",
+    "sha256": "6f000e965d29f0417a3a8b56fdb0d31b969dd5fe92cb2cba2e1c309bb305155f",
+    "bytes": 7525638
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00007.phdf.zst",
+    "sha256": "ee678614116d16ba1f17179880ff86eb080ad7330bb8471a8771a58b050b7e9b",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00007.bin.zst",
+    "sha256": "fae3d3fe87f493690fc6bad8dedf4d1245c4f04c73c91a4265e27c33c13634f7",
+    "bytes": 97178999
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00007.bin.zst",
+    "sha256": "12365f781add7328058a4b73c931d8494d88b8c89ec3e6eb93cdeca66cd9a5a5",
+    "bytes": 67294526
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00007.bin.zst",
+    "sha256": "0033990e65f9ed17995a57288e41770b21471cd56a463a92322206d08385107e",
+    "bytes": 37410078
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00007.bin.zst",
+    "sha256": "6c290e0f4eada94c91375f081b3ed9cb4878da8aa5183fb150c9cf661c52f556",
+    "bytes": 7525639
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00008.phdf.zst",
+    "sha256": "73a978d726ade13d671383f0a8aed8e1bd67e31952bc9a48e65df169f3978932",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00008.bin.zst",
+    "sha256": "4883a15276fdf873a1c16c62f1e4c6ec4d6ecc3865eb09026e71a17fa8e1f365",
+    "bytes": 97178999
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00008.bin.zst",
+    "sha256": "915f461461fec6aa93ed33e9aa21403a79832ffb24813a3c4c3476c9cd6bacfa",
+    "bytes": 67294526
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00008.bin.zst",
+    "sha256": "76091213d8842ad32f59d997c48ece6bac4ee2bb95ab17e6cc3983186a702fce",
+    "bytes": 37410078
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00008.bin.zst",
+    "sha256": "4dba6ee8082e9b2ffeabe140726bf2d7ae31d7c9a3e1c12c915c68ddfa17aa0a",
+    "bytes": 7525639
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00009.phdf.zst",
+    "sha256": "1dcec3e9670753c90ef5892978e540a768694a64f5ed4eeb5855b4e9f7db94a9",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00009.bin.zst",
+    "sha256": "313c094dc69e2395011fd83fb12f41aff9bfdd9497e19e8c4907cf05b35e079d",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00009.bin.zst",
+    "sha256": "5dc97c766bf1505f8060a5188837a55b052a92e8e0fcfc1baf1598ecf0065183",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00009.bin.zst",
+    "sha256": "83aa1c6156c619009374f4a303a2050273519da5bcc292eeda3aafc161fbaf47",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00009.bin.zst",
+    "sha256": "92f18d790bf35b5becb9147b443c6a2e87f202339d047885497cc93750e3e051",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00010.phdf.zst",
+    "sha256": "9989f16c42e100390b1ada1d95f91f8231d932fb1b1e41320bcd1f6497a48214",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00010.bin.zst",
+    "sha256": "0821e070719f77fabbc125972cf1e763ca6de3d4a8b24fb103e5e9657cd271bb",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00010.bin.zst",
+    "sha256": "ca9c6dd2e68fab54fc31d2567c2cd9dba10a30458ce476f1095c5909cacf4c5a",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00010.bin.zst",
+    "sha256": "ed1055e4b9ee908ca7c9d4b6af2dba84deedf1bdde52cc6061e086468c1c290f",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00010.bin.zst",
+    "sha256": "7e95bc1842c886d24083727696ad6b2ab18e23df7a24adbe391087b90e386056",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00011.phdf.zst",
+    "sha256": "d76d4414d133c0d5d92495ba94352a544aee8eeaabb4d2587417e133140b8b4a",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00011.bin.zst",
+    "sha256": "44f87dbc82baa236451990ebf5fabac116b32a67a87cf5c5a6489e59c706a101",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00011.bin.zst",
+    "sha256": "31c8ce1a0366da06d0946cada7b4992faf980cb28d02243e6476ea5db93a4ef1",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00011.bin.zst",
+    "sha256": "94f1684e531a550ca3a128ab7735167e76f063d2dd4d8fa837b7f7de751682ce",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00011.bin.zst",
+    "sha256": "8bc7bc7cb570827222c00edd8be37094057b250abb44d165c52ce4625672a99a",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00012.phdf.zst",
+    "sha256": "fc834f98945f24374128b17162d73ecba14cc41a73761d931c1f36438fa80456",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00012.bin.zst",
+    "sha256": "ad6828dfeb4ee0555764b105c4e1fb7672edd17bc6db128efee9979aa7ee263f",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00012.bin.zst",
+    "sha256": "c6d4d5f85d9a3f2f46ccdda3650f9a39c0e00420e2991a57b4c2e970d936ed9e",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00012.bin.zst",
+    "sha256": "63ea49a184aac2fd7d7d41f8d298b9d47db3b4fb48d478057438f74dbb70d514",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00012.bin.zst",
+    "sha256": "fb42192de2df189a0415626475d968fa241a47e022081593e6ff72f608fcc22d",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00013.phdf.zst",
+    "sha256": "df4ff790ce6f75e764b88be5842b7086be5e0cf734be22dc028df1829c4e7617",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00013.bin.zst",
+    "sha256": "6c5892992e6b83968d3c075614c4c39f7f4cb35c68b75aee6ea84fb34f6ba2bc",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00013.bin.zst",
+    "sha256": "405bce0483070e880e23e1c01855e740dfa6bd52847989f0c886c8a978dc1574",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00013.bin.zst",
+    "sha256": "7942af85a839b7664f250901e1aa211040ac2dd537e90b95c4e7ad6ba3b773a3",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00013.bin.zst",
+    "sha256": "c3b14549b65c00ae427dbe1e9ba4e5282b445e0f652f91e0b4d4e3c8e6bcd812",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00014.phdf.zst",
+    "sha256": "d6694245088f4897473cb2237bd02f79a9e67a197342368522182e0b7572fadf",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00014.bin.zst",
+    "sha256": "dd7f53bf269fe7e4b1e77ae0cba00695c4b108887f836798d7a2d28efb7fa2dd",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00014.bin.zst",
+    "sha256": "f3473be1bb4f778c3fd59c91d712e6acf3f0d0ffd2a725b24f61ee72da74dba6",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00014.bin.zst",
+    "sha256": "b41cc437d911af7baa8f544bcd67a91ebffbcfa461f1dd152eb1ec0ab1333531",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00014.bin.zst",
+    "sha256": "abc0543637271a7bcacce5c1634c9cc06c6d52743e902f595f7a1709ddd59edd",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00015.phdf.zst",
+    "sha256": "02c461d9e591f783d26040a61887ded1ae861fec54846809d38a0ccad0b0551c",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00015.bin.zst",
+    "sha256": "01db42ef278b8d8f9c385b656c9a6c183e8853a52bf86d175d105cfd2fb7aaa7",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00015.bin.zst",
+    "sha256": "f629b502387c409b7a4d3c258d7c8b073a7144e0ba6175ec28cc3562b5a85ee5",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00015.bin.zst",
+    "sha256": "34636920ea04126489c579dba5788343bfddafde67ae9c8b99c36983ef1fc743",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00015.bin.zst",
+    "sha256": "135fe67fc2f0e20077045d07f5655b58be84a214d349387ed4330b3fecc11b8a",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00016.phdf.zst",
+    "sha256": "2049ae6f1273a32e9ad422ea30065c18aca3774f86a7765eb79fabb0e59739af",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00016.bin.zst",
+    "sha256": "817e6f9ecf076601e7d0e33c2a9aac1ac84eec47afd6b27a1ee73b16973fb375",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00016.bin.zst",
+    "sha256": "0ae9109ca2a6ff162e9db66f2d64fccef77466e8da421e7cc7324c58fd895ef6",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00016.bin.zst",
+    "sha256": "e0b4e331ab54ebb33aa929642043a150574b980146229f963984b50c8fad8ea3",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00016.bin.zst",
+    "sha256": "b85d94b6691614b24f00507cd81a938943f4ae38569cc27c389e1a433c35af8e",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00017.phdf.zst",
+    "sha256": "2bbc82634d17dd0e2402c770090fd965feef35cf8e8cce1f7e5ad469bc62c350",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00017.bin.zst",
+    "sha256": "d2dd3e8f861cd97e204ee2b38c1aa4550ceec68ff78e516308c7284041e46b42",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00017.bin.zst",
+    "sha256": "40138d83209fd5857871050a96a6ea57bd92f5137d9db08327c4e9f583f84edd",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00017.bin.zst",
+    "sha256": "bdfc3d922945c2f413742ceaf35fe17a2b5dad52c643530c6eac3b56fc401ab4",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00017.bin.zst",
+    "sha256": "b54b8b17db08dbf71abd32c7da76c5fb938b80f55a5acf63705313e3a012680b",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00018.phdf.zst",
+    "sha256": "09358d9c6c33691b0bedc36aedf626409a981adb61198605ffb0bd3b2c91b4f7",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00018.bin.zst",
+    "sha256": "7e2fcdee53e12b002eb56b36431c1fabf7bcdc2c224d5119bb91e57107d8997f",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00018.bin.zst",
+    "sha256": "bc89816360450cff5c9fb29a6996304fb39e24eee5dcbca071e0add66f156e76",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00018.bin.zst",
+    "sha256": "b839a2278eefb797b65d3c9a319b302580c39ddab3cde2a7417f318ce31a0853",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00018.bin.zst",
+    "sha256": "859d3ee70f825d13cb17e5c436e63d4ddbd244fd0be28793d6b81a47241d62eb",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.00019.phdf.zst",
+    "sha256": "f52ae5c8c80be7ad883410e32b7df3a0478741830f3013dc9dee983336634bbb",
+    "bytes": 1399052417,
+    "PANGU_reduction_cached": true
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00019.bin.zst",
+    "sha256": "4c888dc8e18d267ff10cee78681d8c3e31ea452f491f02bae85ccc5a35f567f7",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00019.bin.zst",
+    "sha256": "c6643495664c935e2a1551fca0b01aa09bdb1dc4bd510c58b7edf0aa3fcbe9f9",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00019.bin.zst",
+    "sha256": "6306f5c64201ba4ad32c229a09618b2f959d841d21006f569f24a9827fbf1e0c",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00019.bin.zst",
+    "sha256": "6552c64c6b20a5ecf81cf4717a17fd14b16a9f189a0431b875a6862f859b9f3b",
+    "bytes": 7525615
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.final.phdf.zst",
+    "sha256": "9f4fa6e8c654d50c53db8718c8ceb95b00997e7daef5bf05545c9f1c405f6b05",
+    "bytes": 1399052417
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.adm.00020.bin.zst",
+    "sha256": "bb8d980651abcc43abc59a29a33dba723f631f35e255d232e0f31954eacbc70b",
+    "bytes": 97178975
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_w_bcc.00020.bin.zst",
+    "sha256": "feacc78854d7b25300a0e2994735c6151b4ffdf10c92620f05ec882068f6b25b",
+    "bytes": 67294502
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00020.bin.zst",
+    "sha256": "ec1fbc1f6b655c4ef5f251f56b6354dc1a738a0e6acd067c491b9134e3b38821",
+    "bytes": 37410054
+  },
+  {
+    "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.con_H.00020.bin.zst",
+    "sha256": "623bc457c1c1d91352f349a0ec2cc7a99682ede1845d75c284be3877b121a72b",
+    "bytes": 7525615
+  }
+]

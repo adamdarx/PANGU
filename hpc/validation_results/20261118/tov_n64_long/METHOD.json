@@ -1,0 +1,32 @@
+{
+  "reduction_dtype": "float64",
+  "native_field_output_dtype": "float32",
+  "PANGU_field_output_dtype": "float64",
+  "histories_output_precision": "native high-precision text; used for global conservation",
+  "status": "21_pairs_read_only_verified_archive_field_analysis",
+  "N": 64,
+  "common_shell": [
+    3,
+    30
+  ],
+  "proper_H_RMS": "sqrt(integral(H^2 sqrt(det(gamma)) d3x)/integral(sqrt(det(gamma)) d3x))",
+  "H_definition": "R + K^2 - K_ij K^ij -16pi E; stored native FD4/FD6 operators retained",
+  "global_baryon_definition": "Both evolved conserved densities are densitized: integrate D d3x, without another sqrt(gamma)",
+  "shell_inventory_is_not_a_conservation_error": true,
+  "PANGU_max_reported_radius": 1.9936548970662245,
+  "AthenaK_spherical_harmonic_radius_upper_bound": 1.9560305021878985,
+  "native_radius_bound": "Orthonormal real Ylm,lmax12: c00/sqrt(4pi)+norm(c_l>0)*sqrt(168/(4pi)); single star and AH centered at origin",
+  "PANGU_first_qualified_AH_time": 44.02812499999419,
+  "PANGU_last_failed_AH_time": 42.02499999999601,
+  "AthenaK_first_reported_AH_time": 42.4625,
+  "AthenaK_first_report_inside_PANGU_sampling_bracket": true,
+  "pre_AH_density_end_time": 40,
+  "physical_acceptance": false,
+  "limitations": [
+    "One resolution; no convergence order inferred.",
+    "Native FD4/FD6, atmosphere reset and boundary implementations differ.",
+    "AthenaK uses stabilized native KO0.1/kappa1.02/chi floors; PANGU archive unchanged.",
+    "Native AH found flag does not certify residual quality; mass differences cannot be assigned to evolution alone.",
+    "Global baryon histories include BH interior; shell inventories have boundary fluxes."
+  ]
+}

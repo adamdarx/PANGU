@@ -1,39 +1,20 @@
 {
-  "updated_utc": "2026-11-18T00:17:10.221602+00:00",
-  "status": "eight_GPU_two_node_restart_repartition_gate_pending",
-  "initial_four_GPU_submission": {
-    "authorized_utc": "2026-11-17T14:53:35.138952Z",
-    "user_instruction": "\u7ee7\u7eed\u7eed\u8dd1\uff0cathenak\u5df2\u6709\u6570\u636e\u8981\u7528\u4e0a",
-    "target": 500,
-    "original_running_jobs_unchanged": true,
-    "cases": {
-      "stationary": {
-        "original": "17260150",
-        "admission": "17376915",
-        "formal": "17376916",
-        "dependency": "afterany:17260150,afterok:17376915"
-      },
-      "spinning": {
-        "original": "17260147",
-        "admission": "17376917",
-        "formal": "17376918",
-        "dependency": "afterany:17260147,afterok:17376917"
-      }
-    }
-  },
+  "updated_utc": "2026-11-18T01:06:38.927746+00:00",
+  "status": "reviewed_fourGPU_continuations_queued",
   "cases": {
     "stationary": {
       "original": "17260150",
-      "admission": "17378930",
-      "formal": "17378931"
+      "formal": "17379019",
+      "reviewed_GPU_admission": "17376915"
     },
     "spinning": {
       "original": "17260147",
-      "admission": "17378932",
-      "formal": "17378933"
+      "formal": "17379020",
+      "reviewed_GPU_admission": "17376917"
     }
   },
   "target": 500,
-  "reason": "Both four-GPU restart trajectories succeeded exactly, but measured reserve7575MiB failed8192MiB policy. Preserve threshold; test eight GPUs across two nodes. Original jobs unchanged.",
+  "user_instruction": "不需要过分严格",
+  "physical_GPU_restart": "Actual exact same-cycle comparison and8step GPU evolution passed; failed wrapper states retained; only conservative resource margin reviewed",
   "original_running_jobs_unchanged": true
 }

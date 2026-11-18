@@ -1,0 +1,77 @@
+{
+  "time": 100,
+  "rows": [
+    {
+      "r_min": 0,
+      "r_max": 1,
+      "PANGU_baryon_mass": 1.5392373815940228,
+      "AthenaK_baryon_mass": 1.5350359422729996,
+      "pair_difference_PANGU_minus_AthenaK": 0.004201439321023237,
+      "absolute_densitized_mass_difference_L1": 2.689454604215877
+    },
+    {
+      "r_min": 1,
+      "r_max": 1.8,
+      "PANGU_baryon_mass": 4.104426372326533e-10,
+      "AthenaK_baryon_mass": 4.14033605393936e-10,
+      "pair_difference_PANGU_minus_AthenaK": -3.590968161282668e-12,
+      "absolute_densitized_mass_difference_L1": 4.254430851792865e-12
+    },
+    {
+      "r_min": 1.8,
+      "r_max": 3,
+      "PANGU_baryon_mass": 4.392568718403274e-10,
+      "AthenaK_baryon_mass": 4.4266001316155217e-10,
+      "pair_difference_PANGU_minus_AthenaK": -3.403141321224766e-12,
+      "absolute_densitized_mass_difference_L1": 4.379897771699884e-12
+    },
+    {
+      "r_min": 3,
+      "r_max": 30,
+      "PANGU_baryon_mass": 3.7094158663919554e-09,
+      "AthenaK_baryon_mass": 3.671282116966721e-09,
+      "pair_difference_PANGU_minus_AthenaK": 3.813374942523449e-11,
+      "absolute_densitized_mass_difference_L1": 9.123437620699826e-11
+    },
+    {
+      "r_min": 30,
+      "r_max": null,
+      "PANGU_baryon_mass": 1.931918789283281e-09,
+      "AthenaK_baryon_mass": 1.858830678845631e-09,
+      "pair_difference_PANGU_minus_AthenaK": 7.308811043764995e-11,
+      "absolute_densitized_mass_difference_L1": 7.492652241453249e-11
+    }
+  ],
+  "absolute_densitized_mass_difference_L1_outside_r1p8": 1.7054079639323063e-10,
+  "absolute_densitized_mass_difference_L1_global": 2.6894546043906726,
+  "global_pair_difference": 0.004201439425250975,
+  "pair_difference_inside_r1p8": 0.00420143931743211,
+  "pair_difference_outside_r1p8": 1.078187185416589e-10,
+  "fraction_of_pair_difference_inside_r1p8": 0.9999999743376367,
+  "PANGU_inactive_constraint_mask_mass": 0.0,
+  "AthenaK_mass_on_same_PANGU_inactive_mask": 0.0,
+  "PANGU_latest_qualified_AH_time": 98.112499999945,
+  "PANGU_latest_qualified_min_radius": 1.9936399428106046,
+  "AthenaK_final_reported_AH_lower_radius_bound": 1.9432233749665226,
+  "interpretation": "Endpoint spatial localization, not a complete conservation/flux budget. r<1.8 lies within both latest reported AH radii; PANGU last qualified AH precedes endpoint by~1.89time units. Native finder quality is a separate limitation.",
+  "source_archives": [
+    {
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261102-stellar-formation/runs/collapse/16902889/unstable_b1/sync_grmhd_tov.sync_grmhd_tov.final.phdf.zst",
+      "sha256": "9f4fa6e8c654d50c53db8718c8ceb95b00997e7daef5bf05545c9f1c405f6b05",
+      "bytes": 1399052417
+    },
+    {
+      "path": "20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00020.bin",
+      "bytes": 37410054,
+      "mtime_ns": 1794939545000000000,
+      "remove_after_verified": false,
+      "closed_phase": true,
+      "physical_acceptance": "pending independent quantitative analysis",
+      "sha256": "ec1fbc1f6b655c4ef5f251f56b6354dc1a738a0e6acd067c491b9134e3b38821",
+      "compressed_bytes": 25138061,
+      "verified": "2026-11-18T02:57:57.340644+08:00",
+      "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Operations/20261117-athenak-grmhd-reference/tov-repair/runs/tov_n64/17374027/bin/athenak_tov_collapse_n64.mhd_u.00020.bin.zst",
+      "server_removed": false
+    }
+  ]
+}
