@@ -1,0 +1,294 @@
+{
+  "created_utc": "2026-11-18T01:40:41.438224+00:00",
+  "scope": "Accepted8-step GPU test binary fields and test checkpoints only. Admissions/commands/logs retained. Formal output outside scope.",
+  "files": [
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.adm.00000.bin",
+      "bytes": 97179083,
+      "sha256": "7361a1889e1466db0df3230526fd4fd988fe2b23343ae93310f8fd2ed8c55dd7",
+      "mtime_ns": 1794926639000000000,
+      "inode": 198159598878757782,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.adm.00001.bin",
+      "bytes": 97178995,
+      "sha256": "4efd1dfc5cda7ecc550c8833b7d589749945a7af354b16c859fa53713e638e36",
+      "mtime_ns": 1794926645000000000,
+      "inode": 198159598878757793,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.con_H.00000.bin",
+      "bytes": 7525755,
+      "sha256": "adbe027fba666841f4e7e77baa533377ae5bb765f6b0471779ec9770fd264745",
+      "mtime_ns": 1794926639000000000,
+      "inode": 198159598878757780,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.con_H.00001.bin",
+      "bytes": 7525635,
+      "sha256": "0756bb765f4d2116d013d908b1cdc70729760101b919ca9575f3ffac845934e4",
+      "mtime_ns": 1794926645000000000,
+      "inode": 198159598878757791,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.con_M.00000.bin",
+      "bytes": 7525771,
+      "sha256": "5485394ff6f1bafbbaa52a104d125f8bc50226738005f088eebc634b79c932e4",
+      "mtime_ns": 1794926639000000000,
+      "inode": 198159598878757779,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.con_M.00001.bin",
+      "bytes": 7525635,
+      "sha256": "ebee2fb0ecf2a356e983013facdc090f63d7a1482b084534f02c5d3d0e45a188",
+      "mtime_ns": 1794926645000000000,
+      "inode": 198159598878757790,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.mhd_divb.00000.bin",
+      "bytes": 7525738,
+      "sha256": "d024132e80f3060664dc9f0fcddd6134ae2f7a1d66e35037804e042c98c4a6eb",
+      "mtime_ns": 1794926639000000000,
+      "inode": 198159598878757781,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.mhd_divb.00001.bin",
+      "bytes": 7525634,
+      "sha256": "85c5e6686049baf7b70ff94c4ea45bdf55045650b4afed79e9269c5eca2cd552",
+      "mtime_ns": 1794926645000000000,
+      "inode": 198159598878757792,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.mhd_u.00000.bin",
+      "bytes": 37410130,
+      "sha256": "cf7015264bb3d62739999924824da193145c79bb1b6bc607aa7ed5f8c61b15da",
+      "mtime_ns": 1794926640000000000,
+      "inode": 198159598878757784,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.mhd_u.00001.bin",
+      "bytes": 37410074,
+      "sha256": "064e95dbbea929ea07ac52dbea7dcf02b6da77b6457f409a9536e315f57d37a3",
+      "mtime_ns": 1794926646000000000,
+      "inode": 198159598878757795,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.mhd_w_bcc.00000.bin",
+      "bytes": 67294562,
+      "sha256": "9201dff33adf3894d905dee716ac4ecaf99361de78e987c16c067674090ecf97",
+      "mtime_ns": 1794926640000000000,
+      "inode": 198159598878757785,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.mhd_w_bcc.00001.bin",
+      "bytes": 67294522,
+      "sha256": "3af910bb486490990647cd976c129f2dfd2895958e7fcc02651d6689d7db9502",
+      "mtime_ns": 1794926646000000000,
+      "inode": 198159598878757796,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.z4c.00000.bin",
+      "bytes": 164419097,
+      "sha256": "e45deb148c4b16b26414e00e95f29586b068b131143318c8ca76be5a65ad4a3b",
+      "mtime_ns": 1794926640000000000,
+      "inode": 198159598878757783,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/bin/athenak_tov_collapse_n64.z4c.00001.bin",
+      "bytes": 164419025,
+      "sha256": "baf7d052dff69eb512c945e30f2ad1df5d8089f84d425a85e00902d916a32e5a",
+      "mtime_ns": 1794926646000000000,
+      "inode": 198159598878757794,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/rst/athenak_tov_collapse_n64.00000.rst",
+      "bytes": 1519225890,
+      "sha256": "43c6ad1f6aa5948b00d89004d290255d654c309574593f67010bbc7936126d97",
+      "mtime_ns": 1794926643000000000,
+      "inode": 198159598878757789,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n64/17374129/rst/athenak_tov_collapse_n64.00001.rst",
+      "bytes": 1519225890,
+      "sha256": "c594f0e90944c01d397884bcc56d093eb6c8278ceb16abc9e365a13c5a8eeaa6",
+      "mtime_ns": 1794926649000000000,
+      "inode": 198159598878757797,
+      "job": "17374129",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.adm.00000.bin",
+      "bytes": 327849386,
+      "sha256": "ea3c33fc95e634f482f75346bcae4ac6a675243143134ede01a8c9cf463224ef",
+      "mtime_ns": 1794961227000000000,
+      "inode": 198159598895530045,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.adm.00001.bin",
+      "bytes": 327849298,
+      "sha256": "247e003804bd3f35d086101336cf56374f29d46a6d74f7806fd051d73b9835e0",
+      "mtime_ns": 1794961240000000000,
+      "inode": 198159598895530056,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.con_H.00000.bin",
+      "bytes": 25269594,
+      "sha256": "2342a890f05a158954d95b6c763f8805b27bf6436aaae962818900c3bb9fab2f",
+      "mtime_ns": 1794961226000000000,
+      "inode": 198159598895530043,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.con_H.00001.bin",
+      "bytes": 25269474,
+      "sha256": "dfae68dcea045912e67518e3a7a19d55be323e7430c16331f95ba513bd25e97e",
+      "mtime_ns": 1794961239000000000,
+      "inode": 198159598895530054,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.con_M.00000.bin",
+      "bytes": 25269610,
+      "sha256": "70a91145beb364aa5815a1542f73218c5e378beb7f1eea80097ae39ca317e5a3",
+      "mtime_ns": 1794961226000000000,
+      "inode": 198159598895530042,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.con_M.00001.bin",
+      "bytes": 25269474,
+      "sha256": "faf0a6fc7b7e115038b3330f92d777f4b240b9da10fee59809472a1c1730ce96",
+      "mtime_ns": 1794961239000000000,
+      "inode": 198159598895530053,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.mhd_divb.00000.bin",
+      "bytes": 25269577,
+      "sha256": "99ec8e8f44db40c3615733baa2fcaeabd08cff304594759a57d06691d80b84a8",
+      "mtime_ns": 1794961226000000000,
+      "inode": 198159598895530044,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.mhd_divb.00001.bin",
+      "bytes": 25269473,
+      "sha256": "37fdb947500699d5f65a07ecd5a3ca7a9ce0f54e36a79bddddd3eeedca6014fc",
+      "mtime_ns": 1794961239000000000,
+      "inode": 198159598895530055,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.mhd_u.00000.bin",
+      "bytes": 126129457,
+      "sha256": "371ff8243c4af8de258c89fe70a24d6b2d105018eff3e7434cb929efee783553",
+      "mtime_ns": 1794961229000000000,
+      "inode": 198159598895530047,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.mhd_u.00001.bin",
+      "bytes": 126129401,
+      "sha256": "512cfd18160421cf9a51c6b3ab11ff007b8ef5b10ba859958bc90f8b47b4adc3",
+      "mtime_ns": 1794961241000000000,
+      "inode": 198159598895530058,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.mhd_w_bcc.00000.bin",
+      "bytes": 226989377,
+      "sha256": "27eae3a81baf1cbf1ddc8d50f7556ff302ff619df485550a33fb10c49374cda5",
+      "mtime_ns": 1794961230000000000,
+      "inode": 198159598895530048,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.mhd_w_bcc.00001.bin",
+      "bytes": 226989337,
+      "sha256": "4b8f69cb802e0663761b52611db1235c62fcffa650c5d2be7c503ce69c9aed62",
+      "mtime_ns": 1794961242000000000,
+      "inode": 198159598895530059,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.z4c.00000.bin",
+      "bytes": 554784248,
+      "sha256": "24384983a4f8124ee86628dfb019991a5857d50ed57a85914573df7fb3f4057a",
+      "mtime_ns": 1794961229000000000,
+      "inode": 198159598895530046,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/bin/athenak_tov_collapse_n96.z4c.00001.bin",
+      "bytes": 554784176,
+      "sha256": "e1e18955e64d392f524cfbf9a5ca1c58fa153fae27166017606a70e893682d3a",
+      "mtime_ns": 1794961241000000000,
+      "inode": 198159598895530057,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/rst/rank_00000000/athenak_tov_collapse_n96.00000.rst",
+      "bytes": 3597360129,
+      "sha256": "eab1340d9176f62ae0025662e80392b33ec02ca56bb1534080785e6956b74845",
+      "mtime_ns": 1794961235000000000,
+      "inode": 198159598895530052,
+      "job": "17378945",
+      "removed": true
+    },
+    {
+      "path": "runs/tov_n96/17378945/rst/rank_00000000/athenak_tov_collapse_n96.00001.rst",
+      "bytes": 3597360129,
+      "sha256": "5d50543bd69a614a5baa8621224d015cb963280b70f008d6e9d6808a3dbfda5f",
+      "mtime_ns": 1794961246000000000,
+      "inode": 198159598895530060,
+      "job": "17378945",
+      "removed": true
+    }
+  ]
+}

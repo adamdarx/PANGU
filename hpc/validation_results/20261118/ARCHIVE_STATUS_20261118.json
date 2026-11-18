@@ -1,0 +1,76 @@
+{
+  "updated_utc": "2026-11-18T01:41:39.529634+00:00",
+  "scope": "Seven active or completed selected archive indexes, not the entire D drive",
+  "archive_cohorts": {
+    "original_single_black_hole": {
+      "verified_files": 344,
+      "logical_bytes": 999375540570,
+      "archived_bytes": 985691042507,
+      "source_files_removed": 132,
+      "source_logical_bytes_removed": 787041760366
+    },
+    "N128_matter": {
+      "verified_files": 44,
+      "logical_bytes": 455119229667,
+      "archived_bytes": 398723543233,
+      "source_files_removed": 20,
+      "source_logical_bytes_removed": 223137013760
+    },
+    "coarse_single_black_hole": {
+      "verified_files": 81,
+      "logical_bytes": 14848632810,
+      "archived_bytes": 13987256570,
+      "source_files_removed": 19,
+      "source_logical_bytes_removed": 14641594526
+    },
+    "ET_and_AthenaK_TOV_repair": {
+      "verified_files": 162,
+      "logical_bytes": 15812224573,
+      "archived_bytes": 11207940448,
+      "source_files_removed": 68,
+      "source_logical_bytes_removed": 14502872318
+    },
+    "new_references_and_binary_black_hole": {
+      "verified_files": 165,
+      "logical_bytes": 45541407605,
+      "archived_bytes": 23749369269,
+      "source_files_removed": 130,
+      "source_logical_bytes_removed": 30802867814
+    },
+    "historical_BNS": {
+      "verified_files": 54,
+      "logical_bytes": 239671688812,
+      "archived_bytes": 167037714343,
+      "source_files_removed": 48,
+      "source_logical_bytes_removed": 224406244972
+    },
+    "single_black_hole_continuation": {
+      "verified_files": 0,
+      "logical_bytes": 0,
+      "archived_bytes": 0,
+      "source_files_removed": 0,
+      "source_logical_bytes_removed": 0
+    }
+  },
+  "on_disk_file_stat_check": {
+    "distinct_files": 850,
+    "missing_or_size_mismatch": 0,
+    "check": "Archive path and stored size rechecked against prior hash-verified index"
+  },
+  "quota": {
+    "used_kib": 1540355600,
+    "limit_kib": 2147483648,
+    "free_GiB": 579.0024261474609
+  },
+  "new_temporary_cleanup": {
+    "files": 32,
+    "bytes": 13634053576,
+    "receipt": "DISCARDED_ACCEPTED_TOV_GPU_TEST_RAW_20261118.json"
+  },
+  "latest_BNS_N128_field_archived": {
+    "job": "17355477",
+    "index": 15,
+    "nominal_time": 75
+  },
+  "BNS_N128_source_retention": "Retain the series through final job validation. Then clean verified source duplicates."
+}
