@@ -1,0 +1,102 @@
+{
+  "updated_utc": "2026-11-18T05:21:30.693910+00:00",
+  "admission_job": "17369148",
+  "queued_formals": {
+    "32": "17378935",
+    "48": "17378936",
+    "64": "17378937"
+  },
+  "correction": "Require whitespace or line start before wsec_step. The older expression also read the throughput metric.",
+  "original_receipt_sha256": "e5e9906f142aea5ed351d58b9fe80274d6bb5a41913809959d662e2cb87e1ed1",
+  "fixed_parser_sha256": "6b0f08a5425667839aeda504d304992b708896d0325e72f1d44d6baf95369bd3",
+  "cases": [
+    {
+      "n": 32,
+      "evolution_log": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-bbh-convergence/admission/17369148/n32/evolution.log",
+      "log_sha256": "4696f43dc80349b2e32df1d8b29deadbcb8f9dc8a8fb869a47e833c4beeb3880",
+      "last_16_wall_seconds": [
+        0.517,
+        0.532,
+        0.523,
+        0.538,
+        0.529,
+        0.522,
+        0.53,
+        0.535,
+        0.515,
+        0.523,
+        0.531,
+        0.529,
+        0.512,
+        0.519,
+        0.535,
+        1.68
+      ],
+      "step_dt": 0.00625,
+      "previous_incorrect_mean_estimate_hours": 107150004.45333332,
+      "corrected_median_step_seconds": 0.529,
+      "corrected_mean_step_seconds": 0.598125,
+      "rough300M_median_step_hours": 7.053333333333334,
+      "rough300M_mean_step_hours": 7.975
+    },
+    {
+      "n": 48,
+      "evolution_log": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-bbh-convergence/admission/17369148/n48/evolution.log",
+      "log_sha256": "19b201506250fa7e5ac45b3e49534a7e853f02af104e8ae8cac7a7e1923fae76",
+      "last_16_wall_seconds": [
+        1.06,
+        1.05,
+        0.996,
+        1.03,
+        1.05,
+        1.04,
+        1.06,
+        1.77,
+        1.04,
+        1.02,
+        1.05,
+        1.03,
+        1.06,
+        1.04,
+        1.03,
+        3.12
+      ],
+      "step_dt": 0.004166666666666667,
+      "previous_incorrect_mean_estimate_hours": 274087512.98749995,
+      "corrected_median_step_seconds": 1.045,
+      "corrected_mean_step_seconds": 1.215375,
+      "rough300M_median_step_hours": 20.9,
+      "rough300M_mean_step_hours": 24.3075
+    },
+    {
+      "n": 64,
+      "evolution_log": "/lustre/home/2601110206/CODEX_WORKPLACE/Operations/20261117-bbh-convergence/admission/17369148/n64/evolution.log",
+      "log_sha256": "571527f3564359ea534dc87d8dbea67058ca7155ec630d554f9a6ec9dcf2ab4a",
+      "last_16_wall_seconds": [
+        1.85,
+        1.86,
+        1.87,
+        1.84,
+        1.84,
+        1.86,
+        1.84,
+        1.83,
+        1.86,
+        1.86,
+        1.88,
+        1.84,
+        1.87,
+        1.83,
+        1.84,
+        5.12
+      ],
+      "step_dt": 0.003125,
+      "previous_incorrect_mean_estimate_hours": 487333363.5,
+      "corrected_median_step_seconds": 1.855,
+      "corrected_mean_step_seconds": 2.055625,
+      "rough300M_median_step_hours": 49.46666666666667,
+      "rough300M_mean_step_hours": 54.81666666666667
+    }
+  ],
+  "timing_scope": "Extrapolation from the original 32 GPU steps. End-to-end formal timing depends on later evolution and I/O."
+}

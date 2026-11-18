@@ -67,7 +67,8 @@ try:
         assert 'Driver completed.' in text
         cycles=re.findall(r'\bcycle=\s*(\d+)\s+time=\s*([\deE+.\-]+)\s+dt=\s*([\deE+.\-]+)',text)
         assert cycles and int(cycles[-1][0])==32,(cycles[-3:],text[-1500:])
-        step_times=[float(v) for v in re.findall(r'\bwsec_step=\s*([\deE+.\-]+)',text)]
+        # Match the standalone seconds field. The rate field ends in the same suffix.
+        step_times=[float(v) for v in re.findall(r'(?<!\S)wsec_step=\s*([\deE+.\-]+)',text)]
         assert len(step_times)>=16
         fields=[]
         for path in sorted(folder.glob('*.phdf')):
