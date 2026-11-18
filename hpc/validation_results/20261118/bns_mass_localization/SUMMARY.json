@@ -1,0 +1,210 @@
+{
+  "method": "Integrate densitized D and last-stage recovery component 0 with coordinate cell volumes.",
+  "scope": "Fixed coordinate radial bins. The recovery values are per-output last-stage diagnostics.",
+  "cases": {
+    "n64": {
+      "job": "17133234",
+      "frames": [
+        {
+          "nominal_time": 175,
+          "time": 175.00312499994078,
+          "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n64/17133234/formal/sync_plugin_grmhd.bns.00035.phdf.zst",
+          "sha256": "77c86197d5229486d34529e9db8ec5dab7d39ddf3c073da2681e51efbfd6e31c",
+          "baryon_mass_total": 2.9275906020847846,
+          "regions": {
+            "r_lt_4": {
+              "baryon_mass": 2.925044940719393,
+              "recovery_mass_signed": -1.6653345369377348e-16,
+              "recovery_mass_absolute": 2.775563914309996e-16
+            },
+            "r_4_to_8": {
+              "baryon_mass": 0.0011509834758380894,
+              "recovery_mass_signed": 8.271806125530277e-25,
+              "recovery_mass_absolute": 4.1359030627651384e-24
+            },
+            "r_8_to_30": {
+              "baryon_mass": 0.0013715994796665548,
+              "recovery_mass_signed": 0.0,
+              "recovery_mass_absolute": 0.0
+            },
+            "r_ge_30": {
+              "baryon_mass": 2.3078409887302625e-05,
+              "recovery_mass_signed": 3.952080479844335e-16,
+              "recovery_mass_absolute": 3.9520805020960184e-16
+            }
+          }
+        },
+        {
+          "nominal_time": 180,
+          "time": 180.00468749992865,
+          "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n64/17133234/formal/sync_plugin_grmhd.bns.00036.phdf.zst",
+          "sha256": "4b38a150f54b88faf3f34c6debe3aed2dac6b6325c261c0576643fb9e12301e0",
+          "baryon_mass_total": 2.927908807520921,
+          "regions": {
+            "r_lt_4": {
+              "baryon_mass": 2.9258943683087915,
+              "recovery_mass_signed": 1.5641855577454312e-07,
+              "recovery_mass_absolute": 1.5641855577455715e-07
+            },
+            "r_4_to_8": {
+              "baryon_mass": 0.0008450133080708522,
+              "recovery_mass_signed": 0.0,
+              "recovery_mass_absolute": 0.0
+            },
+            "r_8_to_30": {
+              "baryon_mass": 0.001141727124290342,
+              "recovery_mass_signed": 0.0,
+              "recovery_mass_absolute": 0.0
+            },
+            "r_ge_30": {
+              "baryon_mass": 2.7698779768351314e-05,
+              "recovery_mass_signed": 4.107170726328661e-16,
+              "recovery_mass_absolute": 4.107170749451468e-16
+            }
+          }
+        },
+        {
+          "nominal_time": 200,
+          "time": 200.0,
+          "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n64/17133234/formal/sync_plugin_grmhd.bns.final.phdf.zst",
+          "sha256": "38c39908d0956d2e571ea268914ad6a88a5159e72b59e16143abd3d668ea0fbc",
+          "baryon_mass_total": 2.9301108764917676,
+          "regions": {
+            "r_lt_4": {
+              "baryon_mass": 2.929178998592642,
+              "recovery_mass_signed": 1.0862345972695478e-07,
+              "recovery_mass_absolute": 1.0862345972695855e-07
+            },
+            "r_4_to_8": {
+              "baryon_mass": 0.00030643181797862165,
+              "recovery_mass_signed": 8.726755462434442e-23,
+              "recovery_mass_absolute": 5.054073542698999e-22
+            },
+            "r_8_to_30": {
+              "baryon_mass": 0.0005818190766836199,
+              "recovery_mass_signed": -1.6957202557337067e-23,
+              "recovery_mass_absolute": 3.072975975634498e-22
+            },
+            "r_ge_30": {
+              "baryon_mass": 4.362700446334449e-05,
+              "recovery_mass_signed": 2.7130624491255866e-16,
+              "recovery_mass_absolute": 2.713062485864543e-16
+            }
+          }
+        }
+      ],
+      "min_measured_horizon_radius": 4.601317836017118,
+      "max_measured_horizon_radius": 5.466839099324222,
+      "last_measured_horizon_time": 198.1265624998847,
+      "baryon_mass_change_175_to_200": 0.002520274406982992,
+      "regional_baryon_mass_change_175_to_200": {
+        "r_lt_4": 0.004134057873249386,
+        "r_4_to_8": -0.0008445516578594677,
+        "r_8_to_30": -0.0007897804029829349,
+        "r_ge_30": 2.0548594576041864e-05
+      }
+    },
+    "n96": {
+      "job": "17254476",
+      "frames": [
+        {
+          "nominal_time": 175,
+          "time": 175.0000000000888,
+          "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00035.phdf.zst",
+          "sha256": "843b822fe152edc3046212ae3067daa74ad525c5225c16034f4a316d4513a070",
+          "baryon_mass_total": 2.927123794775733,
+          "regions": {
+            "r_lt_4": {
+              "baryon_mass": 2.926455392871001,
+              "recovery_mass_signed": 3.9475964918721856e-16,
+              "recovery_mass_absolute": 3.948373615190427e-16
+            },
+            "r_4_to_8": {
+              "baryon_mass": 0.00037511816727365475,
+              "recovery_mass_signed": 4.6567204854837335e-24,
+              "recovery_mass_absolute": 2.573450794609423e-23
+            },
+            "r_8_to_30": {
+              "baryon_mass": 0.00028883584213194776,
+              "recovery_mass_signed": 3.661040118521729e-24,
+              "recovery_mass_absolute": 3.055972818598683e-23
+            },
+            "r_ge_30": {
+              "baryon_mass": 4.447895326669113e-06,
+              "recovery_mass_signed": 8.37952197748366e-17,
+              "recovery_mass_absolute": 8.379522278371986e-17
+            }
+          }
+        },
+        {
+          "nominal_time": 180,
+          "time": 180.00000000010698,
+          "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.00036.phdf.zst",
+          "sha256": "f084d8c358407ecebcf3b40e349da96a71b5222ca2ee86568b801f7343c4ccd3",
+          "baryon_mass_total": 2.927263488528614,
+          "regions": {
+            "r_lt_4": {
+              "baryon_mass": 2.926787290496243,
+              "recovery_mass_signed": 1.0502321192131742e-07,
+              "recovery_mass_absolute": 1.0502321192135858e-07
+            },
+            "r_4_to_8": {
+              "baryon_mass": 0.00024268387759306204,
+              "recovery_mass_signed": 1.184093728710165e-23,
+              "recovery_mass_absolute": 9.269018308441422e-23
+            },
+            "r_8_to_30": {
+              "baryon_mass": 0.0002284240253939522,
+              "recovery_mass_signed": 6.3570361890649705e-25,
+              "recovery_mass_absolute": 6.072884330493464e-23
+            },
+            "r_ge_30": {
+              "baryon_mass": 5.090129383659374e-06,
+              "recovery_mass_signed": 9.675103793935533e-17,
+              "recovery_mass_absolute": 9.675104111362386e-17
+            }
+          }
+        },
+        {
+          "nominal_time": 200,
+          "time": 200.0,
+          "archive": "/mnt/d/PANGU_TEST_DATA/PANGU_II_NR_DATA/Matter/20261112-bns-dt5/runs/n96/17254476/formal/sync_plugin_grmhd.bns.final.phdf.zst",
+          "sha256": "54271d2864d8235f3eabdd24ca09114ea0c78cc490f6fc4751b796dbc7f7bd38",
+          "baryon_mass_total": 2.9294784358489987,
+          "regions": {
+            "r_lt_4": {
+              "baryon_mass": 2.9293033667986683,
+              "recovery_mass_signed": 1.0919515490991576e-07,
+              "recovery_mass_absolute": 1.091951549099158e-07
+            },
+            "r_4_to_8": {
+              "baryon_mass": 6.583848786712322e-05,
+              "recovery_mass_signed": 3.621787334824196e-23,
+              "recovery_mass_absolute": 3.1371782116041925e-22
+            },
+            "r_8_to_30": {
+              "baryon_mass": 0.00010139425967566343,
+              "recovery_mass_signed": 4.243130179207201e-24,
+              "recovery_mass_absolute": 1.571336800660918e-22
+            },
+            "r_ge_30": {
+              "baryon_mass": 7.836302787636737e-06,
+              "recovery_mass_signed": 1.3099933480229287e-16,
+              "recovery_mass_absolute": 1.309993392296596e-16
+            }
+          }
+        }
+      ],
+      "min_measured_horizon_radius": 4.6107909575659205,
+      "max_measured_horizon_radius": 5.4716206888408925,
+      "last_measured_horizon_time": 198.13750000017296,
+      "baryon_mass_change_175_to_200": 0.002354641073265551,
+      "regional_baryon_mass_change_175_to_200": {
+        "r_lt_4": 0.0028479739276674465,
+        "r_4_to_8": -0.00030927967940653155,
+        "r_8_to_30": -0.00018744158245628432,
+        "r_ge_30": 3.388407460967624e-06
+      }
+    }
+  }
+}
