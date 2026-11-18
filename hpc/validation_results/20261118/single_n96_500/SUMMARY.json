@@ -1,0 +1,101 @@
+{
+  "analysis": "PANGU N96 stationary and spinning 500M archive",
+  "constraints": "Cell-count RMS over native active physical cells with ghost cells excluded.",
+  "horizon": "Each series uses its measured initial horizon as the mass and spin reference. The stationary case uses absolute spin changes.",
+  "cases": {
+    "stationary": {
+      "job": "17313453",
+      "valid_horizon_samples": 998,
+      "total_horizon_samples": 998,
+      "horizon_source_sha256": "3f129e95467759681d7f2f54401f1334d340d69aad5e3849a1c49e3c893c2c1d",
+      "phase_receipt_sha256": "4032860614b888da91793f1d20156e3972c9064428771f039d99e027554641fd",
+      "horizon_first": {
+        "time": 0.003255208333333333,
+        "irreducible_mass": 0.9999999728039791,
+        "christodoulou_mass": 0.9999999728039791,
+        "spin": 1.4658966246698925e-19,
+        "scaled_rms_expansion": 8.918081428952129e-05,
+        "expansion_tolerance": 0.0001,
+        "irreducible_mass_relative_change": 0.0,
+        "christodoulou_mass_relative_change": 0.0,
+        "spin_change": 0.0
+      },
+      "horizon_last": {
+        "time": 499.80143229054556,
+        "irreducible_mass": 0.9999077325015622,
+        "christodoulou_mass": 0.9999077325015622,
+        "spin": 1.8753063438874235e-14,
+        "scaled_rms_expansion": 9.557167951031559e-05,
+        "expansion_tolerance": 0.0001,
+        "irreducible_mass_relative_change": -9.224030492549495e-05,
+        "christodoulou_mass_relative_change": -9.224030492549495e-05,
+        "spin_change": 1.875291684921177e-14
+      },
+      "max_abs_relative_irreducible_mass_change": 9.526708657459082e-05,
+      "max_abs_relative_christodoulou_mass_change": 9.526708657459082e-05,
+      "max_abs_spin_change": 1.5839702325739887e-10,
+      "constraint_samples": 21,
+      "first_constraints": {
+        "time": 0.0,
+        "constraint_mask_cells": 15443360,
+        "hamiltonian_RMS": 7.398084985444525e-07,
+        "momentum_RMS": 0.0,
+        "field_sha256": "9456ba885f20d37466589b48c114f7487d8b0df86796585f73b8be1ef6f083c3"
+      },
+      "final_constraints": {
+        "time": 500.0,
+        "constraint_mask_cells": 15443360,
+        "hamiltonian_RMS": 1.31777844242769e-06,
+        "momentum_RMS": 8.226749283979067e-07,
+        "field_sha256": "7071cf80ac6d0db7c695bda970185b507f45551c0f2585b8ac54df60816aab40"
+      }
+    },
+    "spinning": {
+      "job": "17313451",
+      "valid_horizon_samples": 499,
+      "total_horizon_samples": 499,
+      "horizon_source_sha256": "59a99438a1f36361543ec84b2a71c401b265f55954894db034c68160c7f92d25",
+      "phase_receipt_sha256": "2b79ed88bb786592ab14c766bd4ef77500f61d6a033e714462a70ee9b23caea6",
+      "horizon_first": {
+        "time": 0.003255208333333333,
+        "irreducible_mass": 1.0583583308700575,
+        "christodoulou_mass": 1.0843983733202396,
+        "spin": 0.49999999914830745,
+        "scaled_rms_expansion": 9.16433460821188e-05,
+        "expansion_tolerance": 0.0001,
+        "irreducible_mass_relative_change": 0.0,
+        "christodoulou_mass_relative_change": 0.0,
+        "spin_change": 0.0
+      },
+      "horizon_last": {
+        "time": 499.30013020721515,
+        "irreducible_mass": 1.058558811277559,
+        "christodoulou_mass": 1.084584263374941,
+        "spin": 0.4999996623174915,
+        "scaled_rms_expansion": 8.950814549473284e-05,
+        "expansion_tolerance": 0.0001,
+        "irreducible_mass_relative_change": 0.00018942583211556396,
+        "christodoulou_mass_relative_change": 0.00017142229209743398,
+        "spin_change": -3.368308159612532e-07
+      },
+      "max_abs_relative_irreducible_mass_change": 0.00046321728503451176,
+      "max_abs_relative_christodoulou_mass_change": 0.00041722158380630425,
+      "max_abs_spin_change": 4.757891360718247e-05,
+      "constraint_samples": 21,
+      "first_constraints": {
+        "time": 0.0,
+        "constraint_mask_cells": 15443360,
+        "hamiltonian_RMS": 9.166913805291072e-05,
+        "momentum_RMS": 1.1354162667260628e-07,
+        "field_sha256": "911fb62c317072d8287e6dcfb99170781f5e13548d474eb05224d54de473d884"
+      },
+      "final_constraints": {
+        "time": 500.0,
+        "constraint_mask_cells": 15443360,
+        "hamiltonian_RMS": 1.4115979534767811e-06,
+        "momentum_RMS": 8.573578754647982e-07,
+        "field_sha256": "29cc6811f2fb3626c09d5048b770b691525506d2e2934cfc47e5f200b16dd90e"
+      }
+    }
+  }
+}
